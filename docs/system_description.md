@@ -1,52 +1,52 @@
-# Descripción del sistema
+# System description
 
-## Componentes físicos
+## Physical components
 
-| Elemento | Modelo V1 | Parámetros (config) |
+| Element | V1 model | Parameters (config) |
 |---|---|---|
-| Láser | Cabezal cartesiano XY sobre pórtico, Z fijo. Un único trabajo a la vez. | `laser.speed_x`, `laser.speed_y`, `laser.motion_model`, `laser.workspace`, `laser.home` |
-| Cintas | N cintas paralelas a X, a alturas `y_i`; todas comparten la geometría longitudinal. | `conveyors.count`, `conveyors.y_positions`, `conveyors.speed` |
-| Zonas | entrada `[0, 10)`, zona láser `[10, 45]`, salida `(45, 55]` cm | `geometry.*` |
-| Piezas | Puntos sobre la cinta con tiempo de procesado propio. | `processing.*`, `simulation.min_part_spacing` |
+| Laser | Cartesian XY head on a gantry, Z fixed. One job at a time. | `laser.speed_x`, `laser.speed_y`, `laser.motion_model`, `laser.workspace`, `laser.home` |
+| Conveyors | N conveyors parallel to X at heights `y_i`; all share the same longitudinal geometry. | `conveyors.count`, `conveyors.y_positions`, `conveyors.speed` |
+| Zones | entry `[0, 10)`, laser zone `[10, 45]`, exit `(45, 55]` cm | `geometry.*` |
+| Parts | Points on the belt with their own processing time. | `processing.*`, `simulation.min_part_spacing` |
 
-Convención: **X** = avance de las cintas (+X), **Y** = transversal entre cintas, **Z** fijo.
+Convention: **X** = conveyor travel (+X), **Y** = across conveyors, **Z** fixed.
 
-## Ciclo de una pieza
+## Part life cycle
 
 ```
-llegada ──► WAITING (cola de entrada, si la cinta está parada o la entrada ocupada)
-        ──► MOVING  (x ∈ [0, 10): el láser no la alcanza)
-        ──► READY   (x ∈ [10, 45]: candidata para el láser)
-        ──► PROCESSING (el láser está encima; su cinta parada)
-        ──► COMPLETED  (la cinta rearranca y la lleva a la salida)
+arrival ──► WAITING (entry queue, if the conveyor is stopped or the entry is occupied)
+        ──► MOVING  (x ∈ [0, 10): the laser cannot reach it)
+        ──► READY   (x ∈ [10, 45]: candidate for the laser)
+        ──► PROCESSING (the laser is on it; its conveyor is stopped)
+        ──► COMPLETED  (the conveyor restarts and carries it to the exit)
         ──► EXITED     (x ≥ 55)
 ```
 
-## Ciclo del láser
+## Laser cycle
 
 ```
-IDLE ──(la política elige una pieza READY)──► MOVING hacia el punto de encuentro
-     ──► WAITING_FOR_PART (si llega antes que la pieza)
-     ──► PROCESSING (cinta de la pieza STOPPED durante processing_time)
-     ──► IDLE (cinta STARTED; nueva decisión en el mismo instante)
+IDLE ──(the policy chooses a READY part)──► MOVING to the meeting point
+     ──► WAITING_FOR_PART (if it arrives before the part)
+     ──► PROCESSING (the part's conveyor is STOPPED for processing_time)
+     ──► IDLE (conveyor STARTED; new decision at the same instant)
 ```
 
-## Reglas de las cintas
+## Conveyor rules
 
-* Una cinta se mueve si su conjunto de *motivos de parada* está vacío.
-* Motivo `processing`: lo añade la regla de parada (`stop_policy.py`) al empezar un
-  procesado; por defecto solo en la cinta de la pieza.
-* Motivo `blocked` (modo `block`): una pieza sin procesar ha llegado a x = 45.
-* Al parar una cinta se paran todas sus piezas; las demás cintas siguen.
+* A conveyor moves when its set of *stop reasons* is empty.
+* Reason `processing`: added by the stopping rule (`stop_policy.py`) when processing
+  starts; by default only on the part's conveyor.
+* Reason `blocked` (`block` mode): an unprocessed part has reached x = 45.
+* When a conveyor stops, all its parts stop; the other conveyors keep moving.
 
-## Capas del software
+## Software layers
 
 ```
-config (YAML) ─► simulation engine ─► estado/eventos/métricas ─► results/ (CSV, JSON, log)
+config (YAML) ─► simulation engine ─► state/events/metrics ─► results/ (CSV, JSON, log)
                         ▲                         │
-                policies (select)                 └─► trace.json ─► visualization (solo reproduce)
+                policies (select)                 └─► trace.json ─► visualization (replay only)
                                                   └─► optimization/objective_functions
 ```
 
-El motor no importa nada de la visualización. La visualización no contiene lógica de
-simulación. Las políticas solo ven un `DecisionContext` de lectura.
+The engine imports nothing from the visualization. The visualization contains no
+simulation logic. Policies only see a read-only `DecisionContext`.

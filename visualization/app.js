@@ -24,6 +24,7 @@
   const cell = $("cell"), cctx = cell.getContext("2d");
   const qc = $("queueChart"), qctx = qc.getContext("2d");
 
+  let traces = {};        // policy name -> trace
   let trace = null, frames = [], T = 0, simT = 0, playing = false, speed = 5, lastTs = null;
   let cumRun = [];       // cumulative running time per conveyor at each frame (belt animation)
   let colors = {};
@@ -47,14 +48,27 @@
   const convColor = (i) => colors.conv[i % colors.conv.length];
 
   // ------------------------------------------------------------- loading
-  function load(tr) {
+  function setTraces(map, selected) {
+    traces = map;
+    const sel = $("policySelect");
+    sel.innerHTML = Object.keys(traces).map((k) =>
+      `<option value="${k}">${k}</option>`).join("");
+    sel.value = selected;
+    sel.disabled = Object.keys(traces).length < 2;
+    load(traces[selected]);
+  }
+
+  function load(tr, keepTime = false) {
+    const prevT = simT, wasPlaying = playing;
     const msg = document.getElementById("emptyMsg");
     if (msg) msg.remove();
     cell.hidden = false;
     trace = tr;
     frames = tr.frames;
     T = frames[frames.length - 1].t;
-    simT = 0; playing = false; lastLogIdx = -1;
+    simT = keepTime ? Math.min(prevT, T) : 0;
+    playing = keepTime ? wasPlaying : false;
+    lastLogIdx = -1;
     const nC = tr.geometry.conveyors.length;
     cumRun = [new Array(nC).fill(0)];
     for (let i = 1; i < frames.length; i++) {
@@ -63,8 +77,8 @@
     }
     const m = tr.meta, s = tr.summary || {};
     $("meta").textContent = `policy=${m.policy} · arrivals=${m.arrival_mode} · seed=${m.seed} · ` +
-      `fin de zona=${m.unprocessed_at_zone_end} · parada=${m.conveyor_stop_policy} · ` +
-      `movimiento=${m.motion_model} · dt=${m.dt}s · makespan=${fmt(s.makespan, 1)} s`;
+      `zone end=${m.unprocessed_at_zone_end} · stop rule=${m.conveyor_stop_policy} · ` +
+      `motion=${m.motion_model} · dt=${m.dt}s · makespan=${fmt(s.makespan, 1)} s`;
     $("scrub").max = T.toFixed(1);
     $("tEnd").textContent = `${T.toFixed(1)} s`;
     buildQueues(nC);
@@ -89,8 +103,8 @@
   function buildLegend() {
     $("legend").innerHTML = Object.keys(STATUS).map((k) =>
       `<span><i style="background:${colors[k]}"></i>${STATUS[k].name}</span>`).join("") +
-      `<span><i style="background:${colors.laser};border-radius:50%"></i>Cabezal láser</span>` +
-      `<span><i style="background:${colors.stop}"></i>Cinta detenida</span>`;
+      `<span><i style="background:${colors.laser};border-radius:50%"></i>Laser head</span>` +
+      `<span><i style="background:${colors.stop}"></i>Stopped conveyor</span>`;
   }
 
   // ------------------------------------------------------------- frames
@@ -161,10 +175,10 @@
     ctx.fillStyle = colors.zActive; ctx.fillRect(v.X(x1), top, (x2 - x1) * s, bot - top);
     ctx.fillStyle = colors.zExit; ctx.fillRect(v.X(x2), top, (x3 - x2) * s, bot - top);
     ctx.font = `600 11px ${colors.fontUi}`; ctx.fillStyle = colors.muted; ctx.textAlign = "center";
-    ctx.fillText("ENTRADA", v.X((x0 + x1) / 2), top - 8);
-    ctx.fillText("ZONA ACCESIBLE AL LÁSER", v.X((x1 + x2) / 2), top - 8);
-    ctx.fillText("SALIDA", v.X((x2 + x3) / 2), top - 8);
-    ctx.fillText("COLA", v.X(-QUEUE_STEP * 2.2), top - 8);
+    ctx.fillText("ENTRY", v.X((x0 + x1) / 2), top - 8);
+    ctx.fillText("LASER ZONE", v.X((x1 + x2) / 2), top - 8);
+    ctx.fillText("EXIT", v.X((x2 + x3) / 2), top - 8);
+    ctx.fillText("QUEUE", v.X(-QUEUE_STEP * 2.2), top - 8);
 
     // laser workspace outline
     ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = colors.accent; ctx.lineWidth = 1.2;
@@ -195,7 +209,7 @@
       ctx.fillText(`C${c.id}`, 8, v.Y(c.y) - 2);
       ctx.font = `600 9px ${colors.fontData}`;
       ctx.fillStyle = running ? colors.muted : colors.stop;
-      ctx.fillText(running ? "RUN" : (reason.includes("processing") ? "STOP·LÁSER" : "STOP·BLOQ"), 8, v.Y(c.y) + 11);
+      ctx.fillText(running ? "RUN" : (reason.includes("processing") ? "STOP·LASER" : "STOP·BLOCK"), 8, v.Y(c.y) + 11);
     });
 
     // parts
@@ -258,8 +272,8 @@
     const dy = bot + 18;
     ctx.strokeStyle = colors.muted; ctx.fillStyle = colors.muted; ctx.lineWidth = 1;
     ctx.font = `11px ${colors.fontData}`; ctx.textAlign = "center";
-    [[x0, x1, `${g.entry_length} cm entrada`], [x1, x2, `${g.active_length} cm láser`],
-     [x2, x3, `${g.exit_length} cm salida`]].forEach(([a, b, label]) => {
+    [[x0, x1, `${g.entry_length} cm entry`], [x1, x2, `${g.active_length} cm laser zone`],
+     [x2, x3, `${g.exit_length} cm exit`]].forEach(([a, b, label]) => {
       ctx.beginPath(); ctx.moveTo(v.X(a) + 2, dy); ctx.lineTo(v.X(b) - 2, dy);
       ctx.moveTo(v.X(a), dy - 5); ctx.lineTo(v.X(a), dy + 5); ctx.moveTo(v.X(b), dy - 5); ctx.lineTo(v.X(b), dy + 5);
       ctx.stroke(); ctx.fillText(label, v.X((a + b) / 2), dy + 16);
@@ -387,8 +401,12 @@
       const file = e.target.files && e.target.files[0]; if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        try { load(JSON.parse(reader.result)); $("footer").textContent = `Datos: ${file.name}`; }
-        catch (err) { $("footer").textContent = `No se pudo leer ${file.name}: no es un trace.json válido (${err.message}).`; }
+        try {
+          const tr = JSON.parse(reader.result);
+          const key = `${tr.meta.policy} (${file.name})`;
+          setTraces(Object.assign({}, traces, { [key]: tr }), key);
+          $("footer").textContent = `Data: ${file.name}`; }
+        catch (err) { $("footer").textContent = `Could not read ${file.name}: it is not a valid trace.json (${err.message}).`; }
       };
       reader.readAsText(file);
     });
@@ -400,14 +418,16 @@
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
     new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-    if (window.SIM_TRACE) {
-      load(window.SIM_TRACE);
+    $("policySelect").addEventListener("change", (e) => load(traces[e.target.value], true));
+    const data = window.SIM_TRACES || (window.SIM_TRACE ? { [window.SIM_TRACE.meta.policy]: window.SIM_TRACE } : null);
+    if (data && Object.keys(data).length) {
+      setTraces(data, Object.keys(data)[0]);
       simT = 0; playing = true; updatePlayBtn();   // start playing the demo straight away
     } else {
       const msg = Object.assign(document.createElement("div"), {
         id: "emptyMsg", className: "empty",
-        innerHTML: "No hay datos todavía. Ejecuta <code>python run_simulation.py</code> y recarga la página, " +
-                   "o usa «Abrir trace.json».",
+        innerHTML: "No data yet. Run <code>python run_simulation.py</code> and reload the page, " +
+                   "or use “Open trace.json”.",
       });
       cell.hidden = true;
       cell.before(msg);

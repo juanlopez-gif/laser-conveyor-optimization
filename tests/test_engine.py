@@ -50,7 +50,8 @@ def test_metrics_single_part_analytic(explicit_config):
     * interception: x(t)=10+5t, laser needs max(|x-27.5|, 12)/5 -> meets at x=22 after 2.4 s
     * processing 4.4 -> 7.4, conveyor 1 stopped 3 s, exit at 7.4 + (55-22)/5 = 14.0
     """
-    cfg = explicit_config([{"time": 0.0, "conveyor": 1, "processing_time": 3.0}])
+    cfg = explicit_config([{"time": 0.0, "conveyor": 1, "processing_time": 3.0}],
+                          conveyors__speed=5.0, laser__speed_x=5.0, laser__speed_y=5.0)
     s = Simulation(cfg, record_trace=False).run().summary
     tol = 2 * DT + 1e-6
     assert s["parts_generated"] == 1 and s["parts_completed"] == 1 and s["parts_exited"] == 1

@@ -8,9 +8,10 @@ Examples
     python run_simulation.py --set laser.speed_x=10 --set conveyors.speed=3
 
 Outputs go to ``results/<name>/`` (summary.json/csv, parts.csv, events.log,
-events.csv, queue_lengths.csv, trace.json) and, unless ``--no-viz`` is given,
-``visualization/data/trace.js`` is refreshed so that opening
-``visualization/index.html`` replays this run.
+events.csv, queue_lengths.csv, trace.json). Unless ``--no-viz`` is given, every
+registered policy is also run on the same instance and
+``visualization/data/trace.js`` is refreshed, so that opening
+``visualization/index.html`` replays the run and lets you switch policy.
 """
 
 from __future__ import annotations
@@ -24,7 +25,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from simulation.config import load_config  # noqa: E402
 from simulation.engine import Simulation  # noqa: E402
-from simulation.results_io import save_result  # noqa: E402
+from policies import available_policies  # noqa: E402
+from simulation.results_io import save_result, write_visualization_traces  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="dotted override, e.g. --set laser.speed_x=8 (repeatable)")
     ap.add_argument("--name", help="results sub-folder name (default: <policy>_seed<seed>)")
     ap.add_argument("--no-viz", action="store_true", help="do not update visualization/data/trace.js")
+    ap.add_argument("--only-policy", action="store_true",
+                    help="visualization data with the selected policy only (faster)")
     ap.add_argument("--quiet", action="store_true", help="do not print the event log head")
     args = ap.parse_args(argv)
 
@@ -49,12 +53,28 @@ def main(argv: list[str] | None = None) -> int:
         sets.append(f"arrivals.mode={args.mode}")
     cfg = load_config(args.config, set_items=sets)
 
+    results_dir = ROOT / cfg.output.get("results_dir", "results")
+    save_trace = bool(cfg.output.get("save_trace", True))
     result = Simulation(cfg, record_trace=True).run()
     name = args.name or f"{cfg.policy_name}_{cfg.arrivals.mode}_seed{cfg.simulation.seed}"
-    out = save_result(result, ROOT / cfg.output.get("results_dir", "results") / name,
-                      save_trace=bool(cfg.output.get("save_trace", True)),
-                      update_visualization=not args.no_viz
-                      and bool(cfg.output.get("update_visualization_data", True)))
+    out = save_result(result, results_dir / name, save_trace=save_trace)
+
+    update_viz = not args.no_viz and bool(cfg.output.get("update_visualization_data", True))
+    if update_viz:
+        # The player lets the user switch policy, so every registered policy is run on the
+        # SAME instance (same config and seed). The selected policy is shown first.
+        traces = {cfg.policy_name: result.trace}
+        if not args.only_policy:
+            for other in available_policies():
+                if other == cfg.policy_name:
+                    continue
+                other_cfg = load_config(args.config, set_items=sets + [f"policy.name={other}"])
+                r = Simulation(other_cfg, record_trace=True).run()
+                save_result(r, results_dir / f"{other}_{cfg.arrivals.mode}_seed{cfg.simulation.seed}",
+                            save_trace=save_trace)
+                traces[other] = r.trace
+        path = write_visualization_traces(traces)
+        print(f"Visualization data ({', '.join(traces)}) written to {path}")
 
     if not args.quiet:
         print("--- first events " + "-" * 50)
@@ -76,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{k:38s} {v:.3f}" if isinstance(v, float) else f"{k:38s} {v}")
     print(f"\nResults saved to {out}")
     if not args.no_viz:
-        print("Open visualization/index.html in a browser to replay this run.")
+        print("Open visualization/index.html in a browser to replay the run(s).")
     return 0
 
 

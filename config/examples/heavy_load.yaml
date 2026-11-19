@@ -1,0 +1,14 @@
+# Heavy load: the original provisional values (conveyors 5 cm/s, laser 5 cm/s,
+# processing 3 s, arrivals every 8/10/12 s). The cell is overloaded: queues grow.
+conveyors:
+  speed: 5.0
+laser:
+  speed_x: 5.0
+  speed_y: 5.0
+processing:
+  time: 3.0
+arrivals:
+  deterministic:
+    intervals: [8.0, 10.0, 12.0]
+  stochastic:
+    mean_interarrival: [8.0, 10.0, 12.0]

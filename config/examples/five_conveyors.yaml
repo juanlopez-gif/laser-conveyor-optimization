@@ -5,7 +5,7 @@ conveyors:
   spacing: 12.0
 arrivals:
   deterministic:
-    intervals: [16, 18, 20, 22, 24]
+    intervals: [16, 20, 24, 28, 32]
     first_arrival: [0, 1, 2, 3, 4]
   stochastic:
-    mean_interarrival: [16, 18, 20, 22, 24]
+    mean_interarrival: [16, 20, 24, 28, 32]

@@ -1,32 +1,32 @@
-# Hoja de ruta para la optimización
+# Optimization roadmap
 
-## Cómo se engancha un método nuevo
+## How a new method plugs in
 
-| tipo de método | punto de entrada | ejemplo |
+| method type | entry point | example |
 |---|---|---|
-| regla online / heurística | nueva clase en `src/policies/` (`@register_policy`) | ATC, look-ahead, regla aprendida |
-| rolling horizon | política que, en cada decisión, resuelve un subproblema con las piezas visibles | CP-SAT sobre las próximas 5–10 piezas |
-| offline (instancia conocida) | `arrivals.mode: explicit` + solver → secuencia → política `fixed_sequence` que la reproduce | MILP, CP-SAT, DP |
-| ajuste de parámetros | bucle externo sobre `run_experiments` minimizando `composite_objective` | búsqueda de pesos de `weighted_score` con GA / SA |
-| aprendizaje por refuerzo | entorno tipo Gym que envuelve `Simulation.step()` y llama a la política en cada decisión | PPO / DQN |
+| online rule / heuristic | new class in `src/policies/` (`@register_policy`) | ATC, look-ahead, learned rule |
+| rolling horizon | a policy that solves a sub-problem over the visible parts at every decision | CP-SAT over the next 5–10 parts |
+| offline (known instance) | `arrivals.mode: explicit` + solver → sequence → a `fixed_sequence` policy that replays it | MILP, CP-SAT, DP |
+| parameter tuning | outer loop over `run_experiments` minimizing `composite_objective` | tuning the `weighted_score` weights with GA / SA |
+| reinforcement learning | Gym-style environment wrapping `Simulation.step()` and calling the policy at each decision | PPO / DQN |
 
-## Pasos sugeridos
+## Suggested steps
 
-1. Fijar con la célula real: velocidades, tiempos de procesado, regla de fin de zona
-   (`block` / `pass`), tamaño de pieza.
-2. Generar un banco de instancias (`explicit`) pequeñas (5–15 piezas) y resolverlas
-   exactamente (CP-SAT / DP) para tener cotas y referencias.
-3. Medir el *gap* de las políticas simples frente a esas referencias.
-4. Diseñar heurísticas mejores (p. ej. `weighted_score` con pesos optimizados, look-ahead).
-5. Rolling horizon con CP-SAT para el caso dinámico.
-6. Estudio multiobjetivo (frente de Pareto: makespan vs recorrido vs paradas).
+1. Pin down with the real cell: speeds, processing times, end-of-zone rule
+   (`block` / `pass`), part size.
+2. Build a bank of small `explicit` instances (5–15 parts) and solve them exactly
+   (CP-SAT / DP) to obtain bounds and references.
+3. Measure the gap of the simple policies against those references.
+4. Design better heuristics (e.g. `weighted_score` with tuned weights, look-ahead).
+5. Rolling-horizon CP-SAT for the dynamic case.
+6. Multi-objective study (Pareto front: makespan vs travel vs downtime).
 
-## Mejoras del simulador previstas
+## Planned simulator improvements
 
-* Núcleo dirigido por eventos (más rápido), validado contra el de paso fijo.
-* Pre-posicionamiento del láser hacia piezas que aún están en la zona de entrada.
-* Aceleraciones / perfiles trapezoidales de los ejes.
-* Tamaño físico de piezas, varias operaciones por pieza, varios láseres.
+* Event-driven core (faster), validated against the fixed-step one.
+* Laser pre-positioning towards parts still in the entry zone.
+* Axis accelerations / trapezoidal profiles.
+* Physical part size, several operations per part, several lasers.
 
-Dependencias que habrá que añadir entonces (no instaladas aún): `ortools` (CP-SAT),
-`pyomo` + un solver MILP (HiGHS/CBC), `scipy`.
+Dependencies to add then (not installed yet): `ortools` (CP-SAT), `pyomo` + a MILP
+solver (HiGHS/CBC), `scipy`.

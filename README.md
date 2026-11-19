@@ -1,32 +1,31 @@
 # laser-conveyor-optimization
 
-Prototipo de investigación para **simular** (y, más adelante, **optimizar**) una célula
-industrial formada por **un láser cartesiano XY** y **N cintas transportadoras paralelas**.
+Research prototype to **simulate** (and later **optimize**) an industrial cell made of
+**one XY Cartesian laser** and **N parallel conveyors**.
 
-La V1 es un simulador limpio, modular, reproducible y visual. Aún **no** contiene un
-algoritmo de optimización definitivo: deja preparado el terreno (políticas enchufables,
-funciones objetivo, formulación del problema) para compararlos después.
+V1 is a clean, modular, reproducible and visual simulator. It does **not** contain a
+final optimization algorithm yet. It provides the groundwork (pluggable policies,
+objective functions, problem formulation) to compare optimization methods later.
 
 ---
 
-## 1. Qué problema intentamos resolver
+## 1. The problem
 
-Un único láser (recurso compartido y móvil) debe procesar piezas que llegan de forma
-continua por varias cintas. Mientras el láser trabaja una pieza, **solo la cinta de esa
-pieza se detiene**; las demás siguen moviéndose. La pregunta de fondo es:
+A single laser (a shared, mobile resource) must process parts that arrive continuously
+on several conveyors. While the laser works on a part, **only that part's conveyor
+stops**; the others keep moving. The underlying question is:
 
-> ¿A qué pieza debe ir el láser a continuación, y cuándo, para minimizar makespan,
-> esperas, recorrido del láser y tiempo de parada de las cintas?
+> Which part should the laser go to next, and when, to minimize makespan, waiting time,
+> laser travel and conveyor downtime?
 
-Es un problema de *scheduling* de un recurso único con tiempos de preparación (viaje)
-dependientes de la secuencia, llegadas dinámicas y bloqueo. Ver
-[docs/system_description.md](docs/system_description.md) y
-[src/optimization/problem_formulation.md](src/optimization/problem_formulation.md).
+It is a single-resource scheduling problem with sequence-dependent setup (travel) times,
+dynamic arrivals and blocking. See [docs/system_description.md](docs/system_description.md)
+and [src/optimization/problem_formulation.md](src/optimization/problem_formulation.md).
 
-## 2. Geometría del sistema
+## 2. System geometry
 
 ```
-                       LÁSER XY  (pórtico: carro X + puente Y, Z fijo)
+                       XY LASER  (gantry: X carriage + Y bridge, Z fixed)
                                  ↓
                ┌────────┬───────────────────────────────┬────────┐
   C1 (y=0)  →  │ ====== │ ============================= │ ====== │  →
@@ -34,71 +33,86 @@ dependientes de la secuencia, llegadas dinámicas y bloqueo. Ver
   C3 (y=24) →  │ ====== │ ============================= │ ====== │  →
                └────────┴───────────────────────────────┴────────┘
                x=0     x=10                            x=45     x=55
-               ↑ entrada 10 cm   zona accesible al láser 35 cm   salida 10 cm ↑
+               ↑ entry 10 cm      laser workspace 35 cm       exit 10 cm ↑
 
-  X = dirección de avance de las cintas (+X)     Y = transversal entre cintas     Z = fijo
-  Workspace del láser: X ∈ [10, 45] cm, Y ∈ [0, 24] cm (derivado de la geometría)
+  X = conveyor travel direction (+X)     Y = across conveyors     Z = fixed
+  Laser workspace: X ∈ [10, 45] cm, Y ∈ [0, 24] cm (derived from the geometry)
 ```
 
-Unidades: **cm, s, cm/s**. Valores por defecto: cintas 5 cm/s, láser 5 cm/s en X y en Y,
-procesado 3 s, llegadas cada 8 / 10 / 12 s.
+Units: **cm, s, cm/s**. Current defaults:
 
-## 3. Instalación
+| parameter | default |
+|---|---|
+| conveyor speed | 3 cm/s |
+| laser speed X / Y | 10 cm/s / 10 cm/s (simultaneous axes) |
+| processing time | 2.5 s per part |
+| arrivals (deterministic) | one part every 10 / 12 / 14 s on C1 / C2 / C3 |
+| arrival horizon | 300 s, then the system is drained |
+| policy | `nearest_job` |
 
-Requiere Python ≥ 3.10.
+With these values the processing load of the laser is
+2.5·(1/10 + 1/12 + 1/14) ≈ 0.64, so the cell is busy but stable and the policies give
+clearly different results. The earlier, overloaded values are kept in
+[config/examples/heavy_load.yaml](config/examples/heavy_load.yaml).
 
-```powershell
+## 3. Installation
+
+Requires Python ≥ 3.10.
+
+```bash
+git clone https://github.com/juanlopez-gif/laser-conveyor-optimization.git
 cd laser-conveyor-optimization
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+.venv\Scripts\activate        # Windows  (Linux/macOS: source .venv/bin/activate)
 pip install -r requirements.txt
 ```
 
-(Linux/macOS: `source .venv/bin/activate`.) Dependencias: `pyyaml` (config), `pytest`
-(tests) y `matplotlib` (solo para los gráficos de comparación). No hay SimPy, OR-Tools ni
-Pyomo todavía, a propósito.
+Dependencies: `pyyaml` (config), `pytest` (tests) and `matplotlib` (only for the
+comparison plots). SimPy, OR-Tools and Pyomo are intentionally not used yet.
 
-## 4. Ejecutar una simulación
+## 4. Run a simulation
 
-```powershell
+```bash
 python run_simulation.py
 ```
 
-Imprime el principio del log de eventos y un resumen de KPIs, y guarda en
+It prints the head of the event log and a KPI summary, and writes
 `results/<policy>_<mode>_seed<seed>/`:
 
-| fichero | contenido |
+| file | content |
 |---|---|
-| `summary.json`, `summary.csv` | todas las métricas de la ejecución |
-| `parts.csv` | una fila por pieza (tiempos de llegada, inicio, fin, salida, espera, flujo, lateness) |
-| `events.log`, `events.csv` | log de eventos legible / tabular |
-| `queue_lengths.csv` | longitud de cola por cinta cada 0.1 s |
-| `trace.json` | traza de estados para la visualización |
-| `config_used.json` | configuración exacta usada (reproducibilidad) |
+| `summary.json`, `summary.csv` | every metric of the run |
+| `parts.csv` | one row per part (arrival, start, completion, exit, waiting, flow, lateness) |
+| `events.log`, `events.csv` | readable / tabular event log |
+| `queue_lengths.csv` | queue length per conveyor every 0.1 s |
+| `trace.json` | state trace for the visualization |
+| `config_used.json` | exact configuration used (reproducibility) |
 
-Opciones útiles: `--policy nearest_job`, `--mode stochastic`, `--seed 7`,
-`--config config/examples/five_conveyors.yaml`, `--set laser.speed_x=10` (repetible),
-`--no-viz`.
+Useful options: `--policy fifo`, `--mode stochastic`, `--seed 7`,
+`--config config/examples/five_conveyors.yaml`, `--set laser.speed_x=12` (repeatable),
+`--no-viz`, `--only-policy`.
 
-## 5. Abrir la visualización
+## 5. Open the visualization
 
-`run_simulation.py` escribe `visualization/data/trace.js`. Después basta con **abrir
-`visualization/index.html` con doble clic** (funciona desde `file://`, sin servidor).
-Alternativa: `python -m http.server -d visualization 8000` y abrir http://localhost:8000.
+`run_simulation.py` runs **every available policy on the same instance** and writes
+`visualization/data/trace.js`. Then simply **double-click `visualization/index.html`**
+(it works from `file://`, no server needed). Alternative:
+`python -m http.server -d visualization 8000` and open http://localhost:8000.
 
-Muestra las cintas con sus zonas, las piezas coloreadas por estado (WAITING, MOVING,
-READY, PROCESSING, COMPLETED), el pórtico del láser moviéndose en X/Y, qué cinta está
-parada (borde naranja, `STOP·LÁSER` o `STOP·BLOQ`), un dashboard, la evolución de las
-colas y el log de eventos. Controles: **Play/Pause, Reset, 1x/2x/5x/10x/50x**, barra de
-tiempo y botón *Abrir trace.json* para cargar cualquier otra ejecución.
+The page shows the conveyors and their zones, parts colored by state (WAITING, MOVING,
+READY, PROCESSING, COMPLETED), the laser gantry moving in X/Y, which conveyor is stopped
+(orange outline, `STOP·LASER` or `STOP·BLOCK`), a dashboard, queue lengths over time and
+the event log. Controls: **policy selector**, **Play/Pause, Reset, 1x/2x/5x/10x/50x**,
+a time slider and an *Open trace.json* button to load any other run. Switching policy
+keeps the current time, so you can compare policies at the same instant.
 
-La visualización **solo reproduce** una traza ya calculada: la velocidad visual no puede
-cambiar ningún resultado. `python visualization/build_standalone.py` genera un único
-HTML autocontenido para compartir una ejecución.
+The visualization **only replays** a trace that was already computed: the playback speed
+cannot change any result. `python visualization/build_standalone.py` bundles the player
+and the traces into one self-contained HTML file to share.
 
-## 6. Cambiar de 3 a N cintas
+## 6. Going from 3 to N conveyors
 
-Todo está en [config/default_config.yaml](config/default_config.yaml). Para 5 cintas:
+Everything lives in [config/default_config.yaml](config/default_config.yaml). For 5 conveyors:
 
 ```yaml
 conveyors:
@@ -107,99 +121,102 @@ conveyors:
   spacing: 12.0
 arrivals:
   deterministic:
-    intervals: [8, 10, 12, 9, 11]   # una por cinta (o un escalar para todas)
+    intervals: [16, 20, 24, 28, 32]   # one per conveyor (or one scalar for all)
     first_arrival: [0, 1, 2, 3, 4]
 ```
 
-Ejemplo listo: `python run_simulation.py --config config/examples/five_conveyors.yaml`.
-El workspace del láser en Y se recalcula solo. Si una lista no tiene N valores, el
-programa da un error explicativo.
+Ready-made example: `python run_simulation.py --config config/examples/five_conveyors.yaml`.
+The laser Y workspace is recomputed automatically. If a list does not have N values the
+program stops with an explanatory error.
 
-## 7. Cambiar velocidades
+## 7. Changing speeds
 
 ```yaml
-conveyors: {speed: 5.0}          # escalar o lista por cinta
+conveyors: {speed: 3.0}          # scalar or one value per conveyor
 laser:
-  speed_x: 5.0
-  speed_y: 5.0
-  motion_model: simultaneous     # o sequential
+  speed_x: 10.0
+  speed_y: 10.0
+  motion_model: simultaneous     # or sequential
 ```
 
-`simultaneous`: `t = max(dx/vx, dy/vy)` (ejes a la vez, por defecto).
-`sequential`: `t = dx/vx + dy/vy` (primero X, luego Y). Ver
+`simultaneous`: `t = max(dx/vx, dy/vy)` (both axes at once, default).
+`sequential`: `t = dx/vx + dy/vy` (X first, then Y). See
 [docs/mathematical_model.md](docs/mathematical_model.md).
 
-## 8. Cambiar las llegadas
+## 8. Changing arrivals and processing times
 
 ```yaml
 arrivals:
   mode: deterministic            # deterministic | stochastic | explicit
-  deterministic: {intervals: [8, 10, 12], first_arrival: [0, 1, 2]}
-  stochastic:   {distribution: exponential, mean_interarrival: [8, 10, 12]}   # Poisson
-  explicit: [{time: 0.0, conveyor: 1, processing_time: 3.0}, ...]           # instancia fija
+  deterministic: {intervals: [10, 12, 14], first_arrival: [0, 1, 2]}
+  stochastic:   {distribution: exponential, mean_interarrival: [10, 12, 14]}   # Poisson
+  explicit: [{time: 0.0, conveyor: 1, processing_time: 2.5}, ...]           # fixed instance
 processing:
   distribution: constant         # constant | uniform | normal
-  time: 3.0
+  time: 2.5
 ```
 
-## 9. Cambiar la política de scheduling
+## 9. Choosing the scheduling policy
 
-```powershell
-python run_simulation.py --policy fifo            # FIFO global (la que más espera)
-python run_simulation.py --policy nearest_job     # menor tiempo de viaje del láser
+```bash
+python run_simulation.py --policy nearest_job     # shortest laser travel time (default)
+python run_simulation.py --policy fifo            # global FIFO (longest waiting part)
 python run_simulation.py --policy round_robin     # C1 → C2 → C3 → C1 ...
-python run_simulation.py --policy weighted_score  # w1·espera − w2·viaje + w3·urgencia
+python run_simulation.py --policy weighted_score  # w1·waiting − w2·travel + w3·urgency
 ```
 
-Pesos de `weighted_score` en `policy.params.weighted_score`. **Añadir una política**:
-crea `src/policies/mi_politica.py` con una clase que herede de `BasePolicy`, decórala con
-`@register_policy("mi_politica")` e implementa `select(candidates, ctx)`. Se descubre sola;
-el motor no se toca.
+or `policy.name` in the config, or the selector in the visualization. Weights of
+`weighted_score` are in `policy.params.weighted_score`.
 
-## 10. Muchas simulaciones (sin interfaz)
+**Adding a policy:** create `src/policies/my_policy.py` with a class that inherits from
+`BasePolicy`, decorate it with `@register_policy("my_policy")` and implement
+`select(candidates, ctx)`. It is discovered automatically (CLI, experiments and
+visualization); the engine does not change.
 
-```powershell
+## 10. Many simulations (headless)
+
+```bash
 python run_experiments.py --runs 1000
 python run_experiments.py --runs 200 --policies fifo nearest_job --workers 8
-python experiments/compare_policies.py --runs 30      # + gráfico comparison.png y Pareto
+python experiments/compare_policies.py --runs 100     # + comparison.png and Pareto front
 ```
 
-Todas las políticas se evalúan con **las mismas semillas** (números aleatorios comunes).
-Salida en `results/experiments/<tag>/`: `runs.csv`, `summary_by_policy.csv/json` (media,
-desviación, IC 95 %). Rendimiento orientativo: ≈ 2 s por ejecución de 300 s con
-`dt = 0.01` en un portátil; para barridos grandes usa `--workers` y/o
-`--set simulation.dt=0.02`.
+All policies are evaluated on **the same seeds** (common random numbers). Output in
+`results/experiments/<tag>/`: `runs.csv`, `summary_by_policy.csv/json` (mean, std,
+95 % CI). Indicative speed: ≈ 1–2 s per 300 s run with `dt = 0.01` on a laptop; use
+`--workers` and/or `--set simulation.dt=0.02` for large sweeps.
 
-## 11. Métricas
+## 11. Metrics
 
-Tiempo total simulado · piezas generadas / completadas / salidas / salidas sin procesar ·
-throughput (piezas/min) · espera media y máxima · flow time medio y máximo · makespan ·
-lateness media y máxima · distancia y tiempo de viaje del láser · utilización del láser
-(total, procesado, movimiento) · tiempo ocioso del láser · tiempo de parada por cinta
-(total, por procesado, por bloqueo) · % en marcha por cinta · cola media y máxima por cinta ·
-serie temporal de colas · valor de la función objetivo compuesta. Definiciones en
-[src/simulation/metrics.py](src/simulation/metrics.py).
+Total simulated time · parts generated / completed / exited / exited unprocessed ·
+throughput (parts/min) · average and maximum waiting time · average and maximum flow
+time · makespan · average and maximum lateness · laser travel distance and time · laser
+utilization (total, processing, movement) · laser idle time · stopped time per conveyor
+(total, due to processing, due to blocking) · % running per conveyor · average and
+maximum queue per conveyor · queue length time series · composite objective value.
+Definitions in [src/simulation/metrics.py](src/simulation/metrics.py).
 
-## 12. Qué está preparado para la optimización futura
+## 12. What is ready for future optimization
 
-* `src/policies/`: interfaz `BasePolicy` + registro → cualquier método online (heurística,
-  rolling horizon, RL) entra como una política más.
-* `src/optimization/objective_functions.py`: objetivos simples y compuesto
-  `α·makespan + β·viaje + γ·parada + δ·espera` (pesos en `objective.weights`) y frente de Pareto.
-* `arrivals.mode: explicit`: instancias estáticas para métodos offline (MILP, CP-SAT, DP).
-* `src/simulation/stop_policy.py`: la regla de parada de cintas es intercambiable.
-* Documentación: [problem_formulation.md](src/optimization/problem_formulation.md),
+* `src/policies/`: `BasePolicy` interface + registry → any online method (heuristic,
+  rolling horizon, RL) plugs in as one more policy.
+* `src/optimization/objective_functions.py`: single objectives and the composite
+  `α·makespan + β·travel + γ·downtime + δ·waiting` (weights in `objective.weights`),
+  plus a Pareto filter.
+* `arrivals.mode: explicit`: static instances for offline methods (MILP, CP-SAT, DP).
+* `src/simulation/stop_policy.py`: the conveyor stopping rule is swappable.
+* Documentation: [problem_formulation.md](src/optimization/problem_formulation.md),
   [decision_variables.md](src/optimization/decision_variables.md),
   [docs/future_optimization.md](docs/future_optimization.md),
   [docs/bicycle_problem_comparison.md](docs/bicycle_problem_comparison.md).
 
-## Arquitectura
+## Architecture
 
 ```mermaid
 flowchart LR
     CFG[config/*.yaml] --> ENG
-    subgraph SIM[src/simulation — motor sin GUI]
-        ENG[engine.py<br/>paso fijo dt] --> CONV[conveyor.py]
+    subgraph SIM[src/simulation — engine, no GUI]
+        ENG[engine.py<br/>fixed step dt] --> CONV[conveyor.py]
         ENG --> LAS[laser.py + motion.py]
         ENG --> ARR[arrivals.py]
         ENG --> STP[stop_policy.py]
@@ -216,28 +233,28 @@ flowchart LR
 
 ```
 laser-conveyor-optimization/
-├── run_simulation.py            una simulación + resultados + traza visual
-├── run_experiments.py           muchas simulaciones (atajo a experiments/run_experiment.py)
-├── config/default_config.yaml   ÚNICA fuente de parámetros
-├── src/simulation/              motor (no depende de la visualización)
-├── src/policies/                políticas de despacho enchufables
-├── src/optimization/            objetivos + formulación (para la fase 2)
-├── visualization/               reproductor HTML/JS Canvas
-├── experiments/                 comparación de políticas
+├── run_simulation.py            one simulation + results + visualization traces
+├── run_experiments.py           many simulations (shortcut to experiments/run_experiment.py)
+├── config/default_config.yaml   SINGLE source of parameters (+ config/examples/)
+├── src/simulation/              engine (does not depend on the visualization)
+├── src/policies/                pluggable dispatching policies
+├── src/optimization/            objectives + formulation (for phase 2)
+├── visualization/               HTML/JS canvas player
+├── experiments/                 policy comparison
 ├── tests/                       pytest
-└── docs/                        descripción, supuestos, modelo, bicycle problem
+└── docs/                        description, assumptions, model, bicycle problem
 ```
 
 ## Tests
 
-```powershell
+```bash
 python -m pytest
 ```
 
-## Supuestos principales
+## Main assumptions
 
-Resumen (detalle y justificación en [docs/assumptions.md](docs/assumptions.md)):
-motor de paso fijo propio en lugar de SimPy; el láser *intercepta* la pieza en movimiento;
-una pieza sin procesar que llega al final de la zona láser **bloquea su cinta** (modo
-`block`, configurable a `pass`); piezas en cola aguas arriba si la entrada está ocupada;
-sin aceleraciones; el láser solo elige piezas ya dentro de la zona accesible.
+Summary (details and rationale in [docs/assumptions.md](docs/assumptions.md)): custom
+fixed-step engine instead of SimPy; the laser *intercepts* the moving part; an
+unprocessed part reaching the end of the laser zone **blocks its conveyor** (`block`
+mode, configurable to `pass`); parts queue upstream when the entry is occupied; no
+accelerations; the laser only selects parts that are already inside the laser zone.

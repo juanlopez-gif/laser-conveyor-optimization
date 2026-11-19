@@ -34,11 +34,11 @@ conveyors:
   count: 3                     # N conveyors. Change this + the lists below.
   y_positions: [0.0, 12.0, 24.0]   # if null -> y_i = i * spacing
   spacing: 12.0
-  speed: 5.0                   # scalar (all conveyors) or list with one value per conveyor
+  speed: 3.0                   # scalar (all conveyors) or list with one value per conveyor
 
 laser:
-  speed_x: 5.0
-  speed_y: 5.0
+  speed_x: 10.0
+  speed_y: 10.0
   # simultaneous: both axes move at the same time -> t = max(dx/vx, dy/vy)
   # sequential:   X first, then Y               -> t = dx/vx + dy/vy
   motion_model: simultaneous
@@ -52,21 +52,21 @@ laser:
 arrivals:
   mode: deterministic          # deterministic | stochastic | explicit
   deterministic:
-    intervals: [8.0, 10.0, 12.0]   # one per conveyor (or a scalar)
+    intervals: [10.0, 12.0, 14.0]  # one per conveyor (or a scalar)
     first_arrival: [0.0, 1.0, 2.0] # offset of the first part per conveyor
   stochastic:
     distribution: exponential      # Poisson arrivals -> exponential inter-arrival times
-    mean_interarrival: [8.0, 10.0, 12.0]
+    mean_interarrival: [10.0, 12.0, 14.0]
   explicit: []                     # list of {time, conveyor, processing_time} (tests / static instances)
 
 processing:
   distribution: constant       # constant | uniform | normal
-  time: 3.0                    # used by "constant"
-  uniform: {low: 2.0, high: 4.0}
-  normal: {mean: 3.0, std: 0.5, min: 0.5}
+  time: 2.5                    # used by "constant"
+  uniform: {low: 1.5, high: 3.5}
+  normal: {mean: 2.5, std: 0.5, min: 0.5}
 
 policy:
-  name: fifo                   # fifo | nearest_job | round_robin | weighted_score | (any registered)
+  name: nearest_job            # fifo | nearest_job | round_robin | weighted_score | (any registered)
   params:
     weighted_score:
       w_wait: 1.0              # + waiting time [s]

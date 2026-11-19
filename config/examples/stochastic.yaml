@@ -3,7 +3,7 @@ arrivals:
   mode: stochastic
   stochastic:
     distribution: exponential
-    mean_interarrival: [8.0, 10.0, 12.0]
+    mean_interarrival: [10.0, 12.0, 14.0]
 processing:
   distribution: uniform
-  uniform: {low: 2.0, high: 4.0}
+  uniform: {low: 1.5, high: 3.5}

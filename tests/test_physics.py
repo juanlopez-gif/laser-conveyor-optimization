@@ -150,7 +150,7 @@ def test_no_processing_before_reaching_laser_zone(config):
 def test_part_in_entry_zone_is_not_a_candidate(explicit_config):
     cfg = explicit_config([{"time": 0.0, "conveyor": 1}])
     sim = Simulation(cfg, record_trace=False)
-    for _ in range(150):                                # 1.5 s: part at x = 7.5 < 10
+    for _ in range(150):                                # 1.5 s: part still before x = 10
         sim.step()
         assert sim.laser.state == LaserState.IDLE
     assert sim.parts[0].status == PartStatus.MOVING
@@ -158,7 +158,7 @@ def test_part_in_entry_zone_is_not_a_candidate(explicit_config):
 
 # 8 -------------------------------------------------------------------------
 def test_conveyor_restarts_after_processing(explicit_config):
-    cfg = explicit_config([{"time": 0.0, "conveyor": 2}])
+    cfg = explicit_config([{"time": 0.0, "conveyor": 2, "processing_time": 3.0}])
     result = Simulation(cfg, record_trace=False).run()
     part = result.parts[0]
     stops = [e for e in result.events.of_kind(EventKind.CONVEYOR_STOP) if e.conveyor_id == 2]

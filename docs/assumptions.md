@@ -1,105 +1,107 @@
-# Supuestos y decisiones de modelado (V1)
+# Modelling assumptions and decisions (V1)
 
-Cada supuesto es configurable salvo que se indique lo contrario. Si alguno no
-corresponde a la célula real, se cambia en `config/default_config.yaml` o en el
-módulo indicado.
+Every assumption is configurable unless stated otherwise. If one does not match the real
+cell, change it in `config/default_config.yaml` or in the module mentioned.
 
-## A. Motor de simulación
+## A. Simulation engine
 
-**A1. Motor propio de paso fijo (`dt = 0.01 s`) en lugar de SimPy.**
-SimPy es excelente cuando el estado solo cambia en eventos discretos. Aquí el estado
-cambia de forma *continua* (piezas y láser se mueven) y los eventos dependen de esas
-posiciones: cuándo el láser alcanza una pieza que se mueve, cuándo una pieza llega al
-final de la zona, cuándo la parada de una cinta cambia la trayectoria prevista. Con
-SimPy habría que calcular analíticamente cada uno de esos cruces y cancelar y
-reprogramar procesos a mano, lo que añade complejidad sin aportar nada en la V1.
-Un integrador de paso fijo, con un orden de operaciones explícito dentro de cada
-paso (ver `src/simulation/engine.py`), es simple, determinista y fácil de verificar.
-Coste: los instantes de los eventos tienen un error de hasta `dt` y cada ejecución de
-300 s tarda unos 2 s. Mejora futura: un núcleo dirigido por eventos con cálculo
-analítico de cruces, que puede validarse contra este.
+**A1. Custom fixed-step engine (`dt = 0.01 s`) instead of SimPy.**
+SimPy is excellent when the state only changes at discrete events. Here the state
+changes *continuously* (parts and laser move) and events depend on those positions: when
+the laser reaches a moving part, when a part reaches the end of the zone, when a
+conveyor stop changes the predicted trajectory. With SimPy each of those crossings would
+have to be computed analytically and processes cancelled and rescheduled by hand, which
+adds complexity without benefit in V1. A fixed-step integrator with an explicit order of
+operations inside each step (see `src/simulation/engine.py`) is simple, deterministic and
+easy to verify. Cost: event times have an error of up to `dt` and a 300 s run takes
+about 1–2 s. Future improvement: an event-driven core with analytic crossing times,
+validated against this one.
 
-**A2.** Determinismo: semilla maestra → flujos `random.Random("seed/arrivals/i")` y
-`"seed/processing/i"` por cinta. Misma semilla ⇒ mismo experimento (testeado), y las
-políticas comparten instancias (números aleatorios comunes).
+**A2.** Determinism: master seed → streams `random.Random("seed/arrivals/i")` and
+`"seed/processing/i"` per conveyor. Same seed ⇒ same experiment (tested), and policies
+share instances (common random numbers).
 
-## B. Cintas y piezas
+## B. Conveyors and parts
 
-**B1.** Las piezas son puntos con separación mínima `min_part_spacing = 4 cm` en la
-cinta (aprox. el tamaño de la pieza). No se modela el tamaño de la pieza ni colisiones.
+**B1.** Parts are points with a minimum spacing `min_part_spacing = 4 cm` on the belt
+(roughly the part size). Part size and collisions are not modelled.
 
-**B2.** Si una pieza llega cuando su cinta está parada o la entrada está ocupada, espera
-en una cola aguas arriba (estado **WAITING**) y entra en cuanto puede.
-*Interpretación del estado WAITING del enunciado.*
+**B2.** If a part arrives while its conveyor is stopped or the entry is occupied, it
+waits in an upstream queue (state **WAITING**) and enters as soon as possible.
+*This is how the WAITING state of the specification was interpreted.*
 
-**B3.** Estados: WAITING (cola de entrada) → MOVING (zona de entrada) → READY (zona láser,
-sin procesar) → PROCESSING → COMPLETED (procesada, camino de la salida) → EXITED.
+**B3.** States: WAITING (entry queue) → MOVING (entry zone) → READY (laser zone, not
+processed) → PROCESSING → COMPLETED (processed, travelling to the exit) → EXITED.
 
-**B4. Pieza sin procesar al final de la zona láser.** El enunciado no dice qué ocurre.
-Por defecto (`unprocessed_at_zone_end: block`) **la cinta se detiene** con la pieza en
-x = 45 cm hasta que el láser la procese (ninguna pieza se pierde, aparece *blocking*).
-Alternativa `pass`: la pieza sigue y sale sin procesar (se cuenta en
-`parts_exited_unprocessed`). **Esta es la decisión más importante a validar con la
-célula real.**
+**B4. Unprocessed part at the end of the laser zone.** The specification does not say
+what happens. By default (`unprocessed_at_zone_end: block`) **the conveyor stops** with
+the part at x = 45 cm until the laser processes it (no part is lost, *blocking*
+appears). Alternative `pass`: the part keeps going and exits unprocessed (counted in
+`parts_exited_unprocessed`). **This is the most important decision to validate with the
+real cell.**
 
-**B5.** Regla de parada durante el procesado: solo la cinta de la pieza
-(`processing_conveyor_only`); alternativa `all_conveyors`. Ampliable en
+**B5.** Stopping rule during processing: only the part's conveyor
+(`processing_conveyor_only`); alternative `all_conveyors`. Extensible in
 `src/simulation/stop_policy.py`.
 
-**B6.** Las cintas arrancan y paran instantáneamente (sin rampas).
+**B6.** Conveyors start and stop instantaneously (no ramps).
 
-## C. Láser
+## C. Laser
 
-**C1.** Velocidad constante por eje, sin aceleración ni tiempo de asentamiento.
+**C1.** Constant speed per axis, no acceleration or settling time.
 
-**C2.** Movimiento por defecto **simultáneo**: `t = max(dx/vx, dy/vy)`; alternativa
-`sequential`: `t = dx/vx + dy/vy`. Para la distancia recorrida se suma la longitud real
-del camino (diagonal mientras se mueven ambos ejes y después recto).
+**C2.** Default motion is **simultaneous**: `t = max(dx/vx, dy/vy)`; alternative
+`sequential`: `t = dx/vx + dy/vy`. The travelled distance is the real path length
+(diagonal while both axes move, then straight).
 
-**C3. Intercepción.** La pieza sigue moviéndose mientras el láser viaja (su cinta solo
-para al empezar el procesado). El láser va al *punto de encuentro* más temprano y, si la
-cinta cambia de estado durante el viaje, recalcula. Con las velocidades por defecto
-(láser 5 cm/s = cinta 5 cm/s) el láser **no puede alcanzar en X una pieza que va por
-delante**; en modo `block` la alcanza cuando la pieza se detiene al final de la zona.
+**C3. Interception.** The part keeps moving while the laser travels (its conveyor only
+stops when processing starts). The laser heads to the earliest *meeting point* and
+re-plans if the conveyor changes state during the trip. Because the laser (10 cm/s) is
+faster than the conveyors (3 cm/s) it can catch parts ahead of it; with the heavy-load
+example (both 5 cm/s) it can only catch a part ahead when the part stops at the zone end.
 
-**C4.** El láser solo puede elegir piezas READY (dentro de la zona accesible). No se
-pre-posiciona para piezas que todavía están en la zona de entrada (mejora futura).
+**C4.** The laser can only select READY parts (inside the reachable zone). It does not
+pre-position for parts still in the entry zone (future improvement).
 
-**C5.** Workspace del láser = zona activa en X (10–45 cm) × [y mín, y máx] de las cintas.
-El láser nunca sale de él (testeado).
+**C5.** Laser workspace = laser zone in X (10–45 cm) × [min y, max y] of the conveyors.
+The laser never leaves it (tested).
 
-**C6.** Cuando está ocioso, el láser se queda donde terminó (no vuelve a una posición de
-reposo). Posición inicial: centro del workspace.
+**C6.** When idle, the laser stays where it finished (no return to a home position).
+Initial position: centre of the workspace.
 
-## D. Llegadas y procesado
+## D. Arrivals and processing
 
-**D1.** Modo determinista: primera llegada en `first_arrival` (0, 1, 2 s) y después cada
-`intervals` (8, 10, 12 s). Modo estocástico: Poisson (tiempos entre llegadas
-exponenciales con medias 8, 10, 12 s).
+**D1.** Deterministic mode: first arrival at `first_arrival` (0, 1, 2 s), then every
+`intervals` (10, 12, 14 s). Stochastic mode: Poisson (exponential inter-arrival times
+with means 10, 12, 14 s).
 
-**D2.** Se generan llegadas hasta `arrival_horizon = 300 s`; después (`drain: true`) se
-sigue simulando hasta vaciar el sistema. El makespan es el instante en que termina la
-última pieza.
+**D2.** Arrivals are generated up to `arrival_horizon = 300 s`; afterwards
+(`drain: true`) the simulation continues until the system is empty. Makespan is the time
+at which the last part is completed.
 
-**D3.** Tiempo de procesado constante 3 s (o uniforme / normal truncada por pieza).
+**D3.** Constant processing time 2.5 s (or uniform / truncated normal per part).
 
-**D4.** Fecha de entrega = llegada + 20 s, solo para calcular lateness.
+**D4.** Due date = arrival + 20 s, used only to compute lateness.
 
-## E. Métricas
+## E. Metrics
 
-**E1.** Cola de una cinta = piezas que han llegado y cuyo procesado no ha empezado
-(WAITING + MOVING + READY).
+**E1.** Queue of a conveyor = parts that have arrived and whose processing has not
+started (WAITING + MOVING + READY).
 
-**E2.** Espera = inicio de procesado − llegada. Flow time = fin de procesado − llegada.
+**E2.** Waiting = processing start − arrival. Flow time = processing end − arrival.
 
-**E3.** Utilización del láser = (moviéndose + procesando) / tiempo total. El tiempo que
-espera quieto en el punto de encuentro cuenta como ocioso.
+**E3.** Laser utilization = (moving + processing) / total time. Time spent standing at
+the meeting point waiting for the part counts as idle.
 
-## F. Observación sobre la carga del caso por defecto
+## F. Load of the default case
 
-Con llegadas cada 8, 10 y 12 s y 3 s de procesado, la carga de **solo procesado** es
-3·(1/8 + 1/10 + 1/12) ≈ **0.93**. Al añadir los viajes del láser (≈ 1–5 s por pieza) el
-sistema queda **sobrecargado**: las colas crecen durante los 300 s de llegadas y las
-cintas pasan mucho tiempo bloqueadas. No es un error del simulador, sino una
-consecuencia de los parámetros provisionales. Para estudiar régimen estacionario
-conviene, por ejemplo, `processing.time: 2.0` o intervalos mayores.
+Defaults (updated after the first review): conveyors 3 cm/s, laser 10 cm/s, processing
+2.5 s, arrivals every 10 / 12 / 14 s. The processing-only load is
+2.5·(1/10 + 1/12 + 1/14) ≈ **0.64**; adding laser travel brings the laser utilization to
+roughly 0.9, so the cell is busy but stable, and the dispatching policy matters. With
+much lighter loads (e.g. arrivals every 12 / 15 / 18 s and 2 s processing) there is
+rarely more than one candidate part and all policies behave identically.
+
+The first provisional values (conveyors 5 cm/s, laser 5 cm/s, processing 3 s, arrivals
+every 8 / 10 / 12 s) overload the cell (processing load ≈ 0.93 before travel; queues grow
+without bound). They are kept in `config/examples/heavy_load.yaml`.

@@ -1,73 +1,73 @@
-# Modelo matemático del simulador (V1)
+# Mathematical model of the simulator (V1)
 
-Notación: cintas `k = 1..N` en `y_k`; zona láser `[a, b]` (a = 10, b = 45 cm);
-longitud total `L` (55 cm); velocidad de cinta `v_k`; velocidades del láser `v_x`, `v_y`.
+Notation: conveyors `k = 1..N` at `y_k`; laser zone `[a, b]` (a = 10, b = 45 cm);
+total length `L` (55 cm); conveyor speed `v_k`; laser speeds `v_x`, `v_y`.
 
-## 1. Cinta
+## 1. Conveyor
 
-Estado `s_k(t) ∈ {RUN, STOP}`, con `STOP ⇔ R_k(t) ≠ ∅` (conjunto de motivos de parada).
-Para toda pieza `j` sobre la cinta `k`:
+State `s_k(t) ∈ {RUN, STOP}`, with `STOP ⇔ R_k(t) ≠ ∅` (set of stop reasons).
+For every part `j` on conveyor `k`:
 
 ```
 dx_j/dt = v_k · 1[s_k(t) = RUN]
 ```
 
-Modo `block`: si `x_j = b` y `j` no ha empezado a procesarse, `blocked ∈ R_k`.
+`block` mode: if `x_j = b` and `j` has not started processing, `blocked ∈ R_k`.
 
-## 2. Tiempo de viaje del láser
+## 2. Laser travel time
 
-De `(x_1, y_1)` a `(x_2, y_2)`, con `dx = |x_2 − x_1|`, `dy = |y_2 − y_1|`:
+From `(x_1, y_1)` to `(x_2, y_2)`, with `dx = |x_2 − x_1|`, `dy = |y_2 − y_1|`:
 
-| modelo | fórmula | interpretación |
+| model | formula | meaning |
 |---|---|---|
-| `simultaneous` (por defecto) | `τ = max(dx/v_x, dy/v_y)` | dos motores independientes moviéndose a la vez; manda el eje más lento |
-| `sequential` | `τ = dx/v_x + dy/v_y` | primero X, después Y |
+| `simultaneous` (default) | `τ = max(dx/v_x, dy/v_y)` | two independent motors moving at the same time; the slower axis dominates |
+| `sequential` | `τ = dx/v_x + dy/v_y` | X first, then Y |
 
-**Decisión documentada:** se usa `simultaneous` porque es el comportamiento normal de un
-pórtico cartesiano con un accionamiento por eje. `sequential` queda disponible para
-cuantificar cuánto se pierde si los ejes no se pueden mover a la vez.
+**Documented decision:** `simultaneous` is used because it is the normal behaviour of a
+Cartesian gantry with one drive per axis. `sequential` is available to quantify how much
+is lost if the axes cannot move at the same time.
 
-## 3. Intercepción de una pieza en movimiento
+## 3. Intercepting a moving part
 
-Si el láser está en `(x_L, y_L)` y la pieza en `x_j(0)` sobre una cinta a velocidad `v`,
-su posición prevista es `x_j(t) = min(x_j(0) + v t, b)` en modo `block`. El punto de
-encuentro es el **menor** `t ≥ 0` tal que
+With the laser at `(x_L, y_L)` and the part at `x_j(0)` on a conveyor moving at `v`, its
+predicted position is `x_j(t) = min(x_j(0) + v t, b)` in `block` mode. The meeting point
+is the **smallest** `t ≥ 0` such that
 
 ```
 τ( (x_L, y_L) → (x_j(t), y_k) ) ≤ t
 ```
 
-Se resuelve con un barrido de 64 puntos seguido de bisección (`motion.find_intercept`).
-En modo `pass`, si no existe solución con `x_j(t) ≤ b`, la pieza no es alcanzable.
-Si `v ≥ v_x` y la pieza va por delante, solo existe solución porque la pieza se detiene en `b`.
+It is solved with a 64-point scan followed by bisection (`motion.find_intercept`).
+In `pass` mode, if no solution exists with `x_j(t) ≤ b`, the part is unreachable.
+If `v ≥ v_x` and the part is ahead, a solution only exists because the part stops at `b`.
 
-## 4. Integración temporal
+## 4. Time integration
 
-Paso fijo `Δt`: el estado en `t + Δt` se obtiene aplicando, en este orden, (1) fin de
-procesado, (2) llegadas, (3) bloqueos, (4) admisión a la cinta, (5) decisión de la
-política, (6) movimiento del láser / inicio de procesado, (7) métricas, (8) avance de las
-cintas, (9) cambios de estado por posición. Error en los instantes de evento ≤ `Δt`.
+Fixed step `Δt`: the state at `t + Δt` is obtained by applying, in this order, (1) end
+of processing, (2) arrivals, (3) blocking, (4) admission to the belt, (5) policy
+decision, (6) laser motion / start of processing, (7) metrics, (8) belt motion,
+(9) position-driven state changes. Event-time error ≤ `Δt`.
 
-## 5. Métricas
+## 5. Metrics
 
-Para la pieza `j`: llegada `r_j`, inicio `S_j`, fin `C_j = S_j + p_j`, salida `E_j`,
-fecha de entrega `d_j = r_j + Δ_d`.
+For part `j`: arrival `r_j`, start `S_j`, completion `C_j = S_j + p_j`, exit `E_j`,
+due date `d_j = r_j + Δ_d`.
 
-| métrica | definición |
+| metric | definition |
 |---|---|
-| espera | `W_j = S_j − r_j` |
+| waiting | `W_j = S_j − r_j` |
 | flow time | `F_j = C_j − r_j` |
 | lateness | `L_j = C_j − d_j` |
 | makespan | `C_max = max_j C_j` |
-| throughput | `#completadas / T · 60` (piezas/min) |
-| utilización del láser | `(T_mov + T_proc) / T` |
-| parada de la cinta k | `∫ 1[s_k = STOP] dt` (desglosado en procesado / bloqueo) |
-| cola de la cinta k | `Q_k(t) = #{j en k : r_j ≤ t < S_j}`; media `∫Q_k dt / T` |
+| throughput | `#completed / T · 60` (parts/min) |
+| laser utilization | `(T_move + T_proc) / T` |
+| downtime of conveyor k | `∫ 1[s_k = STOP] dt` (split into processing / blocking) |
+| queue of conveyor k | `Q_k(t) = #{j on k : r_j ≤ t < S_j}`; mean `∫Q_k dt / T` |
 
-## 6. Objetivo compuesto (a minimizar)
+## 6. Composite objective (minimized)
 
 ```
-J = α·C_max + β·D_laser + γ·Σ_k T_stop,k + δ·W̄    (+ otros términos registrados)
+J = α·C_max + β·D_laser + γ·Σ_k T_stop,k + δ·W̄    (+ any other registered term)
 ```
 
-Pesos en `objective.weights`; implementación en `src/optimization/objective_functions.py`.
+Weights in `objective.weights`; implementation in `src/optimization/objective_functions.py`.

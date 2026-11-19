@@ -35,7 +35,8 @@ def main() -> int:
     args = ap.parse_args()
     if args.trace:
         data = json.loads(Path(args.trace).read_text(encoding="utf-8"))
-        trace_js = "window.SIM_TRACE = " + json.dumps(data, separators=(",", ":")) + ";"
+        traces = {data["meta"]["policy"]: data}
+        trace_js = "window.SIM_TRACES = " + json.dumps(traces, separators=(",", ":")) + ";"
     else:
         trace_js = (HERE / "data" / "trace.js").read_text(encoding="utf-8")
     out = build(trace_js, Path(args.out))

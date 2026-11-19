@@ -1,6 +1,0 @@
-# Lighter load (processing 2 s, faster laser): close to a stable regime.
-processing:
-  time: 2.0
-laser:
-  speed_x: 10.0
-  speed_y: 10.0

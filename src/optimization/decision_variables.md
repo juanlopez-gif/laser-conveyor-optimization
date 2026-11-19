@@ -1,20 +1,20 @@
-# Variables de decisión
+# Decision variables
 
-| variable | dominio | significado | en el simulador V1 |
+| variable | domain | meaning | in the V1 simulator |
 |---|---|---|---|
-| `π` (orden) | permutación de las piezas | orden en que el láser procesa las piezas | lo decide la política en cada `select()` |
-| `z_ij` | {0,1} | `j` sigue inmediatamente a `i` | implícito en `laser.history` |
-| `a_j(t)` (asignación temporal) | pieza o "ninguna" | a qué pieza está asignado el láser en cada instante | `laser.current_part` |
-| `S_j` | ℝ⁺ | instante de inicio del procesado | `part.start_processing_time` (resultado del encuentro) |
-| `X_j` | [a, b] | posición x donde se procesa | punto de encuentro (`motion.find_intercept`) |
-| `w_j` (espera deliberada) | ℝ⁺ | retrasar a propósito el inicio (p. ej. dejar que la pieza avance) | no usado: el láser va siempre a la pieza elegida en cuanto queda libre |
-| `u_k(t)` | {0,1} | marcha/parada de la cinta `k` | regla fija `stop_policy` + bloqueo |
-| `ξ` (política de parada) | {solo su cinta, todas, ...} | regla global de parada | `simulation.conveyor_stop_policy` |
-| `θ` (parámetros de política) | ℝᵈ | p. ej. pesos `w_wait`, `w_travel`, `w_urgency` | `policy.params` |
+| `π` (order) | permutation of the parts | order in which the laser processes the parts | decided by the policy at each `select()` |
+| `z_ij` | {0,1} | `j` immediately follows `i` | implicit in `laser.history` |
+| `a_j(t)` (time assignment) | a part or "none" | which part the laser is assigned to at each instant | `laser.current_part` |
+| `S_j` | ℝ⁺ | processing start time | `part.start_processing_time` (result of the interception) |
+| `X_j` | [a, b] | x position where the part is processed | meeting point (`motion.find_intercept`) |
+| `w_j` (deliberate delay) | ℝ⁺ | intentionally delay the start (e.g. let the part come closer) | not used: the laser always heads to the chosen part as soon as it is free |
+| `u_k(t)` | {0,1} | run/stop of conveyor `k` | fixed rule `stop_policy` + blocking |
+| `ξ` (stopping policy) | {own conveyor, all, ...} | global stopping rule | `simulation.conveyor_stop_policy` |
+| `θ` (policy parameters) | ℝᵈ | e.g. weights `w_wait`, `w_travel`, `w_urgency` | `policy.params` |
 
-Dos niveles de optimización posibles:
+Two possible optimization levels:
 
-1. **Optimizar la decisión directamente** (`π`, `S_j`, `X_j`) para una instancia conocida
-   → MILP / CP-SAT / DP / metaheurísticas sobre permutaciones.
-2. **Optimizar la regla** (`θ`, `ξ`) que toma decisiones online → búsqueda sobre
-   parámetros evaluada con `run_experiments` (muchas semillas), o RL.
+1. **Optimize the decisions directly** (`π`, `S_j`, `X_j`) for a known instance
+   → MILP / CP-SAT / DP / metaheuristics over permutations.
+2. **Optimize the rule** (`θ`, `ξ`) that makes online decisions → search over parameters
+   evaluated with `run_experiments` (many seeds), or RL.
