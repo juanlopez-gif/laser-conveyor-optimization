@@ -36,14 +36,14 @@ complete PRISMA counts.
 
 | review point | status in our work | action |
 |---|---|---|
-| **A. Belt order is not automatically processing order**: head-only actions are a restricted policy class; measure the restriction gap. | Correct. `nearest_head` and the RL action space only serve conveyor heads. The belt-order observation of phase 2 is empirical (metaheuristic sequences), not a dominance theorem. | **To do:** on small instances compare the best permutation over all orders (`exhaustive`) with the best belt-order-respecting permutation; report the gap. |
-| **B. NP-hardness needs a realizable reduction**: check whether it holds for fixed N = 3, whether release dates stay exogenous, which stop rule. | Our reduction (formulation §5.5) uses one part per conveyor, negligible travel and a zone long enough that blocking never binds. It therefore proves NP-hardness for **general N** (N = n) and the **own-conveyor** stop rule only; with `all_conveyors` the release dates become schedule-dependent. Fixed N = 3 is **not** covered. | **To do:** state the scope precisely in §5.5; optionally look for a reduction with fixed N. |
+| **A. Belt order is not automatically processing order**: head-only actions are a restricted policy class; measure the restriction gap. | Correct. `nearest_head` and the RL action space only serve conveyor heads. The belt-order observation of phase 2 is empirical (metaheuristic sequences), not a dominance theorem. | **Done (0.5.2):** belt order is not dominant; gap 0 % at default load, up to 3.5 % with bursts (`docs/methods/restriction_gap.md`). |
+| **B. NP-hardness needs a realizable reduction**: check whether it holds for fixed N = 3, whether release dates stay exogenous, which stop rule. | The old sketch used limiting cases (infinite speeds, infinite zone). | **Done (0.5.2):** replaced by a realizable reduction (time scaling by $M>n^2	au_{\max}$, one part per conveyor, $\sigma=I$, general N); fixed N and `all_conveyors` stated as open; makespan not claimed. |
 | **C. CP-SAT exactness is for the discretized model.** | Already stated (`docs/methods/exact_cpsat.md`, agent_architecture "optimal up to discretization"). | none |
-| **D. Time windows are endogenous; write $s_{ij}(t,z)$.** | Correct: windows and travel depend on the belt state (stops caused by earlier decisions). The classification line in §5 writes $s_{ij}(t)$ and "time windows". | **To do:** rewrite the classification as $s_{ij}(t,z)$ with state-induced (endogenous) windows. |
-| **E. Return = objective only with γ = 1 and consistent 1/M scaling.** | The undiscounted return equals $-(\sum F_j+\Pi)$ (tested); divided by the exogenous $n$ it is exactly `penalized_flow_time`. **But PPO was trained with γ = 0.99 per decision**, so the trained objective is a discounted proxy. | **To do:** say so in `docs/methods/rl.md`; try γ = 1 (or average-reward) in the next RL iteration. |
+| **D. Time windows are endogenous; write $s_{ij}(t,z)$.** | Correct: windows and travel depend on the belt state (stops caused by earlier decisions). | **Done (0.5.2):** classification rewritten with $s_{ij}(t,z)$ and endogenous windows. |
+| **E. Return = objective only with γ = 1 and consistent 1/M scaling.** | The undiscounted return equals $-(\sum F_j+\Pi)$ (tested); divided by the exogenous $n$ it is exactly `penalized_flow_time`. **But PPO was trained with γ = 0.99 per decision**, so the trained objective is a discounted proxy. | **Done (0.5.2):** caveat in `docs/methods/rl.md`; γ = 1 / average reward remains for the next RL iteration. |
 | **F. Admission loophole** (flow measured from belt admission would reward delaying entry). | Already handled: $F_j=C_j-r_j$ with $r_j$ the external arrival; the work-in-progress integral counts parts from arrival, including the upstream buffer. | none (mention explicitly in the paper) |
-| **G. Revocable pre-positioning needs decision semantics.** | Defined in the engine: `when_idle` revokes at the first step in which another part is READY; no cancellation cost; the laser keeps its position and the policy decides again. The RL agent does not use pre-positioning. | **To do:** write these semantics formally in §1.5 (decision events during travel/wait). |
-| **Overlap of processing and blocking stops.** | $T_B$ counts a conveyor as blocked whenever the "blocked" stop reason is active. With `processing_conveyor_only` the block ends at $S_j$, so there is no overlap; with `all_conveyors` a blocked conveyor may simultaneously be stopped for processing elsewhere, and it is counted as blocked (attributed downtime ≠ physical downtime). | **To do:** state this attribution rule in §1.4. |
+| **G. Revocable pre-positioning needs decision semantics.** | Defined in the engine: `when_idle` revokes at the first step in which another part is READY; no cancellation cost; the laser keeps its position and the policy decides again. The RL agent does not use pre-positioning. | **Done (0.5.2):** decision epochs, candidate sets and revocation rule written in §1.5 (MD and PDF). |
+| **Overlap of processing and blocking stops.** | $T_B$ counts a conveyor as blocked whenever the "blocked" stop reason is active. With `processing_conveyor_only` the block ends at $S_j$, so there is no overlap; with `all_conveyors` a blocked conveyor may simultaneously be stopped for processing elsewhere, and it is counted as blocked (attributed downtime ≠ physical downtime). | **Done (0.5.2):** attribution rule stated in §1.4 (MD and PDF). |
 | **Blocking-time optimization is already known (S11).** | Our penalty is new only in combination (event + duration, inside the interception/dispatch model). | Claim the coupling, not the penalty itself. |
 
 ## 3. What the review means for a paper (summary)
@@ -60,13 +60,13 @@ complete PRISMA counts.
 * Venues suggested by the map: Journal of Scheduling (theory/optimization route),
   Computers & Operations Research, RCIM or IEEE CASE (with industrial data).
 
-## 4. Action list (not started; to be prioritized with the cell owner)
+## 4. Action list
 
-1. Restriction gap of head-only policies on small instances (point A).
-2. Precise scope of the NP-hardness result (point B) and endogenous-window notation
-   (point D) in the formulation.
-3. Formal semantics of revocable pre-positioning and of blocked-time attribution
-   (points G, overlap).
+1. ~~Restriction gap of head-only policies on small instances (point A).~~ Done 0.5.2.
+2. ~~Precise scope of the NP-hardness result (point B) and endogenous-window notation
+   (point D) in the formulation.~~ Done 0.5.2.
+3. ~~Formal semantics of revocable pre-positioning and of blocked-time attribution
+   (points G, overlap).~~ Done 0.5.2.
 4. RL: γ = 1 / average reward, several training seeds, DAgger (point E + rl.md §5).
 5. Additional experiments suggested by the map: event-only vs duration-only vs joint
    penalty; own-belt vs all-belts stop rule; decision-time tails.

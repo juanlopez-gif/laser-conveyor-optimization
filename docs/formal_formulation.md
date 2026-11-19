@@ -229,6 +229,16 @@ $$
 C_{\max}+\Pi\quad(\texttt{penalized\_makespan}).
 $$
 
+**Attribution of blocked time (0.5.2).** $T_B$ counts conveyor $k$ as blocked on
+$[B_j,S_j)$ whatever else is happening: if during that interval another part is
+processed and the stop rule $\sigma$ also stops $k$ (with $\sigma=I$ this happens when
+the laser processes a part *behind* $j$ on the same belt), $k$ is stopped for two
+reasons at once and the interval counts both as blocked time and as processing
+downtime. $T_B$ is therefore **attributed** downtime, and the per-reason stop times
+reported by the simulator (`conveyor_k_stopped_processing_time`,
+`conveyor_k_stopped_blocked_time`) may add up to more than the physical downtime
+`conveyor_k_stopped_time`, which counts every instant once.
+
 $\overline F_\Pi$ is the total cost (flow time plus penalty, both in seconds) per part,
 and it is the default objective of the code since 0.4.0 (it replaced $C_{\max}$, which
 is almost fixed by the arrivals at moderate load and does not discriminate policies).
@@ -284,6 +294,24 @@ to know that a part is in the entry zone (an entry sensor); whether the real cel
 it is open. Revocable pre-positioning (`when_idle`) never commits the laser to a future
 part while another part is already waiting, which is what makes it useful for myopic
 policies (§4, `docs/methods/nearest_head_prepositioning.md`).
+
+**Decision semantics (0.5.2).** Let $\mathcal R(t)$ be the READY unassigned parts and
+$\mathcal U(t)$ the unassigned parts in the entry zone of a running belt. A *decision
+epoch* is an instant at which the laser is free (idle, or released by a revocation)
+and the candidate set is non-empty:
+
+| mode | candidate set at an epoch | commitment |
+|---|---|---|
+| `none` | $\mathcal R(t)$ | irrevocable until processing starts |
+| `always` | $\mathcal R(t)\cup\mathcal U(t)$ | irrevocable until processing starts |
+| `when_idle` | $\mathcal R(t)$ if non-empty, else $\mathcal U(t)$ | to a READY part: irrevocable; to an entry-zone part $j$: revoked at the first instant $t'$ with $\mathcal R(t')\ne\emptyset$ and $j\notin\mathcal R(t')$ |
+
+On revocation the laser keeps its current position $(x_L(t'),y_L(t'))$, nothing is
+charged besides the travel already performed, and a new epoch occurs at $t'$ with
+candidates $\mathcal R(t')$. A commitment also ends if the target becomes unreachable
+(belt stopped before the zone, or beyond $b$ in `pass` mode). In the simulator $t'$ is
+resolved at the granularity of the step `dt` (`Simulation._revoke_prepositioning`, at
+the start of the step following the one in which a part became READY).
 
 ### 1.6 Problem statement
 
@@ -474,7 +502,11 @@ the first decision and re-solve at the next epoch.
    them in any order.
 2. **Blocking cascades.** By (C4), on each conveyor the binding cap at time $t$ is the
    most downstream unstarted part: $D_k(t)\le \min\lbrace E_j+b:\ j\in J_k,\ S_j>t\rbrace$.
-   Processing parts of a conveyor out of belt order therefore causes blocking.
+   Processing parts of a conveyor out of belt order therefore tends to cause blocking.
+   It is **not** dominated, however: belt order is not always optimal (counterexamples
+   with gaps up to a few per cent in `docs/methods/restriction_gap.md`), so the
+   head-only policies (`nearest_head`, the RL action space) form a *restricted* policy
+   class.
 3. **Interception is always possible in blocking mode.** If $v_k\ge v_x$ the laser may
    not catch a part ahead of it while it moves, but by (C4) the part stops at $b$, so
    every part is eventually reachable and $\mathcal P$ is always feasible.
@@ -483,20 +515,48 @@ the first decision and re-solve at the next epoch.
    $C_{\max}\ \ge\ \min_j\big(r_j+a/v_{k(j)}\big)+\sum_j p_j$. Adding a lower bound on
    the travel between consecutive processing points (e.g. $\lvert y_k-y_{k'}\rvert/v_y$
    for changes of conveyor) strengthens the second one.
-5. **Complexity.** $\mathcal P$ contains, as limiting cases, classical NP-hard
-   problems. With travel negligible ($v_x,v_y\to\infty$) and a laser zone long enough
-   that blocking never binds, and with one part per conveyor (so that the belt stops of
-   (C3) do not delay other parts), part $j$ becomes available at $r_j+a/v_{k(j)}$ and
-   (C1)–(C3) reduce to $1\mid r_j\mid L_{\max}$ and $1\mid r_j\mid\sum C_j$, both
-   strongly NP-hard (Lenstra, Rinnooy Kan & Brucker, 1977). With all parts already in
-   the zone and conveyors stopped, the makespan version is a shortest Hamiltonian path
-   in the metric $\tau$ (a TSP-path). Hence exact methods are realistic only for small
-   instances or inside a rolling horizon, and heuristics are needed for the full
-   dynamic problem.
+5. **Complexity (scope made precise in 0.5.2).**
 
-Classification (Graham-style):
-$1\mid r_j,\ s_{ij}(t),\ \text{blocking},\ \text{time windows}\mid C_{\max},\ \sum F_j,\ L_{\max}$,
-where the travel "setup" $s_{ij}(t)$ is sequence- **and** time-dependent.
+   *Proposition.* With the stop rule $\sigma=I$ (only the processed part's conveyor
+   stops) and the number of conveyors $N$ part of the input, the decision versions of
+   $\mathcal P$ for $L_{\max}$ and for $\sum_j C_j$ (equivalently $\sum_j F_j$) are
+   strongly NP-hard.
+
+   *Proof.* Reduce from $1\mid r_j\mid L_{\max}$ and $1\mid r_j\mid\sum C_j$, strongly
+   NP-hard with integer data (Lenstra, Rinnooy Kan & Brucker, 1977). Given $n$ jobs
+   $(r_j,p_j,d_j)$, build $N=n$ conveyors with the same speed $v$, one part per conveyor,
+   and scale all times by an integer $M$: $r'_j=Mr_j$, $p'_j=Mp_j$, $d'_j=Md_j+c$ with
+   $c=a/v$. Part $j$ reaches $x=a$ at $Mr_j+c$, so every availability is shifted by the
+   same constant $c$. Because
+   each conveyor carries one part and $\sigma=I$, no belt stop delays another part, and
+   blocking only makes an unprocessed part wait at $b$; hence the only coupling is the
+   laser. Every travel time is bounded by
+   $\tau_{\max}=\max\big((b-a)/v_x,\ (\max_k y_k-\min_k y_k)/v_y\big)$, which is
+   polynomial in $n$. (⇒) Following an optimal order $\pi$ of the source instance and
+   starting each part as early as possible gives $C'_j\le M\,C_j(\pi)+c+n\tau_{\max}$.
+   (⇐) For any feasible schedule with order $\pi$, removing the travel gives
+   $C'_j\ge M\,C_j(\pi)+c$, where $C_j(\pi)$ is the non-delay schedule of $\pi$ in the
+   source instance. With $M>n^2\tau_{\max}$ the thresholds $L'=ML+n\tau_{\max}$ (for
+   $L_{\max}\le L$) and $K'=MK+nc+n^2\tau_{\max}$ (for $\sum C_j\le K$) separate the
+   integer-valued source answers, so the source instance
+   is a yes-instance iff the constructed one is. All numbers stay polynomially bounded,
+   so strong NP-hardness is preserved. ∎
+
+   *Not covered (open):* a **fixed** number of conveyors (e.g. $N=3$), where several
+   parts share a belt and their availability depends on earlier stops, and the
+   `all_conveyors` stop rule, where every processing interval delays all other parts.
+   The makespan version is not claimed here (the classical observation that, with all
+   parts already in the zone and the belts stopped, it becomes a shortest Hamiltonian
+   path in $\tau$ does not correspond to an instance of the arrival model). Exact methods
+   are realistic only for small instances or inside a rolling horizon.
+
+Classification (Graham-style, notation corrected in 0.5.2):
+$1\mid r_j,\ s_{ij}(t,z),\ \text{blocking},\ \text{endogenous windows}\mid C_{\max},\ \sum F_j,\ L_{\max}$.
+The travel "setup" $s_{ij}(t,z)$ depends on the sequence, on the time **and on the belt
+state** $z$ (odometers $D_k$, i.e. on all earlier stops), because the meeting point is
+the part's position *at interception*. Likewise the accessibility windows of a part
+(when it is inside $[a,b]$) are not data: they are induced by the belt state and hence
+by the schedule itself.
 
 ---
 
@@ -539,4 +599,5 @@ The four specialist methods built on this model are documented in `docs/methods/
 | [exact_cpsat.md](methods/exact_cpsat.md) | CP-SAT models of $\mathcal P_\Delta$ and $\mathcal P^{\mathrm{sim}}_\Delta$; proven optima for $n\le 8$ |
 | [metaheuristics.md](methods/metaheuristics.md) | simulated annealing and iterated local search over $\Phi$ |
 | [online_rollout.md](methods/online_rollout.md) | rollout (look-ahead) policy for the online problem |
+| [restriction_gap.md](methods/restriction_gap.md) | 0.5.2: belt order is not dominant; cost of head-only policies (0 % default load, ≤ 3.5 % bursts) |
 | [nearest_head_prepositioning.md](methods/nearest_head_prepositioning.md) | version 0.4.0: blocking penalty, belt-order policy `nearest_head`, pre-positioning modes; 30-seed study |

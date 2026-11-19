@@ -13,6 +13,7 @@ Code: `src/rl/` (environment, features, training) and the policy `rl`
 | observation (87 features for N = 3) | laser position; per conveyor: running, blocked, upstream buffer, has candidate; for its first 3 unstarted parts: present, position, in zone, time to the zone end, interception time, waiting time, processing time, blocking now; total unfinished parts (`rl/features.py`) |
 | cost between epochs $t,t'$ | $\int_t^{t'}\lvert\lbrace j: r_j\le s<C_j\rbrace\rvert ds+\lambda_T T_B(t,t')+\lambda_N N_B(t,t')$ |
 | return | undiscounted sum $=-(\sum_jF_j+\Pi)=-n\cdot$`penalized_flow_time` (Little's law); reward scaled by 1/100 |
+| **caveat (0.5.2)** | the identity holds for the **undiscounted** return. PPO was trained with $\gamma=0.99$ per decision (and the critic of the cloning step on discounted returns), so it optimized a discounted proxy that weights early costs more; with $n$ exogenous (every arriving part is processed, the system is drained) the per-episode scaling $1/n$ does not change the optimal policy, but across episodes the return weights long episodes more than the mean-per-part objective does. Next iteration: $\gamma=1$ (finite drained episodes) or average-reward. |
 | episode | 300 s of stochastic arrivals, then drained; load sampled per episode (default / heavy), training seeds ≥ 100000 (never the evaluation seeds 1000–1029) |
 
 Design choices and why:
@@ -93,6 +94,8 @@ python experiments/blocking_prepositioning_study.py \
   distribution shift of behaviour cloning; more teacher data (teacher at `dt = 0.01`).
 * PPO with a larger budget on a many-core machine, KL penalty towards the cloned
   policy, critic pre-trained longer; sweep of γ and of the reward scale.
+* $\gamma=1$ (or average reward) so that the trained objective is exactly the
+  evaluated one (see the caveat in §1); several training seeds.
 * Train with pre-positioning `when_idle` (the best mode for rollout and
   `nearest_head`); the current agent was trained and evaluated with `none` only.
 * Calibrate the cell parameters before investing in large-scale training.

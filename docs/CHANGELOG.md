@@ -6,6 +6,39 @@ summarized from the git history.
 
 ---
 
+## 0.5.2 — 2026-11-19 — Technical points of the literature review
+
+Closes points A, B, D, E (documentation), G and the blocked-time overlap of
+`docs/literature/review_assessment.md`.
+
+* **Restriction gap (point A).** New `experiments/restriction_gap.py` and
+  `docs/methods/restriction_gap.md`: exhaustive search over all orders vs belt-order
+  orders on small instances. **Belt order is not dominant**: gap 0 % at default load
+  (8/8 optima keep belt order) but up to 3.5 % (mean 0.3–1.5 %) with bursty arrivals.
+  Head-only policies (`nearest_head`, RL action space) are a restricted class.
+  Counterexample fixed in `tests/test_restriction_gap.py`. Formulation §5 property 2
+  and the PDF (new remark) corrected ("causes blocking" → "tends to cause blocking;
+  not dominant").
+* **NP-hardness (point B).** The sketch based on limiting cases (infinite speeds,
+  infinite zone) was replaced by a realizable reduction from $1|r_j|L_{\max}$ and
+  $1|r_j|\sum C_j$ (time scaling by $M>n^2	au_{\max}$, one part per conveyor). Scope
+  stated: stop rule $\sigma=I$, number of conveyors part of the input. Open: fixed
+  $N$ (e.g. 3) and `all_conveyors`. The makespan/TSP-path remark is no longer claimed.
+* **Notation (point D).** Classification rewritten as
+  $1|r_j, s_{ij}(t,z), 	ext{blocking}, 	ext{endogenous windows}|\ldots$: travel and
+  accessibility windows depend on the belt state, i.e. on the schedule.
+* **Pre-positioning semantics (point G).** §1.5: decision epochs, candidate sets per
+  mode, irrevocable vs revocable commitments, what happens on revocation, `dt`
+  granularity of the simulator.
+* **Blocked-time attribution.** §1.4: $T_B$ is attributed downtime; overlapping
+  processing and blocking stops count in both per-reason times (physical downtime
+  counts once).
+* **RL discount (point E).** `docs/methods/rl.md`: the return equals the objective only
+  undiscounted; PPO was trained with γ = 0.99 (a discounted proxy).
+* No change to the simulator, policies or default parameters.
+
+---
+
 ## 0.5.1 — 2026-11-19 — Literature evidence map (documentation only)
 
 * `docs/literature/systematic_review_2026-11-19.md`: PRISMA-informed evidence map

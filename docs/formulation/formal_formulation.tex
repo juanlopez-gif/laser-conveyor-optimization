@@ -286,6 +286,11 @@ conveyor is known). The penalized objectives are
 \overline F_\Pi=\frac1n\Bigl(\sum_j F_j+\Pi\Bigr)\quad\text{(default objective)},\qquad
 C_{\max}+\Pi .
 \]
+\emph{Attribution.} $T_B$ counts conveyor $k$ as blocked on $[B_j,S_j)$ whatever else
+happens; if in that interval another part is processed and the stop rule also stops
+$k$ (with $\sigma=I$: a part \emph{behind} $j$ on the same belt), the interval counts
+both as blocked time and as processing downtime. $T_B$ is attributed downtime, so the
+per-reason stop times may add up to more than the physical downtime.
 $\overline F_\Pi$ is the total cost per part in seconds. Since $\Pi\ge 0$, every lower
 bound of $\overline F$ (resp.\ $C_{\max}$) is a lower bound of $\overline F_\Pi$ (resp.\
 $C_{\max}+\Pi$). The composite objective of the code is a weighted sum of these criteria,
@@ -328,6 +333,18 @@ goes there and waits. With \texttt{always} and a fixed sequence the simulator is
 decoder of $\Pb$: the single part above completes at $5.84$ s ($5.83$ s up to the step).
 Physically, pre-positioning requires knowing that a part is in the entry zone (an entry
 sensor).
+
+\emph{Decision semantics.} Let $\mathcal R(t)$ be the READY unassigned parts and
+$\mathcal U(t)$ the unassigned parts in the entry zone of a running belt. A decision
+epoch is an instant at which the laser is free and the candidate set is non-empty; the
+candidate set is $\mathcal R(t)$ (\texttt{none}), $\mathcal R(t)\cup\mathcal U(t)$
+(\texttt{always}), or $\mathcal R(t)$ if non-empty and $\mathcal U(t)$ otherwise
+(\texttt{when\_idle}). Commitments are irrevocable until processing starts, except
+that under \texttt{when\_idle} a commitment to an entry-zone part $j$ is revoked at the
+first instant $t'$ with $\mathcal R(t')\neq\emptyset$, $j\notin\mathcal R(t')$; the laser
+keeps its position, nothing else is charged, and a new epoch occurs at $t'$ with
+candidates $\mathcal R(t')$. The simulator resolves $t'$ at the granularity of its
+step.
 
 \subsection{Problem statement}
 \[
@@ -514,8 +531,15 @@ On conveyor $k$ at time $t$ the binding cap is set by the most downstream unstar
 \[
 D_k(t)\le\min\{E_j+b:\ j\in J_k,\ S_j>t\}.
 \]
-Processing the parts of a conveyor out of belt order therefore causes blocking.
+Processing the parts of a conveyor out of belt order therefore tends to cause
+blocking.
 \end{proposition}
+\begin{remark}
+Belt order is nevertheless \emph{not} dominant: on small instances with bursts of
+arrivals the best order sometimes serves a later part of a conveyor first (gaps of a
+few per cent, \texttt{docs/methods/restriction\_gap.md}). Head-only policies form a
+restricted policy class.
+\end{remark}
 
 \begin{proposition}[Feasibility]
 With blocking, $\Pb$ is always feasible. Even if $v_k\ge v_x$, so that the laser
@@ -539,25 +563,41 @@ Adding a lower bound on the travel between consecutive processing points (e.g.\
 $|y_k-y_{k'}|/v_y$ for every change of conveyor) strengthens the second bound.
 
 \begin{proposition}[Complexity]
-$\Pb$ is NP-hard in the strong sense for the objectives $L_{\max}$ and $\sum C_j$.
+With the stop rule $\sigma=I$ and the number of conveyors $N$ part of the input, the
+decision versions of $\Pb$ for $L_{\max}$ and for $\sum_jC_j$ (equivalently $\sum_jF_j$)
+are NP-hard in the strong sense.
 \end{proposition}
-\begin{proof}[Proof sketch]
-Take negligible travel ($v_x,v_y\to\infty$), a laser zone long enough that blocking
-never binds, and one part per conveyor (so that the belt stops of (C3) do not delay
-other parts). Then part $j$ becomes available at $r_j+a/v_{k(j)}$, and (C1)--(C3) reduce
-to the single-machine problems $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, both
-strongly NP-hard (Lenstra, Rinnooy Kan and Brucker, 1977). With all parts already in
-the zone and the conveyors stopped, the makespan version becomes a shortest Hamiltonian
-path in the metric $\tau$.
+\begin{proof}
+Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, strongly NP-hard with
+integer data (Lenstra, Rinnooy Kan and Brucker, 1977). Given $n$ jobs $(r_j,p_j,d_j)$,
+build $N=n$ conveyors of equal speed $v$, one part per conveyor, and scale by an integer
+$M$: $r'_j=Mr_j$, $p'_j=Mp_j$, $d'_j=Md_j+c$ with $c=a/v$. Part $j$ reaches $x=a$ at
+$Mr_j+c$. With one part per conveyor and $\sigma=I$ no belt stop delays another part, and
+blocking only makes an unprocessed part wait at $b$, so the laser is the only coupling.
+Every travel time is at most
+$\tau_{\max}=\max\bigl((b-a)/v_x,\,(\max_ky_k-\min_ky_k)/v_y\bigr)$, polynomial in $n$.
+Following an order $\pi$ and starting as early as possible gives
+$C'_j\le M\,C_j(\pi)+c+n\tau_{\max}$; conversely every feasible schedule with order
+$\pi$ has $C'_j\ge M\,C_j(\pi)+c$, where $C_j(\pi)$ is the non-delay schedule of $\pi$ in
+the source instance. With $M>n^2\tau_{\max}$ the thresholds $ML+n\tau_{\max}$ and
+$MK+nc+n^2\tau_{\max}$ separate the integer-valued source answers, and all numbers stay
+polynomially bounded.
 \end{proof}
+\begin{remark}
+Not covered: a \emph{fixed} number of conveyors (e.g.\ $N=3$), where parts share belts
+and their availability depends on earlier stops, and the all-conveyors stop rule. The
+makespan version is not claimed. Exact methods are realistic only for small instances
+or inside a rolling horizon.
+\end{remark}
 
-Hence exact methods are realistic only for small instances or inside a rolling horizon,
-and heuristics are needed for the full dynamic problem. In Graham-style notation the
-problem is
+In Graham-style notation the problem is
 \[
-1\ \big|\ r_j,\ s_{ij}(t),\ \text{blocking},\ \text{time windows}\ \big|\ C_{\max},\ \textstyle\sum F_j,\ L_{\max},
+1\ \big|\ r_j,\ s_{ij}(t,z),\ \text{blocking},\ \text{endogenous windows}\ \big|\ C_{\max},\ \textstyle\sum F_j,\ L_{\max},
 \]
-where the travel setup $s_{ij}(t)$ is both sequence- and time-dependent.
+where the travel setup $s_{ij}(t,z)$ depends on the sequence, the time and the belt
+state $z$ (the odometers, i.e.\ all earlier stops), because the meeting point is the
+part's position at interception; the accessibility windows of a part are induced by
+the belt state and hence by the schedule itself.
 
 %====================================================================
 \section{Correspondence with the simulator}
