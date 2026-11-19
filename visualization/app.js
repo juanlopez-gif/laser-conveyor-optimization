@@ -331,6 +331,8 @@
     $("kUtil").textContent = `${fmt(100 * k.util, 1)} %`;
     $("kPos").textContent = `${L.x.toFixed(1)}, ${L.y.toFixed(1)}`;
     $("kDist").textContent = `${fmt(k.dist, 0)} cm`;
+    $("kBlocks").textContent = k.blocks === undefined ? "–" : k.blocks;
+    $("kBlocked").textContent = k.blocked_s === undefined ? "–" : `${fmt(k.blocked_s, 1)} s`;
     const pill = $("kLaserState");
     pill.textContent = L.state.replace("_FOR_PART", "");
     pill.style.color = L.state === "PROCESSING" ? colors.laser

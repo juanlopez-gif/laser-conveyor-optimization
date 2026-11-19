@@ -42,6 +42,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--only-policy", action="store_true",
                     help="visualization data with the selected policy only (faster)")
     ap.add_argument("--quiet", action="store_true", help="do not print the event log head")
+    ap.add_argument("--viz-prepositioning", nargs="*", default=[], metavar="MODE",
+                    choices=["none", "when_idle", "always"],
+                    help="also add every policy run with these laser.prepositioning modes "
+                         "to the visualization selector (e.g. --viz-prepositioning when_idle)")
     args = ap.parse_args(argv)
 
     sets = list(args.set)
@@ -73,6 +77,14 @@ def main(argv: list[str] | None = None) -> int:
                 save_result(r, results_dir / f"{other}_{cfg.arrivals.mode}_seed{cfg.simulation.seed}",
                             save_trace=save_trace)
                 traces[other] = r.trace
+        for mode in args.viz_prepositioning:
+            if mode == cfg.laser.prepositioning:
+                continue
+            for pol in ([cfg.policy_name] if args.only_policy else
+                        [cfg.policy_name] + [p for p in available_policies() if p != cfg.policy_name]):
+                pcfg = load_config(args.config, set_items=sets + [f"policy.name={pol}",
+                                                                  f"laser.prepositioning={mode}"])
+                traces[f"{pol} + pre-positioning {mode}"] = Simulation(pcfg, record_trace=True).run().trace
         path = write_visualization_traces(traces)
         print(f"Visualization data ({', '.join(traces)}) written to {path}")
 

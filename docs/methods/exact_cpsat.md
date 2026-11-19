@@ -126,6 +126,11 @@ no rigorous margin is derived here. `cpsat_ready` returns `lower_bound = None` (
 
 ## 5. Discrepancy between the formulation and the simulator (important)
 
+> **Update 0.4.0.** This discrepancy is now an option of the simulator:
+> `laser.prepositioning: none` (default) realises $\mathcal P^{\mathrm{sim}}$ (`cpsat_ready`),
+> `always` realises $\mathcal P$ (`cpsat`). The CP-SAT models do not include the blocking
+> penalty yet; for the penalized objectives they are skipped (docs/CHANGELOG.md).
+
 **The simulator's laser cannot anticipate a part that is not yet in the laser zone; the
 formulation can.** In the engine, a part becomes a dispatch candidate only when it is READY
 ($x_j\ge a$); an idle laser stays at its last processing point until then and only then starts
@@ -306,7 +311,8 @@ Means over the 3 seeds.
 ## 7. Tests (`tests/test_cpsat.py`, ~50 s)
 
 * hand-made instances with optimum known by reasoning: one part (laser waits at the zone
-  entrance, $S=\lceil a/(v\Delta)ceil\Delta$), two independent parts on one belt; values,
+  entrance, $S=\lceil a/(v\Delta)
+ceil\Delta$), two independent parts on one belt; values,
   `proven_optimal` and bound checked exactly (expected values derived from the config);
 * `ready_dispatch` model vs replay on the single part (within 5Δ);
 * a burst on one belt (blocking) with both stop rules: feasible replay, 0 violations,

@@ -24,7 +24,8 @@
 ## Planned simulator improvements
 
 * Event-driven core (faster), validated against the fixed-step one.
-* Laser pre-positioning towards parts still in the entry zone.
+* ~~Laser pre-positioning towards parts still in the entry zone.~~ Done in 0.4.0
+  (`laser.prepositioning: none | when_idle | always`, docs/CHANGELOG.md).
 * Axis accelerations / trapezoidal profiles.
 * Physical part size, several operations per part, several lasers.
 

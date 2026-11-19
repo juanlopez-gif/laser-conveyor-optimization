@@ -27,7 +27,7 @@
 \title{\textbf{Scheduling a Shared XY Laser over Parallel Conveyors}\\[0.3em]
 \large Formal mathematical formulation}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026}
+\date{November 2026 --- version 0.4.0}
 
 \begin{document}
 \maketitle
@@ -40,7 +40,8 @@ problem as an exact continuous-time model built on a \emph{belt odometer}, deriv
 time-indexed mixed-integer linear program, describe the sequence-only (decoder) view
 used by heuristics, discuss the online version and give structural properties and
 complexity results. Every schedule produced by the simulator is checked automatically
-against this model.
+against this model. Version 0.4.0 adds an explicit penalty for blocking events, a
+pre-positioning option for the laser and a belt-order dispatching policy.
 \end{abstract}
 
 \tableofcontents
@@ -250,17 +251,54 @@ throughput & $n/C_{\max}$ (maximizing it $\Leftrightarrow$ minimizing $C_{\max}$
 \bottomrule
 \end{tabular}
 \end{center}
-Here $T$ is the time at which the last part exits ($x_j=L$). The composite objective
-used in the code is
+Here $T$ is the time at which the last part exits ($x_j=L$).
+
+\paragraph{Blocking penalty.} A part that reaches the end of the laser zone unprocessed
+stops its \emph{whole} conveyor by (C4)--\eqref{eq:C5}: the parts behind it stop
+too and no new part can enter that belt. The resulting delays are contained in $C_j$,
+but a blocked conveyor has further costs in the cell (restart, accumulation upstream,
+risk for the upstream process), so it is penalized explicitly. For part $j$ on conveyor
+$k=k(j)$ let
 \[
-\alpha\,C_{\max}+\beta\sum\ell+\gamma\sum_k\int_0^T(1-u_k)\,dt+\delta_W\,\overline{W},
+B_j=\min\{t:\ D_k(t)-E_j\ge b\}
+\]
+be the time it would reach the zone end (well defined, since by (C4) the belt
+stops exactly when $x_j=b$). Part $j$ \emph{blocks} its conveyor iff it gets there
+before the laser starts on it:
+\begin{equation}\label{eq:block}
+\beta_j=\mathbb 1[S_j>B_j],\qquad\text{blocked duration }(S_j-B_j)^+ .
+\end{equation}
+At most one part per conveyor (its most downstream unstarted part) can sit at $b$, and
+a block lasts from $B_j$ to $S_j$, so the blocking intervals of a conveyor are disjoint.
+The number of blocking events and the blocked conveyor time are
+\[
+N_B=\sum_j\beta_j,\qquad
+T_B=\sum_j(S_j-B_j)^+=\sum_k\int_0^T\mathbb 1[\text{conveyor }k\text{ blocked at }t]\,dt ,
+\]
+and the blocking penalty is
+\begin{equation}\label{eq:penalty}
+\Pi=\lambda_N N_B+\lambda_T T_B,\qquad\lambda_N,\lambda_T\ge 0,
+\end{equation}
+with $\lambda_N$ in seconds per event and $\lambda_T$ in seconds per blocked
+conveyor-second (defaults $10$ and $1$, placeholders until the real cost of a stopped
+conveyor is known). The penalized objectives are
+\[
+\overline F_\Pi=\frac1n\Bigl(\sum_j F_j+\Pi\Bigr)\quad\text{(default objective)},\qquad
+C_{\max}+\Pi .
+\]
+$\overline F_\Pi$ is the total cost per part in seconds. Since $\Pi\ge 0$, every lower
+bound of $\overline F$ (resp.\ $C_{\max}$) is a lower bound of $\overline F_\Pi$ (resp.\
+$C_{\max}+\Pi$). The composite objective of the code is a weighted sum of these criteria,
+e.g.
+\[
+\alpha\,C_{\max}+\beta\sum\ell+\gamma\sum_k\int_0^T(1-u_k)\,dt+\delta_W\,\overline{W}+\eta\,\overline F_\Pi ,
 \]
 and multi-objective studies use the Pareto front of these criteria.
 
-\subsection{The simulator's dispatch rule: the restricted model \texorpdfstring{$\Pb^{\mathrm{sim}}$}{P-sim}}
+\subsection{Pre-positioning and the restricted model \texorpdfstring{$\Pb^{\mathrm{sim}}$}{P-sim}}
 Constraint \eqref{eq:C2} allows the laser to move towards a part \emph{before} it
-reaches the laser zone (it may pre-position at $(a,y_k)$ and wait). The simulator and
-every implemented policy dispatch the laser only to parts that are already READY. Let
+reaches the laser zone (it may pre-position at $(a,y_k)$ and wait). By default the
+simulator dispatches the laser only to parts that are already READY. Let
 $R_j=\min\{t:\ x_j(t)\ge a\}$ be the time part $j$ enters the laser zone. The simulator
 satisfies in addition
 \begin{equation}\label{eq:C7}
@@ -272,6 +310,24 @@ a \emph{relaxation} of $\Pb^{\mathrm{sim}}$: its optimum is a lower bound for ev
 the simulator can do, and the gap between both measures the value of pre-positioning
 the laser. For example, a single part arriving at $t=0$ completes at $5.83$ s in $\Pb$
 and at $7.19$ s in $\Pb^{\mathrm{sim}}$.
+
+The option \texttt{laser.prepositioning} selects the model realised by the simulator:
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+mode & candidates when the laser is free & model\\
+\midrule
+\texttt{none} (default) & READY parts ($x_j\ge a$) & $\Pb^{\mathrm{sim}}$\\
+\texttt{always} & READY parts and parts in the entry zone of a running belt & $\Pb$\\
+\texttt{when\_idle} & entry-zone parts only if no part is READY; revoked as soon as a part becomes READY & feasible for $\Pb$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+For a part in the entry zone the meeting point is searched only for $x\ge a$; the laser
+goes there and waits. With \texttt{always} and a fixed sequence the simulator is the
+decoder of $\Pb$: the single part above completes at $5.84$ s ($5.83$ s up to the step).
+Physically, pre-positioning requires knowing that a part is in the entry zone (an entry
+sensor).
 
 \subsection{Problem statement}
 \[
@@ -352,6 +408,11 @@ exactly at $b$ with a partial step).
 \item $C_{\max}\ge C_j$ and $L_{\max}\ge C_j-d_j$ for all $j$;
 \item flow and waiting: $\sum_j(C_j-r_j)$ and $\sum_j(S_j-r_j)$;
 \item downtime: $\Delta\sum_{k,t}(1-u_{kt})$;
+\item blocking: with the variables $\beta_{jt}$ of the non-idling constraints,
+$T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with $\gamma_j\in\{0,1\}$,
+$\gamma_j\ge\beta_{jt}$ for all $t$, and $\Pi=\lambda_N N_B+\lambda_T T_B$. Under
+non-idling, $\beta_{jt}=1$ is forced exactly when the belt must stop for $j$; minimizing
+$\Pi$ keeps it at $0$ otherwise. (Not yet implemented in the CP-SAT model.)
 \item travel distance: add immediate-successor binaries $z_{ij}$ (with a dummy start
 $0$): $\sum_i z_{ij}=1$, $\sum_j z_{ij}\le 1$, $z_{ij}\le w_{ij}$,
 $w_{il}+w_{lj}\le 2-z_{ij}$ for all $l$ (nothing in between), $\xi_{ij}\ge\pm(X_j-X_i)$ and
@@ -412,10 +473,27 @@ next part. The offline problem $\Pb$ with full knowledge of the future gives the
 performance over the arrival distribution and by the empirical ratio
 $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances.
 
-The implemented policies satisfy \eqref{eq:C7} (the laser only selects parts already
-inside the laser zone) and never wait deliberately. They produce feasible solutions of
-$\Pb^{\mathrm{sim}}\subseteq\Pb$, so the optimum of $\Pb$, and every valid lower bound of
-$\Pb$, bounds all of them.
+With the default \texttt{laser.prepositioning: none} the implemented policies satisfy
+\eqref{eq:C7} (the laser only selects parts already inside the laser zone) and never
+wait deliberately; they produce feasible solutions of $\Pb^{\mathrm{sim}}\subseteq\Pb$.
+With pre-positioning they produce feasible solutions of $\Pb$. In every case the optimum
+of $\Pb$, and every valid lower bound of $\Pb$, bounds all of them.
+
+\emph{Belt-order policy.} Processing a conveyor out of belt order lets the earlier part
+travel on towards $b$ and block. The policy \texttt{nearest\_head} only considers the
+\emph{head} of every conveyor (its most downstream unstarted part) and picks the head
+with the smallest interception time, so its schedules keep belt order inside every
+conveyor, the structure of the good sequences found by the metaheuristics.
+
+\emph{Reinforcement learning.} The online problem is a semi-Markov decision process:
+decision epochs are the instants at which the laser is free and at least two conveyors
+have a dispatch candidate. The action is the conveyor whose head is served (actions
+without candidates are masked). The cost accrued between epochs $t$ and $t'$ is
+\[
+c(t,t')=\int_t^{t'}\bigl|\{j:\ r_j\le s<C_j\}\bigr|\,ds+\lambda_T\,T_B(t,t')+\lambda_N\,N_B(t,t'),
+\]
+and since $\int_0^\infty|\{j:r_j\le s<C_j\}|\,ds=\sum_jF_j$, the undiscounted return of
+an episode equals $-(\sum_jF_j+\Pi)=-n\,\overline F_\Pi$.
 
 \emph{Rolling horizon:} at each decision epoch, solve $\Pb_\Delta$ restricted to the
 parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply the
@@ -493,11 +571,13 @@ model element & simulator (\texttt{src/})\\
 odometer $D_k(t)$ & \texttt{Conveyor.displacement}\\
 $E_j$, $D_k(r_j)$, $D_k(S_j)$, $D_k(C_j)$, $X_j$ & \texttt{Part.entry\_coordinate}, \texttt{arrival\_displacement}, \texttt{start\_displacement}, \texttt{completion\_displacement}, \texttt{processing\_x} (exported in \texttt{parts.csv})\\
 upstream queue and spacing \eqref{eq:entry} & \texttt{Conveyor.can\_admit}, \texttt{Conveyor.admit}\\
-(C1) window & candidates are READY parts; processing starts on contact inside $[a,b]$\\
+(C1) window & candidates are READY parts (plus entry-zone parts with pre-positioning); processing starts on contact inside $[a,b]$\\
+(C7), pre-positioning & \texttt{laser.prepositioning}, \texttt{Simulation.\_dispatch}, \texttt{\_revoke\_prepositioning}\\
 (C2) interception & \texttt{motion.find\_intercept} and re-planning in \texttt{Simulation.\_drive\_laser}\\
 (C3) stop rule $\sigma$ & \texttt{stop\_policy.py}\\
 (C4)--(C5) blocking, non-idling & \texttt{Conveyor.advance(block\_unprocessed=True)}, \texttt{\_update\_blocking}\\
 $\tau$, $\ell$ & \texttt{motion.travel\_time}, \texttt{Laser.move\_towards}\\
+$B_j$, $\beta_j$, $N_B$, $T_B$, $\Pi$ & \texttt{Part.block\_time}, \texttt{Part.caused\_block}, summary keys \texttt{blocking\_events}, \texttt{total\_blocked\_time}, \texttt{blocking\_penalty}\\
 objectives & \texttt{metrics.summarize}, \texttt{optimization/objective\_functions.py}\\
 \bottomrule
 \end{tabularx}

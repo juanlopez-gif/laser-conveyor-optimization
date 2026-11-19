@@ -49,6 +49,9 @@ Units: **cm, s, cm/s**. Current defaults:
 | arrivals (deterministic) | one part every 10 / 12 / 14 s on C1 / C2 / C3 |
 | arrival horizon | 300 s, then the system is drained |
 | policy | `nearest_job` |
+| laser pre-positioning | `none` (only parts already in the laser zone) |
+| objective | `penalized_flow_time` = mean flow time + blocking penalty / n |
+| blocking penalty | 10 s per blocking event + 1 s per blocked conveyor-second (placeholders) |
 
 With these values the processing load of the laser is
 2.5·(1/10 + 1/12 + 1/14) ≈ 0.64, so the cell is busy but stable and the policies give
@@ -163,8 +166,14 @@ python run_simulation.py --policy nearest_job     # shortest laser travel time (
 python run_simulation.py --policy fifo            # global FIFO (longest waiting part)
 python run_simulation.py --policy round_robin     # C1 → C2 → C3 → C1 ...
 python run_simulation.py --policy weighted_score  # w1·waiting − w2·travel + w3·urgency
+python run_simulation.py --policy nearest_head    # nearest conveyor, but its FIRST unprocessed part
 python run_simulation.py --policy rollout         # look-ahead with nearest_job as base policy
 ```
+
+**Laser pre-positioning** (0.4.0): `--set laser.prepositioning=when_idle` lets an idle
+laser go and wait for a part that is still in the entry zone (revoked if another part
+becomes READY); `always` makes entry-zone parts permanent candidates (formal model P).
+Default `none`. See [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 or `policy.name` in the config, or the selector in the visualization. Weights of
 `weighted_score` are in `policy.params.weighted_score`.
@@ -194,16 +203,18 @@ throughput (parts/min) · average and maximum waiting time · average and maximu
 time · makespan · average and maximum lateness · laser travel distance and time · laser
 utilization (total, processing, movement) · laser idle time · stopped time per conveyor
 (total, due to processing, due to blocking) · % running per conveyor · average and
-maximum queue per conveyor · queue length time series · composite objective value.
+maximum queue per conveyor · queue length time series · **blocking events, blocked
+conveyor time and blocking penalty** (0.4.0) · composite objective value.
 Definitions in [src/simulation/metrics.py](src/simulation/metrics.py).
 
 ## 12. What is ready for future optimization
 
 * `src/policies/`: `BasePolicy` interface + registry → any online method (heuristic,
   rolling horizon, RL) plugs in as one more policy.
-* `src/optimization/objective_functions.py`: single objectives and the composite
-  `α·makespan + β·travel + γ·downtime + δ·waiting` (weights in `objective.weights`),
-  plus a Pareto filter.
+* `src/optimization/objective_functions.py`: single objectives (including the blocking
+  objectives `blocking_events`, `total_blocked_time`, `blocking_penalty`,
+  `penalized_flow_time`, `penalized_makespan`) and the composite weighted sum
+  (weights in `objective.weights`), plus a Pareto filter.
 * `arrivals.mode: explicit`: static instances for offline methods (MILP, CP-SAT, DP).
 * `src/simulation/stop_policy.py`: the conveyor stopping rule is swappable.
 * **Formal mathematical model:** [docs/formal_formulation.md](docs/formal_formulation.md) —
@@ -226,7 +237,14 @@ consolidated results):
 | `cpsat`, `cpsat_ready` | `src/optimization/solvers/cpsat.py` | exact CP-SAT models of the formulation; proven optima for small instances |
 | `sa`, `ils` | `src/optimization/solvers/metaheuristics.py` | simulated annealing / iterated local search over processing orders |
 | `rollout` policy | `src/policies/rollout.py` | online look-ahead policy; beats nearest_job on 28/30 seeds |
+| `nearest_head` policy (0.4.0) | `src/policies/nearest_head.py` | belt-order rule derived from the metaheuristics' best sequences |
+| `rl` policy (0.5.0) | `src/rl/`, `src/policies/rl_policy.py` | SMDP reinforcement learning: behaviour cloning of rollout (+ PPO); see [docs/methods/rl.md](docs/methods/rl.md) |
 | lower bounds | `src/optimization/lower_bounds.py` | proved bounds to measure optimality gaps |
+
+Results of version 0.4.0 (blocking penalty, `nearest_head`, pre-positioning) are in
+[docs/methods/nearest_head_prepositioning.md](docs/methods/nearest_head_prepositioning.md);
+the RL agent of 0.5.0 in [docs/methods/rl.md](docs/methods/rl.md). Optional RL
+dependencies: `pip install -r requirements-rl.txt`.
 
 ```bash
 PYTHONPATH=src python -m optimization.benchmark --n 6 8 10 --seeds 3 --objective avg_flow_time --time-limit 30
@@ -247,7 +265,7 @@ flowchart LR
         ENG --> EVT[events.py]
         ENG --> TRC[trace.py]
     end
-    POL[src/policies<br/>fifo · nearest_job · round_robin · weighted_score] -- select --> ENG
+    POL[src/policies<br/>fifo · nearest_job · nearest_head · round_robin · weighted_score · rollout] -- select --> ENG
     MET --> OBJ[src/optimization<br/>objective_functions.py]
     ENG --> OUT[results/*.csv · *.json · events.log]
     TRC --> VIS[visualization/<br/>index.html + app.js]
@@ -279,5 +297,8 @@ python -m pytest
 Summary (details and rationale in [docs/assumptions.md](docs/assumptions.md)): custom
 fixed-step engine instead of SimPy; the laser *intercepts* the moving part; an
 unprocessed part reaching the end of the laser zone **stops its conveyor** (`block`
-mode, confirmed for the real cell; `pass` kept for what-if studies); parts queue upstream when the entry is occupied; no
-accelerations; the laser only selects parts that are already inside the laser zone.
+mode, confirmed for the real cell; `pass` kept for what-if studies) and every such
+blocking event is penalized in the objective; parts queue upstream when the entry is
+occupied; no accelerations; by default the laser only selects parts that are already
+inside the laser zone (pre-positioning is optional). All changes are logged with their
+rationale in [docs/CHANGELOG.md](docs/CHANGELOG.md).

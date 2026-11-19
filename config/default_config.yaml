@@ -48,6 +48,17 @@ laser:
     y_min: null
     y_max: null
   home: {x: null, y: null}     # initial position; null -> centre of the workspace
+  # Pre-positioning: may the laser be sent to a part that is still in the ENTRY zone
+  # (it moves to the meeting point at x >= a and waits there)?
+  #   none      -> only parts already inside the laser zone are dispatched (restricted
+  #                model P^sim = P + (C7); behaviour of versions <= 0.3)
+  #   when_idle -> entry-zone parts are candidates only when NO part is READY; if a
+  #                part becomes READY while the laser waits, the pre-positioning is
+  #                revoked and the policy decides again
+  #   always    -> entry-zone parts are always candidates (model P; decoder of P)
+  # Physically this requires knowing that a part is on the entry zone (entry sensor).
+  # See docs/CHANGELOG.md (0.4.0) and docs/formal_formulation.md §1.5.
+  prepositioning: none
 
 arrivals:
   mode: deterministic          # deterministic | stochastic | explicit
@@ -66,7 +77,7 @@ processing:
   normal: {mean: 2.5, std: 0.5, min: 0.5}
 
 policy:
-  name: nearest_job            # fifo | nearest_job | round_robin | weighted_score | (any registered)
+  name: nearest_job            # fifo | nearest_job | nearest_head | round_robin | weighted_score | rollout | ...
   params:
     weighted_score:
       w_wait: 1.0              # + waiting time [s]
@@ -74,8 +85,18 @@ policy:
       w_urgency: 10.0          # + urgency in (0, 1]  (1 = part at the end of the laser zone)
 
 objective:                     # composite objective (minimise) — see src/optimization/
+  # Blocking penalty Pi = per_event * N_B + per_second * T_B  [s-equivalent], where
+  #   N_B = number of parts that reached the end of the laser zone unprocessed
+  #         (each one stopped its whole conveyor), and
+  #   T_B = total conveyor time stopped by blocking [conveyor-s].
+  # The values are PLACEHOLDERS until the real cost of a blocked conveyor is known
+  # (docs/formal_formulation.md §1.4, docs/CHANGELOG.md 0.4.0).
+  blocking_penalty:
+    per_event: 10.0            # lambda_N [s per blocking event]
+    per_second: 1.0            # lambda_T [s per conveyor-second blocked]
   weights:
-    makespan: 1.0
+    penalized_flow_time: 1.0   # mean flow time + Pi / n   (default since 0.4.0; was makespan)
+    makespan: 0.0
     total_laser_travel: 0.0
     total_conveyor_stop_time: 0.0
     avg_waiting_time: 0.0

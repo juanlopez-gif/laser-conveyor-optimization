@@ -15,6 +15,10 @@ Definitions (also in docs/mathematical_model.md):
 * lateness       = completion - due_date,  due_date = arrival + allowance
 * queue length   = parts of a conveyor that arrived and have not started processing
 * laser utilization = (moving + processing) / total time
+* blocking events N_B = parts that reached the end of the laser zone unprocessed and
+  held their conveyor stopped for a positive time (S_j > B_j)
+* blocked time   T_B = total conveyor time stopped because of blocking [conveyor-s]
+                     = sum_j (S_j - B_j)  (exact identity, checked by the tests)
 """
 
 from __future__ import annotations
@@ -116,6 +120,9 @@ def summarize(parts: Sequence[Part], collector: MetricsCollector, laser: Laser,
         "laser_processing_utilization": processing / T,
         "laser_movement_utilization": moving / T,
         "total_conveyor_stop_time": sum(collector.stopped_time),
+        "blocking_events": sum(1 for p in parts if p.caused_block and (
+            p.blocked_duration is None or p.blocked_duration > 1e-9)),
+        "total_blocked_time": sum(collector.stopped_blocked),
     }
     for i in range(collector.n_conveyors):
         k = f"conveyor_{i + 1}"

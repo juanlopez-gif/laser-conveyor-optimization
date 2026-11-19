@@ -40,6 +40,8 @@ DP_MAX_PARTS = 10
 DP_WINDOW = 8
 
 SUPPORTED = ("makespan", "avg_flow_time", "avg_waiting_time")
+#: penalized objective -> unpenalized objective whose bounds remain valid (Pi >= 0)
+PENALIZED = {"penalized_flow_time": "avg_flow_time", "penalized_makespan": "makespan"}
 
 
 # --------------------------------------------------------------------------- #
@@ -450,6 +452,11 @@ def best_lower_bound(instance: Instance, objective) -> float | None:
     ``objective`` is "makespan", "avg_flow_time" or "avg_waiting_time";
     anything else (e.g. a composite weights dict) returns None.
     """
+    if isinstance(objective, str) and objective in PENALIZED:
+        # The blocking penalty Pi >= 0, so a bound of the unpenalized objective is
+        # still valid (docs/CHANGELOG.md 0.4.0). It ignores the penalty and is weak
+        # whenever blocking is unavoidable.
+        return best_lower_bound(instance, PENALIZED[objective])
     if not isinstance(objective, str) or objective not in SUPPORTED:
         return None
     return max(all_lower_bounds(instance, objective).values())

@@ -11,7 +11,9 @@ At every decision epoch (laser idle, at least one READY part) the policy
    is processed (or for ``horizon_s`` simulated seconds);
 3. picks the candidate whose look-ahead has the smallest cost (default: average
    flow time of the known parts, i.e. the online counterpart of
-   ``avg_flow_time``).
+   ``avg_flow_time``). Penalty-aware look-ahead objectives are available
+   (``penalized_flow_time``...), but in the 30-seed study of 0.4.0 they were
+   WORSE even on the penalized metric (docs/CHANGELOG.md, 0.4.0 §4).
 
 If the look-ahead were exact (no future arrivals, same ``dt``, untruncated
 horizon) and the base policy is a state-feedback rule (``nearest_job`` is),
@@ -62,7 +64,9 @@ from .base_policy import BasePolicy, DecisionContext
 
 #: Objectives understood by the look-ahead (same names as optimization.OBJECTIVES).
 LOOKAHEAD_OBJECTIVES = ("avg_flow_time", "avg_waiting_time", "makespan", "max_lateness",
-                        "total_laser_travel", "total_conveyor_stop_time")
+                        "total_laser_travel", "total_conveyor_stop_time",
+                        "blocking_events", "total_blocked_time", "blocking_penalty",
+                        "penalized_flow_time", "penalized_makespan")
 
 _TIE_TOL = 1e-9
 
@@ -131,7 +135,8 @@ class RolloutPolicy(BasePolicy):
     dt_lookahead:  time step of the clone [s] (default 0.05; ``None`` = same dt as
                    the running simulation, which makes the look-ahead exact).
     objective:     look-ahead cost: one of :data:`LOOKAHEAD_OBJECTIVES` or a dict of
-                   weights over them (default ``avg_flow_time``).
+                   weights over them (default ``avg_flow_time``; the blocking
+                   objectives use the weights of ``objective.blocking_penalty``).
     future_samples: number of synthetic future-arrival scenarios averaged per
                    candidate (default 0 = look-ahead with known parts only).
     future_window_s: length of the window in which synthetic arrivals are sampled.
@@ -286,6 +291,7 @@ class RolloutPolicy(BasePolicy):
         tracked = [p for p in clone.parts if p.completion_time is None and p.exit_time is None]
         stop0 = sum(clone.metrics.stopped_time)
         dist0 = clone.laser.distance
+        block0 = sum(clone.metrics.stopped_blocked)
         t_end = math.inf if self.horizon_s is None else t0 + self.horizon_s
         self.clones_simulated += 1
 
@@ -302,14 +308,37 @@ class RolloutPolicy(BasePolicy):
             steps += 1
         self.lookahead_steps += steps
         tracked += clone.parts[n_known:]     # synthetic parts (only when sampling futures)
-        return self._cost(tracked, clone, clone.time, stop0, dist0)
+        return self._cost(tracked, clone, clone.time, stop0, dist0, block0)
 
     def _cost(self, parts: Sequence[Part], clone: Simulation, t_end: float,
-              stop0: float, dist0: float) -> float:
+              stop0: float, dist0: float, block0: float = 0.0) -> float:
         """Weighted look-ahead cost. Unfinished parts count as finishing at ``t_end``
-        (a lower bound on their true completion)."""
+        (a lower bound on their true completion).
+
+        Blocking terms are measured from the decision instant: N_B counts the known
+        parts that reach (or already sit at) the zone end unprocessed, T_B the
+        conveyor time blocked during the look-ahead. Parts already blocking add the
+        same constant to every candidate, so they do not bias the choice."""
+        cfg = clone.cfg
+        n_block = sum(1 for p in parts if p.block_time is not None)
+        t_block = sum(clone.metrics.stopped_blocked) - block0
+        penalty = (cfg.blocking_penalty_per_event * n_block
+                   + cfg.blocking_penalty_per_second * t_block)
+        flow = ((sum((p.completion_time if p.completion_time is not None else t_end)
+                     - p.arrival_time for p in parts) / len(parts)) if parts else 0.0)
         total = 0.0
         for name, w in self.weights.items():
+            if name in ("blocking_events", "total_blocked_time", "blocking_penalty"):
+                total += w * {"blocking_events": n_block, "total_blocked_time": t_block,
+                              "blocking_penalty": penalty}[name]
+                continue
+            if name == "penalized_flow_time":
+                total += w * (flow + (penalty / len(parts) if parts else 0.0))
+                continue
+            if name == "penalized_makespan":
+                total += w * (max(((p.completion_time if p.completion_time is not None
+                                    else t_end) for p in parts), default=0.0) + penalty)
+                continue
             if name == "avg_flow_time":
                 v = (sum((p.completion_time if p.completion_time is not None else t_end)
                          - p.arrival_time for p in parts) / len(parts)) if parts else 0.0

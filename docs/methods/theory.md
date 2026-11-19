@@ -444,6 +444,9 @@ Reading the table:
    $P_{\pi(i)}$. Counterexample D1 shows the difference (start 3.33 s vs. 4.68 s). The decoder in the
    code is therefore "$\Phi$ with non-anticipative travel", consistent with §4 but not with the
    formula of §3. Either §3 should say so or the decoder could pre-position the laser.
+   *Resolved:* §1.5/§3 of the formulation now state it (model $\mathcal P^{\mathrm{sim}}$, (C7)),
+   and since 0.4.0 the simulator can pre-position (`laser.prepositioning: always` realises
+   $\mathcal P$; D1 then gives 5.84 s, i.e. 5.83 s up to `dt`). See docs/CHANGELOG.md.
 2. **§5.5 (minor).** The reduction to $1\mid r_j\mid\sum C_j$ also needs that processing a part
    does not delay the availability of other parts of the same conveyor (C3 stops the belt while
    upstream parts are still travelling to $a$); e.g. one part per conveyor. The NP-hardness

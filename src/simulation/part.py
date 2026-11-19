@@ -56,6 +56,9 @@ class Part:
     start_displacement: float | None = None     # D_k(S_j)
     completion_displacement: float | None = None  # D_k(C_j)
     processing_x: float | None = None           # X_j = D_k(S_j) - E_j
+    # Blocking (formal_formulation §1.4): B_j = time the part reached the end of the
+    # laser zone UNPROCESSED and stopped its conveyor (None if it never did).
+    block_time: float | None = None
 
     @property
     def number(self) -> int:
@@ -86,6 +89,19 @@ class Part:
         return self.completion_time - self.arrival_time
 
     @property
+    def caused_block(self) -> bool:
+        """The part reached the end of the laser zone unprocessed (beta_j = 1)."""
+        return self.block_time is not None
+
+    @property
+    def blocked_duration(self) -> float | None:
+        """S_j - B_j: how long the part held its conveyor stopped (None if no block)."""
+        if self.block_time is None:
+            return None
+        end = self.start_processing_time
+        return None if end is None else end - self.block_time
+
+    @property
     def lateness(self) -> float | None:
         if self.completion_time is None:
             return None
@@ -105,5 +121,7 @@ class Part:
             "arrival_displacement": self.arrival_displacement,
             "start_displacement": self.start_displacement,
             "completion_displacement": self.completion_displacement,
+            "caused_block": self.caused_block, "block_time": self.block_time,
+            "blocked_duration": self.blocked_duration,
             "final_x": round(self.x, 4), "y": self.y,
         }

@@ -82,6 +82,9 @@ class LaserSpec:
     workspace: Workspace
     home_x: float
     home_y: float
+    #: none | when_idle | always — dispatch parts still in the entry zone (model P)
+    #: instead of READY parts only (P^sim). See default_config.yaml.
+    prepositioning: str = "none"
 
 
 @dataclass(frozen=True)
@@ -134,6 +137,9 @@ class Config:
     objective_weights: dict[str, float]
     output: dict[str, Any]
     raw: dict[str, Any] = field(repr=False, compare=False)
+    #: blocking penalty Pi = per_event * N_B + per_second * T_B  (formal_formulation §1.4)
+    blocking_penalty_per_event: float = 0.0
+    blocking_penalty_per_second: float = 0.0
 
     @property
     def n_conveyors(self) -> int:
@@ -179,6 +185,21 @@ def _per_conveyor(value: Any, n: int, name: str) -> tuple[float, ...]:
             f"'{name}' has {len(values)} values but conveyors.count = {n}. "
             "Give one value per conveyor or a single scalar.")
     return values
+
+
+PREPOSITIONING_MODES = ("none", "when_idle", "always")
+
+
+def _prepositioning_mode(value: Any) -> str:
+    """YAML booleans are accepted: false -> none, true -> always."""
+    if value is None or value is False:
+        return "none"
+    if value is True:
+        return "always"
+    mode = str(value)
+    if mode not in PREPOSITIONING_MODES:
+        raise ValueError(f"laser.prepositioning must be one of {PREPOSITIONING_MODES}")
+    return mode
 
 
 def load_raw(path: str | Path | None = None,
@@ -246,7 +267,8 @@ def build_config(raw: dict) -> Config:
         speed_x=float(l["speed_x"]), speed_y=float(l["speed_y"]),
         motion_model=str(l["motion_model"]), workspace=ws,
         home_x=(ws.x_min + ws.x_max) / 2 if home.get("x") is None else float(home["x"]),
-        home_y=(ws.y_min + ws.y_max) / 2 if home.get("y") is None else float(home["y"]))
+        home_y=(ws.y_min + ws.y_max) / 2 if home.get("y") is None else float(home["y"]),
+        prepositioning=_prepositioning_mode(l.get("prepositioning", "none")))
     if laser.motion_model not in ("simultaneous", "sequential"):
         raise ValueError("laser.motion_model must be 'simultaneous' or 'sequential'")
 
@@ -274,9 +296,14 @@ def build_config(raw: dict) -> Config:
         normal_min=float(p["normal"]["min"]))
 
     pol = raw["policy"]
+    bp = raw["objective"].get("blocking_penalty") or {}
+    per_event, per_second = float(bp.get("per_event", 0.0)), float(bp.get("per_second", 0.0))
+    if per_event < 0 or per_second < 0:
+        raise ValueError("objective.blocking_penalty values must be >= 0")
     return Config(
         simulation=sim, geometry=geom, conveyors=conveyors, laser=laser,
         arrivals=arrivals, processing=proc, policy_name=str(pol["name"]),
         policy_params=dict((pol.get("params") or {}).get(str(pol["name"]), {}) or {}),
         objective_weights={k: float(v) for k, v in raw["objective"]["weights"].items()},
-        output=dict(raw.get("output", {})), raw=raw)
+        output=dict(raw.get("output", {})), raw=raw,
+        blocking_penalty_per_event=per_event, blocking_penalty_per_second=per_second)

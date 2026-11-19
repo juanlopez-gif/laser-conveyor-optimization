@@ -19,6 +19,11 @@ Parts keep moving while the laser travels towards them (their conveyor only
 stops when processing starts). The laser therefore aims at the *meeting
 point*: the earliest time ``t`` such that the laser can be at the part's
 predicted position ``x(t)`` no later than the part itself.
+
+Pre-positioning (``laser.prepositioning: true``): the part may still be upstream of
+the laser zone (x < a). The meeting point is then searched only for x >= a, i.e.
+from the instant the part enters the zone; if the laser gets there first it waits
+at (a, y_k). See docs/formal_formulation.md §1.5.
 """
 
 from __future__ import annotations
@@ -55,7 +60,8 @@ class Intercept:
 def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float,
                    x_limit: float, hold_at_limit: bool,
                    vx: float, vy: float, model: str,
-                   samples: int = 64, iterations: int = 40) -> Intercept | None:
+                   samples: int = 64, iterations: int = 40,
+                   x_min: float | None = None) -> Intercept | None:
     """Earliest meeting point between the laser and a part moving along +X.
 
     Parameters
@@ -66,6 +72,9 @@ def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float
     x_limit : last X where the laser can meet the part (end of laser zone).
     hold_at_limit : True if the part stops at ``x_limit`` (``block`` mode);
         False if it keeps going and becomes unreachable (``pass`` mode).
+    x_min : first X where the laser can meet the part (start of the laser zone).
+        Only matters for parts still upstream of it (pre-positioning). A part
+        upstream of ``x_min`` on a stopped belt is unreachable for now (None).
 
     Returns ``None`` if the laser cannot reach the part inside the zone.
     """
@@ -74,26 +83,31 @@ def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float
 
     if px > x_limit + 1e-9:
         return None
+    t0, x0 = 0.0, px                               # earliest meeting time / position
+    if x_min is not None and px < x_min - 1e-9:    # upstream of the zone (pre-positioning)
+        if part_speed <= 0:
+            return None
+        t0, x0 = (x_min - px) / part_speed, x_min
     if part_speed <= 0:
         return Intercept(tt(px), px, py)
 
-    t_lim = (x_limit - px) / part_speed           # time until the part reaches the limit
+    t_lim = t0 + (x_limit - x0) / part_speed      # time until the part reaches the limit
 
     def gap(t: float) -> float:                    # >0: laser still late at time t
-        return tt(px + part_speed * t) - t
+        return tt(x0 + part_speed * (t - t0)) - t
 
     if gap(t_lim) > 0:                             # cannot meet before the limit
         if hold_at_limit:                          # part waits at the limit for the laser
-            return Intercept(tt(x_limit), x_limit, py)
+            return Intercept(max(tt(x_limit), t_lim), x_limit, py)
         return None
-    if gap(0.0) <= 0:
-        return Intercept(0.0, px, py)
+    if gap(t0) <= 0:
+        return Intercept(t0, x0, py)
 
     # gap() is continuous; scan for the first sign change, then bisect.
-    lo, hi = 0.0, t_lim
-    prev = 0.0
+    lo, hi = t0, t_lim
+    prev = t0
     for k in range(1, samples + 1):
-        t = t_lim * k / samples
+        t = t0 + (t_lim - t0) * k / samples
         if gap(t) <= 0:
             lo, hi = prev, t
             break
@@ -104,7 +118,7 @@ def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float
             hi = mid
         else:
             lo = mid
-    x = px + part_speed * hi
+    x = x0 + part_speed * (hi - t0)
     return Intercept(hi, x, py)
 
 

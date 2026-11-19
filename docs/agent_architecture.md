@@ -109,8 +109,11 @@ leaves the earlier part to block the belt. A natural next online rule is
 "nearest conveyor, but its first unprocessed part".
 
 ### Open items
-* Pre-positioning the laser (allowed in $\mathcal P$, not in the simulator) is worth
-  ≈ 1–1.5 s per isolated part: a candidate engine extension.
+* ~~Pre-positioning the laser (allowed in $\mathcal P$, not in the simulator) is worth
+  ≈ 1–1.5 s per isolated part: a candidate engine extension.~~ Done in 0.4.0
+  (`laser.prepositioning`), together with the belt-order policy `nearest_head` and the
+  blocking penalty: see [CHANGELOG.md](CHANGELOG.md) and
+  [methods/nearest_head_prepositioning.md](methods/nearest_head_prepositioning.md).
 * Flow-time lower bounds for large $n$ are weak (windowed DP ignores cross-window
   contention).
 * Engine refactor suggested by the online agent: an explicit `Simulation.fork()` API

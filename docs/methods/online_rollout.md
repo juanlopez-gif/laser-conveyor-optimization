@@ -235,3 +235,24 @@ Wall time of the experiment batches on this PC (2 workers, all 5 policies, 30 se
   `horizon_s` and `max_candidates` trade accuracy for time.
 * `run_simulation.py` runs every available policy for the comparison view, so it
   now also runs rollout (a few seconds on the default deterministic config).
+
+---
+
+## Version 0.4.0: penalty-aware look-ahead (available, not default)
+
+The blocking objectives (`blocking_events`, `total_blocked_time`, `blocking_penalty`,
+`penalized_flow_time`, `penalized_makespan`) are accepted as look-ahead objectives,
+with the penalty weights of `objective.blocking_penalty` (docs/formal_formulation.md
+§1.4). Inside a clone, N_B counts the known parts that reach (or already sit at) the end
+of the laser zone unprocessed, and T_B is the conveyor time blocked during the
+look-ahead; parts already blocking at the decision instant add the same constant to
+every candidate.
+
+**The default stays `avg_flow_time`.** In the 30-seed study
+([nearest_head_prepositioning.md](nearest_head_prepositioning.md)) the penalized
+look-ahead blocked less but was worse on the penalized metric itself at heavy load
+(+2.5 % vs nearest_job, while the flow look-ahead gives −3.7 %), and slightly worse at
+default load (−9.6 % vs −10.1 % with `when_idle`). The look-ahead only sees the parts
+already present, so it over-weights the blocks it can see; minimizing flow time
+reduces blocking implicitly. Rollout also works with laser pre-positioning
+(`when_idle`: −10.1 % at default load, better on 30/30 seeds).

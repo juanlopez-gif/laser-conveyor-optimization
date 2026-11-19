@@ -1,4 +1,4 @@
-"""Baseline methods: the four online dispatching policies and exhaustive search (tiny n)."""
+"""Baseline methods: the online dispatching policies and exhaustive search (tiny n)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def _policy_method(name: str):
     return method
 
 
-for _name in ("fifo", "nearest_job", "round_robin", "weighted_score"):
+for _name in ("fifo", "nearest_job", "nearest_head", "round_robin", "weighted_score"):
     register_method(f"policy:{_name}")(_policy_method(_name))
 
 

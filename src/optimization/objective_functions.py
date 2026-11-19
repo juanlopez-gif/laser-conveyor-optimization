@@ -46,6 +46,38 @@ def maximum_lateness(s: Mapping) -> float:
     return _val(s, "max_lateness")
 
 
+# --- blocking (docs/formal_formulation.md §1.4) ------------------------------------
+# Pi = lambda_N * N_B + lambda_T * T_B is computed by the engine with the weights of
+# ``objective.blocking_penalty`` and stored in the summary as "blocking_penalty".
+
+def blocking_events(s: Mapping) -> float:
+    """N_B: parts that reached the end of the laser zone unprocessed (stopped their belt)."""
+    return _val(s, "blocking_events")
+
+
+def total_blocked_time(s: Mapping) -> float:
+    """T_B: conveyor time stopped by blocking [conveyor-s]."""
+    return _val(s, "total_blocked_time")
+
+
+def blocking_penalty(s: Mapping) -> float:
+    """Pi = lambda_N * N_B + lambda_T * T_B  [s-equivalent]."""
+    return _val(s, "blocking_penalty")
+
+
+def penalized_flow_time(s: Mapping) -> float:
+    """Mean flow time + Pi / n: total cost (flow + blocking penalty) per processed part."""
+    n = s.get("parts_completed") or 0
+    if not n:
+        return math.inf
+    return average_flow_time(s) + blocking_penalty(s) / n
+
+
+def penalized_makespan(s: Mapping) -> float:
+    """Makespan + Pi."""
+    return makespan(s) + blocking_penalty(s)
+
+
 #: Name -> single objective. Keys are the names used in ``objective.weights``.
 OBJECTIVES: dict[str, Callable[[Mapping], float]] = {
     "makespan": makespan,
@@ -55,6 +87,11 @@ OBJECTIVES: dict[str, Callable[[Mapping], float]] = {
     "total_conveyor_stop_time": total_conveyor_stop_time,
     "neg_throughput": negative_throughput,
     "max_lateness": maximum_lateness,
+    "blocking_events": blocking_events,
+    "total_blocked_time": total_blocked_time,
+    "blocking_penalty": blocking_penalty,
+    "penalized_flow_time": penalized_flow_time,
+    "penalized_makespan": penalized_makespan,
 }
 
 

@@ -211,7 +211,8 @@ def _simultaneous_instance(seed: int, n: int) -> Instance:
 def test_never_worse_than_base_when_lookahead_is_exact(seed):
     """All parts arrive at t=0 -> every part is known at every decision, so with the
     same dt and no horizon the look-ahead is exact and rollout's cost-improvement
-    property applies: avg flow time(rollout) <= avg flow time(nearest_job)."""
+    property applies for the look-ahead objective (default avg_flow_time):
+    cost(rollout) <= cost(nearest_job)."""
     inst = _simultaneous_instance(seed, 6)
     base = evaluate_policy(inst, "nearest_job", objective="avg_flow_time")
     ro = evaluate_policy(inst, "rollout", {"dt_lookahead": None, "max_candidates": None},
@@ -220,7 +221,8 @@ def test_never_worse_than_base_when_lookahead_is_exact(seed):
     assert ro.objective <= base.objective + 1e-9
 
 
-@pytest.mark.parametrize("objective", ["makespan", "avg_waiting_time"])
+@pytest.mark.parametrize("objective", ["makespan", "avg_waiting_time", "penalized_flow_time",
+                                       "blocking_penalty", "penalized_makespan"])
 def test_never_worse_other_objectives(objective):
     inst = _simultaneous_instance(7, 6)
     base = evaluate_policy(inst, "nearest_job", objective=objective)

@@ -37,7 +37,8 @@ KEY_METRICS = ["parts_completed", "parts_exited_unprocessed", "throughput_per_mi
                "avg_waiting_time", "max_waiting_time", "avg_flow_time", "makespan",
                "total_laser_travel_distance", "laser_utilization",
                "laser_processing_utilization", "total_conveyor_stop_time",
-               "max_lateness", "objective"]
+               "max_lateness", "blocking_events", "total_blocked_time",
+               "blocking_penalty", "objective"]
 
 
 def run_one(job: tuple[dict, str, int]) -> dict:
