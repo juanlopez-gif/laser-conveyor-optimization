@@ -197,7 +197,7 @@ class Simulation:
         if not candidates:
             return
         from policies.base_policy import DecisionContext
-        ctx = DecisionContext(t, self.laser, self.conveyors, self.geometry, icp)
+        ctx = DecisionContext(t, self.laser, self.conveyors, self.geometry, icp, simulation=self)
         choice = self.policy.select(candidates, ctx)
         if choice is None:
             return

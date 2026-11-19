@@ -34,6 +34,9 @@ class DecisionContext:
     conveyors: Sequence[Conveyor]
     geometry: Geometry
     _intercept: Callable[[Part], Intercept | None]
+    #: The running Simulation (read-only use!). Lets look-ahead policies such as
+    #: rollout clone the current state; ordinary policies must not touch it.
+    simulation: Any = None
 
     def conveyor(self, conveyor_id: int) -> Conveyor:
         return self.conveyors[conveyor_id - 1]

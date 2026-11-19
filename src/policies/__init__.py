@@ -33,8 +33,12 @@ def _discover() -> None:
             importlib.import_module(f"{__name__}.{module.name}")
 
 
-def available_policies() -> list[str]:
-    return sorted(POLICY_REGISTRY)
+def available_policies(include_parametric: bool = False) -> list[str]:
+    """Registered policies. By default only stand-alone online policies are listed;
+    policies that need instance-specific parameters (e.g. ``fixed_sequence``) are
+    excluded unless ``include_parametric`` is True."""
+    return sorted(n for n, c in POLICY_REGISTRY.items()
+                  if include_parametric or not getattr(c, "parametric", False))
 
 
 def get_policy(name: str, params: dict[str, Any] | None = None) -> BasePolicy:
