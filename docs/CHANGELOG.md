@@ -6,6 +6,23 @@ summarized from the git history.
 
 ---
 
+## 0.5.1 — 2026-11-19 — Literature evidence map (documentation only)
+
+* `docs/literature/systematic_review_2026-11-19.md`: PRISMA-informed evidence map
+  produced by an external AI tool from the project's review prompt (21 studies;
+  access-limited, not a publishable SLR).
+* `docs/literature/references.bib`: its 26 references; **all DOIs / arXiv ids verified
+  to exist** (Crossref / arXiv, 2026-11-19); S01 DOI added.
+* `docs/literature/review_assessment.md`: verification report, point-by-point check of
+  the review's technical remarks against our model and code, and an action list.
+  Main open points: restriction gap of head-only policies; scope of the NP-hardness
+  reduction (general N, own-belt stop rule); endogenous windows $s_{ij}(t,z)$; PPO
+  trained with γ = 0.99 (return = objective only for γ = 1); formal semantics of
+  revocable pre-positioning and of blocked-time attribution.
+* No change to model, code or results.
+
+---
+
 ## 0.5.0 — 2026-11-19 — Reinforcement-learning dispatcher
 
 Requested by the cell owner: formulate the dispatching problem as RL and try it.
