@@ -4,7 +4,5 @@ pyyaml>=6.0
 pytest>=7.0
 # Optional: plots in experiments/compare_policies.py
 matplotlib>=3.7
-# Future optimization (NOT installed yet on purpose):
-# ortools   # CP-SAT
-# pyomo     # MILP modelling
-# scipy
+# Exact solver (src/optimization/solvers/cpsat.py; skipped with a warning if missing)
+ortools>=9.10

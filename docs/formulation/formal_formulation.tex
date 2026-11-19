@@ -257,6 +257,22 @@ used in the code is
 \]
 and multi-objective studies use the Pareto front of these criteria.
 
+\subsection{The simulator's dispatch rule: the restricted model \texorpdfstring{$\Pb^{\mathrm{sim}}$}{P-sim}}
+Constraint \eqref{eq:C2} allows the laser to move towards a part \emph{before} it
+reaches the laser zone (it may pre-position at $(a,y_k)$ and wait). The simulator and
+every implemented policy dispatch the laser only to parts that are already READY. Let
+$R_j=\min\{t:\ x_j(t)\ge a\}$ be the time part $j$ enters the laser zone. The simulator
+satisfies in addition
+\begin{equation}\label{eq:C7}
+\textbf{(C7)}\qquad S_{\pi(i+1)}\ \ge\ \max\bigl(C_{\pi(i)},\,R_{\pi(i+1)}\bigr)+\tau\bigl(P_{\pi(i)},P_{\pi(i+1)}\bigr),
+\qquad S_{\pi(1)}\ge R_{\pi(1)}+\tau(P_0,P_{\pi(1)}).
+\end{equation}
+We write $\Pb^{\mathrm{sim}}=\Pb+\text{(C7)}$. Since (C7) only removes schedules, $\Pb$ is
+a \emph{relaxation} of $\Pb^{\mathrm{sim}}$: its optimum is a lower bound for everything
+the simulator can do, and the gap between both measures the value of pre-positioning
+the laser. For example, a single part arriving at $t=0$ completes at $5.83$ s in $\Pb$
+and at $7.19$ s in $\Pb^{\mathrm{sim}}$.
+
 \subsection{Problem statement}
 \[
 (\Pb)\qquad \min_{\pi,\,S,\,u}\ f(\pi,S,u)\quad\text{s.t.}\quad
@@ -363,8 +379,10 @@ Under (C5), once the order $\pi$ is fixed, the \emph{earliest} schedule compatib
 $C_{\pi(i)}$ and heads to the earliest interception point of $\pi(i+1)$, i.e.\ the
 smallest $t$ with $\tau\bigl(P_{\pi(i)},(x_{\pi(i+1)}(t),y)\bigr)\le t-C_{\pi(i)}$,
 recomputed whenever a conveyor changes state; the belts evolve according to
-(C3)--(C5). This map $\Phi:\pi\mapsto(S,u)$ is exactly what the simulator computes
-with a fixed sequence, hence
+(C3)--(C5). In the simulator the laser additionally starts towards $\pi(i+1)$ only
+once that part is READY, i.e.\ the pass respects \eqref{eq:C7}. This map
+$\Phi:\pi\mapsto(S,u)$, the earliest schedule of $\Pb^{\mathrm{sim}}$ for the order $\pi$,
+is exactly what the simulator computes with the \texttt{fixed\_sequence} policy, hence
 \[
 \min_{\pi\in\mathfrak S_n} f\bigl(\Phi(\pi)\bigr)
 \]
@@ -374,8 +392,8 @@ exhaustive search (small $n$) can attack with the simulator as evaluator.
 \begin{remark}
 Positions depend on start times, so delaying a start can move a part closer to the
 laser. The earliest (semi-active) schedule is therefore not guaranteed to dominate for
-every objective: $\Phi$ is a heuristic restriction of $\Pb$, while $\Pb_\Delta$
-explores all start times.
+every objective: $\Phi$ is a heuristic restriction of $\Pb^{\mathrm{sim}}$ (and of
+$\Pb$), while $\Pb_\Delta$ explores all start times and pre-positioning.
 \end{remark}
 
 \begin{remark}
@@ -394,10 +412,10 @@ next part. The offline problem $\Pb$ with full knowledge of the future gives the
 performance over the arrival distribution and by the empirical ratio
 $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances.
 
-The implemented policies (FIFO, nearest job, round robin, weighted score) add two
-restrictions with respect to $\Pb$: the laser only selects parts already inside the
-laser zone and never waits deliberately. They explore a subset of the feasible
-solutions of $\Pb$, so the optimum of $\Pb$ is a lower bound for all of them.
+The implemented policies satisfy \eqref{eq:C7} (the laser only selects parts already
+inside the laser zone) and never wait deliberately. They produce feasible solutions of
+$\Pb^{\mathrm{sim}}\subseteq\Pb$, so the optimum of $\Pb$, and every valid lower bound of
+$\Pb$, bounds all of them.
 
 \emph{Rolling horizon:} at each decision epoch, solve $\Pb_\Delta$ restricted to the
 parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply the
@@ -446,8 +464,9 @@ $|y_k-y_{k'}|/v_y$ for every change of conveyor) strengthens the second bound.
 $\Pb$ is NP-hard in the strong sense for the objectives $L_{\max}$ and $\sum C_j$.
 \end{proposition}
 \begin{proof}[Proof sketch]
-Take negligible travel ($v_x,v_y\to\infty$) and a laser zone long enough that blocking
-never binds. Then part $j$ becomes available at $r_j+a/v_{k(j)}$, and (C1)--(C3) reduce
+Take negligible travel ($v_x,v_y\to\infty$), a laser zone long enough that blocking
+never binds, and one part per conveyor (so that the belt stops of (C3) do not delay
+other parts). Then part $j$ becomes available at $r_j+a/v_{k(j)}$, and (C1)--(C3) reduce
 to the single-machine problems $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, both
 strongly NP-hard (Lenstra, Rinnooy Kan and Brucker, 1977). With all parts already in
 the zone and the conveyors stopped, the makespan version becomes a shortest Hamiltonian

@@ -186,7 +186,29 @@ $$
 
 Multi-objective studies use the Pareto front of these criteria.
 
-### 1.5 Problem statement
+### 1.5 The simulator's dispatch rule: the restricted model $\mathcal P^{\mathrm{sim}}$
+
+(C2) allows the laser to move towards a part **before** it reaches the laser zone (it
+may pre-position at $(a, y_k)$ and wait). The simulator and every implemented policy
+only dispatch the laser to parts that are already READY. Let
+$R_j=\min\lbrace t: x_j(t)\ge a\rbrace$ be the time part $j$ enters the laser zone. The
+simulator satisfies, in addition,
+
+$$
+\textbf{(C7)}\qquad S_{\pi(i+1)}\ \ge\ \max\big(C_{\pi(i)},\ R_{\pi(i+1)}\big)+\tau\big(P_{\pi(i)},P_{\pi(i+1)}\big)
+$$
+
+(and $S_{\pi(1)}\ge R_{\pi(1)}+\tau(P_0,P_{\pi(1)})$). We write
+$\mathcal P^{\mathrm{sim}}=\mathcal P+\text{(C7)}$. Since (C7) only removes
+schedules, $\mathcal P$ is a **relaxation** of $\mathcal P^{\mathrm{sim}}$: its optimum is
+a lower bound for everything the simulator can do, and the gap between the two measures
+the value of pre-positioning the laser. Example (counterexample D1 in
+`docs/methods/theory.md`): a single part arriving at $t=0$ completes at 5.83 s in
+$\mathcal P$ and at 7.19 s in $\mathcal P^{\mathrm{sim}}$. Both models are solved by the
+CP-SAT methods `cpsat` ($\mathcal P_\Delta$) and `cpsat_ready`
+($\mathcal P^{\mathrm{sim}}_\Delta$), see `docs/methods/exact_cpsat.md`.
+
+### 1.6 Problem statement
 
 $$
 (\mathcal P)\qquad \min_{\pi,\,S,\,u}\ f(\pi,S,u)\quad\text{s.t.}\quad \text{(C1)–(C5)},\ \ D_k,\ E_j,\ X_j \text{ defined as in §1.1–1.2.}
@@ -293,8 +315,11 @@ Under (C5), once the order $\pi$ is fixed, the **earliest** schedule compatible 
 (C1)–(C5) is computed by a deterministic forward pass: the laser leaves $P_{\pi(i)}$
 at $C_{\pi(i)}$, heads to the earliest interception point of $\pi(i+1)$ (the smallest
 $t$ with $\tau(P_{\pi(i)},(x_{\pi(i+1)}(t),y))\le t-C_{\pi(i)}$, recomputed whenever a
-conveyor changes state), and the belts evolve by (C3)–(C5). This map
-$\Phi:\pi\mapsto(S,u)$ is exactly what the simulator does with a fixed sequence, so
+conveyor changes state), and the belts evolve by (C3)–(C5). In the simulator the
+laser additionally starts towards $\pi(i+1)$ only once that part is READY, i.e. the
+pass respects (C7). This map $\Phi:\pi\mapsto(S,u)$ — the earliest schedule of
+$\mathcal P^{\mathrm{sim}}$ for the order $\pi$ — is exactly what the simulator computes
+with the `fixed_sequence` policy, so
 
 $$
 \min_{\pi\in\mathfrak S_n} f\big(\Phi(\pi)\big)
@@ -304,8 +329,9 @@ is a permutation problem that genetic algorithms, simulated annealing, tabu sear
 exhaustive search (small $n$) can attack with the simulator as evaluator. Caveat:
 because positions depend on start times, delaying a start can move a part closer to
 the laser; the earliest (semi-active) schedule is therefore not guaranteed to dominate
-for every objective. $\Phi$ restricted to semi-active schedules is a heuristic
-restriction of $\mathcal P$, while $\mathcal P_\Delta$ explores all start times.
+for every objective. $\Phi$ is therefore a heuristic restriction of
+$\mathcal P^{\mathrm{sim}}$ (and of $\mathcal P$), while $\mathcal P_\Delta$ explores all
+start times and pre-positioning.
 
 A dynamic program over subsets $(\text{processed set},\ \text{last part})$ is **not**
 exact here: the belt odometers $D_k$ depend on the whole history, so the state would
@@ -321,10 +347,10 @@ part. The offline problem $\mathcal P$ with full knowledge of the future gives t
 *clairvoyant* benchmark $f^\ast$; a policy $\mu$ is evaluated by its expected
 performance over the arrival distribution and by the empirical ratio
 $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances. The implemented
-policies add two restrictions with respect to $\mathcal P$: the laser only selects
-parts that are already in the laser zone, and it never waits deliberately. Hence
-they explore a subset of the feasible solutions of $\mathcal P$, and $\mathcal P$'s
-optimum is a lower bound for all of them.
+policies satisfy (C7) — the laser only selects parts that are already in the laser zone
+— and never wait deliberately. Hence they produce feasible solutions of
+$\mathcal P^{\mathrm{sim}}\subseteq\mathcal P$, and the optimum of $\mathcal P$ (or the
+valid bounds of `optimization/lower_bounds.py`) is a lower bound for all of them.
 
 **Rolling horizon:** at each decision epoch, solve $\mathcal P_\Delta$ restricted to
 the parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply
@@ -351,7 +377,8 @@ the first decision and re-solve at the next epoch.
    for changes of conveyor) strengthens the second one.
 5. **Complexity.** $\mathcal P$ contains, as limiting cases, classical NP-hard
    problems. With travel negligible ($v_x,v_y\to\infty$) and a laser zone long enough
-   that blocking never binds, part $j$ becomes available at $r_j+a/v_{k(j)}$ and
+   that blocking never binds, and with one part per conveyor (so that the belt stops of
+   (C3) do not delay other parts), part $j$ becomes available at $r_j+a/v_{k(j)}$ and
    (C1)–(C3) reduce to $1\mid r_j\mid L_{\max}$ and $1\mid r_j\mid\sum C_j$, both
    strongly NP-hard (Lenstra, Rinnooy Kan & Brucker, 1977). With all parts already in
    the zone and conveyors stopped, the makespan version is a shortest Hamiltonian path
@@ -388,3 +415,17 @@ for stochastic instances and for the `all_conveyors` stop rule. Any solution pro
 by a policy is therefore a feasible solution of $\mathcal P$ (up to `dt`), and an
 optimal solution of $\mathcal P$ (or $\mathcal P_\Delta$) is a valid benchmark for the
 policies.
+
+---
+
+## 7. Results obtained with this formulation
+
+The four specialist methods built on this model are documented in `docs/methods/`
+(see `docs/agent_architecture.md` for how they were developed and integrated):
+
+| document | content |
+|---|---|
+| [theory.md](methods/theory.md) | valid lower bounds (L1–L6) with proofs; special cases (single-conveyor counterexample, light-traffic optimality theorems, when FIFO / nearest job fail, decoder vs $\mathcal P$) |
+| [exact_cpsat.md](methods/exact_cpsat.md) | CP-SAT models of $\mathcal P_\Delta$ and $\mathcal P^{\mathrm{sim}}_\Delta$; proven optima for $n\le 8$ |
+| [metaheuristics.md](methods/metaheuristics.md) | simulated annealing and iterated local search over $\Phi$ |
+| [online_rollout.md](methods/online_rollout.md) | rollout (look-ahead) policy for the online problem |

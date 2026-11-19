@@ -163,6 +163,7 @@ python run_simulation.py --policy nearest_job     # shortest laser travel time (
 python run_simulation.py --policy fifo            # global FIFO (longest waiting part)
 python run_simulation.py --policy round_robin     # C1 → C2 → C3 → C1 ...
 python run_simulation.py --policy weighted_score  # w1·waiting − w2·travel + w3·urgency
+python run_simulation.py --policy rollout         # look-ahead with nearest_job as base policy
 ```
 
 or `policy.name` in the config, or the selector in the visualization. Weights of
@@ -213,6 +214,24 @@ Definitions in [src/simulation/metrics.py](src/simulation/metrics.py).
   [decision_variables.md](src/optimization/decision_variables.md),
   [docs/future_optimization.md](docs/future_optimization.md),
   [docs/bicycle_problem_comparison.md](docs/bicycle_problem_comparison.md).
+
+## Optimization methods (phase 2)
+
+Developed by four specialist agents on a shared foundation (see
+[docs/agent_architecture.md](docs/agent_architecture.md) for the architecture and the
+consolidated results):
+
+| method | where | what it gives |
+|---|---|---|
+| `cpsat`, `cpsat_ready` | `src/optimization/solvers/cpsat.py` | exact CP-SAT models of the formulation; proven optima for small instances |
+| `sa`, `ils` | `src/optimization/solvers/metaheuristics.py` | simulated annealing / iterated local search over processing orders |
+| `rollout` policy | `src/policies/rollout.py` | online look-ahead policy; beats nearest_job on 28/30 seeds |
+| lower bounds | `src/optimization/lower_bounds.py` | proved bounds to measure optimality gaps |
+
+```bash
+PYTHONPATH=src python -m optimization.benchmark --n 6 8 10 --seeds 3 --objective avg_flow_time --time-limit 30
+python run_simulation.py --policy rollout
+```
 
 ## Architecture
 
