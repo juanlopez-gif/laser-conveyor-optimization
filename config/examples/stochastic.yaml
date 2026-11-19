@@ -1,0 +1,9 @@
+# Poisson arrivals and variable processing times.
+arrivals:
+  mode: stochastic
+  stochastic:
+    distribution: exponential
+    mean_interarrival: [8.0, 10.0, 12.0]
+processing:
+  distribution: uniform
+  uniform: {low: 2.0, high: 4.0}

@@ -1,0 +1,10 @@
+# Core
+pyyaml>=6.0
+# Tests
+pytest>=7.0
+# Optional: plots in experiments/compare_policies.py
+matplotlib>=3.7
+# Future optimization (NOT installed yet on purpose):
+# ortools   # CP-SAT
+# pyomo     # MILP modelling
+# scipy

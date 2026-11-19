@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- HEAD START -->
+<title>Laser Conveyor Cell</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<!-- HEAD END -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- BODY START -->
+<div class="app">
+  <header class="topbar">
+    <div class="title">
+      <h1>Célula láser XY + cintas transportadoras</h1>
+      <p>Reproducción de una simulación ya calculada en Python. La velocidad visual no altera los resultados.</p>
+      <div class="meta" id="meta">sin datos</div>
+    </div>
+    <div class="controls">
+      <button id="playBtn" class="primary" type="button">▶ Play</button>
+      <button id="resetBtn" type="button">↺ Reset</button>
+      <div class="speed" id="speedGroup" role="group" aria-label="Velocidad visual"></div>
+      <label class="file-btn" title="Cargar otro results/&lt;run&gt;/trace.json">Abrir trace.json
+        <input id="fileInput" type="file" accept=".json,application/json">
+      </label>
+    </div>
+  </header>
+
+  <div class="scrub">
+    <span id="tNow">0.0 s</span>
+    <input id="scrub" type="range" min="0" max="1" step="0.1" value="0" aria-label="Tiempo de simulación">
+    <span id="tEnd">0.0 s</span>
+  </div>
+
+  <div class="main">
+    <section class="panel">
+      <h2>Vista en planta (X → avance de las cintas, Y ↓ entre cintas)</h2>
+      <canvas id="cell" aria-label="Vista de la célula"></canvas>
+      <div class="legend" id="legend"></div>
+    </section>
+    <aside class="panel">
+      <h2>Dashboard</h2>
+      <div class="kpis">
+        <div class="kpi"><span class="k">Tiempo de simulación</span><span class="v" id="kTime">–</span></div>
+        <div class="kpi"><span class="k">Estado del láser</span><span class="v"><span class="pill" id="kLaserState">–</span></span></div>
+        <div class="kpi"><span class="k">Piezas completadas</span><span class="v" id="kCompleted">–</span></div>
+        <div class="kpi"><span class="k">Generadas / salidas</span><span class="v" id="kGen">–</span></div>
+        <div class="kpi"><span class="k">Throughput</span><span class="v" id="kThr">–</span></div>
+        <div class="kpi"><span class="k">Utilización láser</span><span class="v" id="kUtil">–</span></div>
+        <div class="kpi"><span class="k">Posición láser (x, y)</span><span class="v" id="kPos">–</span></div>
+        <div class="kpi"><span class="k">Recorrido láser</span><span class="v" id="kDist">–</span></div>
+      </div>
+      <div class="queues" id="queues"></div>
+    </aside>
+  </div>
+
+  <div class="bottom">
+    <section class="panel">
+      <h2>Longitud de cola por cinta (piezas sin procesar)</h2>
+      <canvas id="queueChart"></canvas>
+    </section>
+    <section class="panel">
+      <h2>Registro de eventos</h2>
+      <ul class="log" id="log"></ul>
+    </section>
+  </div>
+  <footer id="footer">Datos: visualization/data/trace.js (generado por <code>python run_simulation.py</code>).</footer>
+</div>
+<!-- BODY END -->
+<script src="data/trace.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

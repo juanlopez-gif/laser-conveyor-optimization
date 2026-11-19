@@ -1,0 +1,11 @@
+# Five conveyors: only the keys that differ from config/default_config.yaml.
+conveyors:
+  count: 5
+  y_positions: null      # -> y = 0, 12, 24, 36, 48
+  spacing: 12.0
+arrivals:
+  deterministic:
+    intervals: [16, 18, 20, 22, 24]
+    first_arrival: [0, 1, 2, 3, 4]
+  stochastic:
+    mean_interarrival: [16, 18, 20, 22, 24]

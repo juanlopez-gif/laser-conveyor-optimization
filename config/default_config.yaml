@@ -1,0 +1,86 @@
+# =============================================================================
+# Laser + conveyors simulator — DEFAULT CONFIGURATION (single source of truth)
+# =============================================================================
+# Units: distances in cm, times in s, speeds in cm/s.
+# Every numeric parameter of the system lives HERE. Other config files (e.g.
+# config/examples/*.yaml) only need to list the keys they override; they are
+# deep-merged on top of this file. CLI overrides: --set laser.speed_x=8
+# =============================================================================
+
+simulation:
+  seed: 42                     # master seed -> every random stream derives from it
+  dt: 0.01                     # integration time step [s] (see docs/assumptions.md)
+  arrival_horizon: 300.0       # no new parts are generated after this time [s]
+  drain: true                  # after the horizon keep simulating until the system is empty
+  max_time: 3600.0             # hard stop [s] (safety net)
+  trace_interval: 0.1          # visualization / queue sampling period [s]
+  min_part_spacing: 4.0        # min distance between consecutive parts on a belt [cm]
+  # What happens when an UNPROCESSED part reaches the end of the laser zone:
+  #   block -> its conveyor stops until the laser processes it (no part is lost)
+  #   pass  -> the part keeps going and leaves the system unprocessed ("missed")
+  unprocessed_at_zone_end: block
+  # Which conveyors stop while the laser processes a part:
+  #   processing_conveyor_only -> only the conveyor carrying the part (default)
+  #   all_conveyors            -> every conveyor stops
+  conveyor_stop_policy: processing_conveyor_only
+  due_date_allowance: 20.0     # due date = arrival_time + allowance [s] (for lateness)
+
+geometry:
+  entry_length: 10.0           # entry zone   (laser cannot reach)
+  active_length: 35.0          # laser zone   (laser can reach)
+  exit_length: 10.0            # exit zone    (laser cannot reach)
+
+conveyors:
+  count: 3                     # N conveyors. Change this + the lists below.
+  y_positions: [0.0, 12.0, 24.0]   # if null -> y_i = i * spacing
+  spacing: 12.0
+  speed: 5.0                   # scalar (all conveyors) or list with one value per conveyor
+
+laser:
+  speed_x: 5.0
+  speed_y: 5.0
+  # simultaneous: both axes move at the same time -> t = max(dx/vx, dy/vy)
+  # sequential:   X first, then Y               -> t = dx/vx + dy/vy
+  motion_model: simultaneous
+  workspace:                   # null -> derived: X = laser zone, Y = [min y, max y] of conveyors
+    x_min: null
+    x_max: null
+    y_min: null
+    y_max: null
+  home: {x: null, y: null}     # initial position; null -> centre of the workspace
+
+arrivals:
+  mode: deterministic          # deterministic | stochastic | explicit
+  deterministic:
+    intervals: [8.0, 10.0, 12.0]   # one per conveyor (or a scalar)
+    first_arrival: [0.0, 1.0, 2.0] # offset of the first part per conveyor
+  stochastic:
+    distribution: exponential      # Poisson arrivals -> exponential inter-arrival times
+    mean_interarrival: [8.0, 10.0, 12.0]
+  explicit: []                     # list of {time, conveyor, processing_time} (tests / static instances)
+
+processing:
+  distribution: constant       # constant | uniform | normal
+  time: 3.0                    # used by "constant"
+  uniform: {low: 2.0, high: 4.0}
+  normal: {mean: 3.0, std: 0.5, min: 0.5}
+
+policy:
+  name: fifo                   # fifo | nearest_job | round_robin | weighted_score | (any registered)
+  params:
+    weighted_score:
+      w_wait: 1.0              # + waiting time [s]
+      w_travel: 1.0            # - estimated laser travel time [s]
+      w_urgency: 10.0          # + urgency in (0, 1]  (1 = part at the end of the laser zone)
+
+objective:                     # composite objective (minimise) — see src/optimization/
+  weights:
+    makespan: 1.0
+    total_laser_travel: 0.0
+    total_conveyor_stop_time: 0.0
+    avg_waiting_time: 0.0
+
+output:
+  results_dir: results
+  save_trace: true                 # trace.json for the visualization
+  update_visualization_data: true  # also write visualization/data/trace.js
