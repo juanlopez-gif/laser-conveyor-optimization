@@ -6,3 +6,9 @@ __pycache__/
 results/*
 !results/.gitkeep
 visualization/standalone.html
+
+# LaTeX build files
+docs/formulation/*.aux
+docs/formulation/*.log
+docs/formulation/*.out
+docs/formulation/*.toc

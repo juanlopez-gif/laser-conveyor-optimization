@@ -1,0 +1,505 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathreplacing,calc}
+\usepackage[colorlinks=true,linkcolor=teal!70!black,citecolor=teal!70!black,urlcolor=teal!70!black]{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\pred}{\operatorname{pred}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pb}{\mathcal{P}}
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\title{\textbf{Scheduling a Shared XY Laser over Parallel Conveyors}\\[0.3em]
+\large Formal mathematical formulation}
+\author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
+\date{November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A single Cartesian XY laser must process parts that arrive continuously on $N$
+parallel conveyors. While a part is processed its conveyor stops; an unprocessed part
+that reaches the end of the laser zone also stops (blocks) its conveyor. We state the
+problem as an exact continuous-time model built on a \emph{belt odometer}, derive a
+time-indexed mixed-integer linear program, describe the sequence-only (decoder) view
+used by heuristics, discuss the online version and give structural properties and
+complexity results. Every schedule produced by the simulator is checked automatically
+against this model.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+%====================================================================
+\section{System and notation}
+%====================================================================
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[x=0.19cm,y=0.19cm,>=Stealth]
+  % zones
+  \fill[gray!10] (0,-4) rectangle (10,28);
+  \fill[teal!10] (10,-4) rectangle (45,28);
+  \fill[gray!10] (45,-4) rectangle (55,28);
+  % belts
+  \foreach \y/\n in {0/1,12/2,24/3}{
+    \draw[fill=gray!30] (0,\y-2.2) rectangle (55,\y+2.2);
+    \node[left] at (-0.5,\y) {\small $k=\n$};
+    \draw[->,thick] (55.5,\y) -- (58.5,\y);
+  }
+  % workspace
+  \draw[teal!70!black,dashed,thick] (10,-3.2) rectangle (45,27.2);
+  % parts
+  \fill[blue!60] (5,-1.2) rectangle (7.4,1.2);
+  \fill[orange!80] (20,10.8) rectangle (22.4,13.2);
+  \fill[red!70] (33,22.8) rectangle (35.4,25.2);
+  \fill[green!60!black] (49,10.8) rectangle (51.4,13.2);
+  % laser gantry
+  \draw[very thick,gray!60!black] (34.2,-3.2) -- (34.2,27.2);
+  \draw[fill=red,draw=white] (34.2,24) circle (1.0);
+  \node[above] at (34.2,27.4) {\small laser head $(X_j,y_k)$};
+  % axis labels
+  \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (0,-5) -- (10,-5)
+       node[midway,below=4pt] {\small entry};
+  \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (10,-5) -- (45,-5)
+       node[midway,below=4pt] {\small laser zone $[a,b]$};
+  \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (45,-5) -- (55,-5)
+       node[midway,below=4pt] {\small exit};
+  \node[below] at (0,-9.5) {\small $0$};
+  \node[below] at (10,-9.5) {\small $a$};
+  \node[below] at (45,-9.5) {\small $b$};
+  \node[below] at (55,-9.5) {\small $L$};
+  \draw[->] (60,-6) -- (66,-6) node[right] {\small $x$};
+  \draw[->] (60,-6) -- (60,0) node[above] {\small $y$};
+\end{tikzpicture}
+\caption{Cell layout (top view). Parts travel in $+x$; the laser reaches the rectangle
+$[a,b]\times[\min_k y_k,\max_k y_k]$.}
+\end{figure}
+
+\subsection{Sets}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+$K=\{1,\dots,N\}$ & conveyors\\
+$J$, $n=|J|$ & parts (jobs) of the instance\\
+$J_k\subseteq J$ & parts of conveyor $k$, indexed in arrival order\\
+$k(j)$ & conveyor carrying part $j$\\
+$\pred(j)$ & part of $J_{k(j)}$ that arrived immediately before $j$ (none for the first)\\
+\bottomrule
+\end{tabularx}
+
+\subsection{Parameters}
+\begin{tabularx}{\linewidth}{@{}l X r@{}}
+\toprule
+symbol & meaning & default\\
+\midrule
+$r_j$ & arrival (release) time of part $j$ & arrival process\\
+$p_j$ & processing time & $2.5$ s\\
+$d_j$ & due date & $r_j+20$ s\\
+$y_k$ & transverse position of conveyor $k$ & $0,12,24$ cm\\
+$v_k$ & conveyor speed & $3$ cm/s\\
+$a,\ b$ & start and end of the laser zone along the belt & $10,\ 45$ cm\\
+$L$ & belt length (exit point) & $55$ cm\\
+$\delta$ & minimum spacing between consecutive parts on a belt & $4$ cm\\
+$v_x,\ v_y$ & laser axis speeds & $10,\ 10$ cm/s\\
+$P_0=(x_0,y_0)$ & initial laser position & workspace centre\\
+$\sigma_{kk'}\in\{0,1\}$ & $1$ if processing a part of conveyor $k'$ stops conveyor $k$ & $\sigma=I$\\
+\bottomrule
+\end{tabularx}
+
+We assume $\sigma_{kk}=1$ for all $k$: a part never moves while it is processed.
+The default rule $\sigma=I$ stops only the conveyor carrying the part; $\sigma\equiv 1$
+stops all conveyors.
+
+\subsection{Travel time and path length of the laser}
+For $P=(x,y)$ and $Q=(x',y')$ let $\Delta x=|x'-x|$ and $\Delta y=|y'-y|$. The travel
+time is
+\begin{equation}\label{eq:tau}
+\tau(P,Q)=
+\begin{cases}
+\max\!\left(\dfrac{\Delta x}{v_x},\dfrac{\Delta y}{v_y}\right) & \text{simultaneous axes (default)},\\[2ex]
+\dfrac{\Delta x}{v_x}+\dfrac{\Delta y}{v_y} & \text{sequential axes}.
+\end{cases}
+\end{equation}
+Both are metrics (weighted $\ell_\infty$ and $\ell_1$ norms), hence $\tau$ satisfies the
+triangle inequality. With simultaneous axes the head moves diagonally until one axis
+arrives and then straight, so the path length is
+\begin{equation}\label{eq:ell}
+\ell(P,Q)=\max\bigl(\Delta y+c_x\,\Delta x,\ \Delta x+c_y\,\Delta y\bigr),\qquad
+c_x=\frac{\sqrt{v_x^2+v_y^2}-v_y}{v_x},\quad c_y=\frac{\sqrt{v_x^2+v_y^2}-v_x}{v_y},
+\end{equation}
+and $\ell=\Delta x+\Delta y$ for sequential axes. For $v_x=v_y$,
+$c_x=c_y=\sqrt2-1$. Since $c_x<1$, \eqref{eq:ell} is convex in $\Delta x$ for fixed
+$\Delta y$, which allows an exact linear representation in Section~\ref{sec:milp}.
+
+%====================================================================
+\section{Exact continuous-time model \texorpdfstring{$\Pb$}{P}}
+%====================================================================
+
+\subsection{Belt odometer, entry coordinates and positions}
+
+\begin{definition}[Belt odometer]
+For each conveyor $k$ let $u_k(t)\in\{0,1\}$ be its run indicator. The odometer
+\[
+D_k(t)=v_k\int_0^t u_k(s)\,ds
+\]
+is the total distance travelled by belt $k$ up to time $t$. It is continuous and
+non-decreasing.
+\end{definition}
+
+All parts on a belt move rigidly with it. A part is therefore fully described by one
+constant, its \emph{entry coordinate} $E_j$: the odometer reading when it is placed at
+$x=0$. Because a part can only enter once the previous one has moved at least $\delta$
+away from the entry,
+\begin{equation}\label{eq:entry}
+E_j=\max\Bigl(D_{k(j)}(r_j),\ E_{\pred(j)}+\delta\Bigr),\qquad E_{\pred(j)}:=-\infty\ \text{for the first part,}
+\end{equation}
+\begin{equation}\label{eq:pos}
+x_j(t)=\max\bigl(0,\ D_{k(j)}(t)-E_j\bigr),\qquad t\ge r_j .
+\end{equation}
+The maximum in \eqref{eq:entry} models the upstream queue (state WAITING): the part
+waits until the odometer reaches $E_{\pred(j)}+\delta$. The entry time is
+$e_j=\min\{t\ge r_j:\ D_{k(j)}(t)\ge E_j\}$.
+
+\subsection{Decision variables}
+\begin{itemize}[nosep]
+\item $\pi$: a permutation of $J$, the processing order of the laser;
+\item $S_j\ge 0$: processing start time of part $j$, with $C_j=S_j+p_j$;
+\item $u_k(\cdot)$: run/stop control of each conveyor (determined by the other
+decisions in the non-idling model, free in the relaxed model).
+\end{itemize}
+Derived quantities: the \emph{processing position} and \emph{processing point}
+\begin{equation}\label{eq:X}
+X_j=D_{k(j)}(S_j)-E_j,\qquad P_j=(X_j,\ y_{k(j)}).
+\end{equation}
+
+\subsection{Constraints}
+
+\paragraph{(C1) Reachability window.}
+\begin{equation}\label{eq:C1}
+a\le X_j\le b\qquad\forall j\in J.
+\end{equation}
+
+\paragraph{(C2) One part at a time, with travel (interception).}
+\begin{equation}\label{eq:C2}
+S_{\pi(1)}\ge\tau\bigl(P_0,P_{\pi(1)}\bigr),\qquad
+S_{\pi(i+1)}\ge C_{\pi(i)}+\tau\bigl(P_{\pi(i)},P_{\pi(i+1)}\bigr),\quad i=1,\dots,n-1.
+\end{equation}
+Since $P_{\pi(i+1)}$ depends on $S_{\pi(i+1)}$ through $D_k$, inequality
+\eqref{eq:C2} is \emph{implicit}: the laser, leaving $P_{\pi(i)}$ at $C_{\pi(i)}$,
+reaches the point where the \emph{moving} part will be at time $S_{\pi(i+1)}$ no later
+than the part (it may wait there). This is exactly the interception logic of the
+simulator. By the triangle inequality, \eqref{eq:C2} implies
+$S_j\ge C_i+\tau(P_i,P_j)$ for every pair with $i$ before $j$, so processing intervals
+are disjoint.
+
+\paragraph{(C3) Conveyors stop during processing.}
+\begin{equation}\label{eq:C3}
+u_k(t)=0\qquad\forall t\in[S_j,C_j),\ \forall j\in J\ \text{with}\ \sigma_{k\,k(j)}=1 .
+\end{equation}
+
+\paragraph{(C4) Blocking (no overrun).} An unprocessed part can never be carried
+beyond $b$: $D_{k(j)}(t)-E_j\le b$ for all $t\le S_j$. Because $D_k$ is
+non-decreasing this is equivalent to $X_j\le b$, i.e.\ it is already the right-hand side
+of \eqref{eq:C1}. A conveyor therefore \emph{must} stop when its most downstream
+unprocessed part reaches $b$.
+
+\paragraph{(C5) Non-idling conveyors.} Conveyors normally run; a conveyor stops only
+when \eqref{eq:C3} or (C4) forces it:
+\begin{equation}\label{eq:C5}
+u_k(t)=0\ \Longrightarrow\
+\bigl(\exists j:\ \sigma_{k\,k(j)}=1,\ t\in[S_j,C_j)\bigr)\ \lor\
+\bigl(\exists j\in J_k:\ S_j>t,\ D_k(t)-E_j=b\bigr).
+\end{equation}
+Dropping \eqref{eq:C5} yields the \emph{relaxed model} $\Pb^R$, in which conveyors may
+also be stopped voluntarily (e.g.\ to keep a part inside the laser zone).
+
+\paragraph{(C6) Workspace.} $P_j\in W=[a,b]\times[\min_k y_k,\max_k y_k]$ follows from
+\eqref{eq:C1}, and straight moves between points of the convex set $W$ stay in $W$.
+
+\subsection{Objectives}
+All objectives are minimized.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+objective & expression\\
+\midrule
+makespan & $C_{\max}=\max_j C_j$\\
+total flow time & $\sum_j (C_j-r_j)$\\
+total waiting time & $\sum_j (S_j-r_j)$\\
+maximum lateness & $L_{\max}=\max_j (C_j-d_j)$\\
+laser travel distance & $\ell(P_0,P_{\pi(1)})+\sum_{i=1}^{n-1}\ell(P_{\pi(i)},P_{\pi(i+1)})$\\
+conveyor downtime & $\sum_k\int_0^{T}\bigl(1-u_k(t)\bigr)dt=\sum_k\bigl(T-D_k(T)/v_k\bigr)$\\
+throughput & $n/C_{\max}$ (maximizing it $\Leftrightarrow$ minimizing $C_{\max}$)\\
+\bottomrule
+\end{tabular}
+\end{center}
+Here $T$ is the time at which the last part exits ($x_j=L$). The composite objective
+used in the code is
+\[
+\alpha\,C_{\max}+\beta\sum\ell+\gamma\sum_k\int_0^T(1-u_k)\,dt+\delta_W\,\overline{W},
+\]
+and multi-objective studies use the Pareto front of these criteria.
+
+\subsection{Problem statement}
+\[
+(\Pb)\qquad \min_{\pi,\,S,\,u}\ f(\pi,S,u)\quad\text{s.t.}\quad
+\eqref{eq:entry}\text{--}\eqref{eq:C5}.
+\]
+
+%====================================================================
+\section{Time-indexed MILP \texorpdfstring{$\Pb_\Delta$}{P-Delta}}\label{sec:milp}
+%====================================================================
+
+Discretize time in steps of length $\Delta$ (e.g.\ $0.1$ s),
+$t\in\mathcal T=\{0,\dots,H-1\}$, and assume $p_j=\Delta\,\bar p_j$, $r_j=\Delta\,\bar r_j$
+with $\bar p_j,\bar r_j\in\mathbb Z_{\ge0}$. $M$ is a sufficiently large constant
+(each big-$M$ can be tightened individually, e.g.\ to $L+v_kH\Delta$ for positions).
+
+\subsection{Variables}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+variable & domain & meaning\\
+\midrule
+$s_{jt}$ & $\{0,1\}$ & processing of $j$ starts at step $t$\\
+$u_{kt}$ & $\{0,1\}$ & conveyor $k$ runs during step $t$\\
+$D_{kt}$ & $\R_{\ge0}$ & odometer of conveyor $k$ at the start of step $t$\\
+$E_j,\ X_j$ & $\R$ & entry coordinate, processing position\\
+$\lambda_j$ & $\{0,1\}$ & which term of the maximum defines $E_j$\\
+$w_{ij}$ & $\{0,1\}$ & $i$ is processed before $j$ ($i\neq j$)\\
+$\tau_{ij},\ \tau_{0j}$ & $\R_{\ge0}$ & travel times\\
+$\beta_{jt}$ & $\{0,1\}$ & part $j$ blocks its conveyor at step $t$ (only for C5)\\
+\bottomrule
+\end{tabular}
+\end{center}
+$S_j:=\Delta\sum_t t\,s_{jt}$ and $C_j:=S_j+p_j$ are linear expressions.
+
+\subsection{Constraints}
+\begin{align}
+&\textstyle\sum_{t\in\mathcal T}s_{jt}=1 && \forall j \tag{M1}\\
+&D_{k0}=0,\qquad D_{k,t+1}=D_{kt}+v_k\Delta\,u_{kt} && \forall k,t \tag{M2}\\
+&E_j\ge D_{k(j),\bar r_j},\qquad E_j\ge E_{\pred(j)}+\delta && \forall j \tag{M3a}\\
+&E_j\le D_{k(j),\bar r_j}+M\lambda_j,\qquad E_j\le E_{\pred(j)}+\delta+M(1-\lambda_j) && \forall j \tag{M3b}\\
+&X_j-\bigl(D_{k(j),t}-E_j\bigr)\le M(1-s_{jt}),\quad
+ \bigl(D_{k(j),t}-E_j\bigr)-X_j\le M(1-s_{jt}) && \forall j,t \tag{M4}\\
+&a\le X_j\le b && \forall j \tag{M5}\\
+&u_{kt}+\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}\le 1 && \forall k,t \tag{M6}\\
+&w_{ij}+w_{ji}=1 && \forall i<j \tag{M7}\\
+&S_j\ge S_i+p_i+\tau_{ij}-M(1-w_{ij}) && \forall i\neq j \tag{M8}\\
+&S_j\ge\tau_{0j} && \forall j \tag{M9}
+\end{align}
+(M5) encodes both (C1) and the blocking constraint (C4); (M6) encodes (C3).
+
+\paragraph{Travel times.} For simultaneous axes,
+\begin{align}
+&\tau_{ij}\ge\frac{X_j-X_i}{v_x},\quad \tau_{ij}\ge\frac{X_i-X_j}{v_x},\quad
+\tau_{ij}\ge\frac{|y_{k(i)}-y_{k(j)}|}{v_y}, \tag{M10}\\
+&\tau_{0j}\ge\frac{X_j-x_0}{v_x},\quad \tau_{0j}\ge\frac{x_0-X_j}{v_x},\quad
+\tau_{0j}\ge\frac{|y_{k(j)}-y_0|}{v_y}. \tag{M11}
+\end{align}
+For sequential axes use $\tau_{ij}\ge\xi_{ij}/v_x+|y_{k(i)}-y_{k(j)}|/v_y$ with
+$\xi_{ij}\ge\pm(X_j-X_i)$. Only lower bounds are needed: a larger $\tau$ only tightens
+(M8)--(M9), so any feasible solution remains feasible when $\tau$ is lowered to the true
+travel time. By the triangle inequality, imposing (M8) for all ordered pairs is
+equivalent to imposing it only between consecutive parts.
+
+\paragraph{Non-idling conveyors (C5).} Omitted for the relaxed model $\Pb^R_\Delta$:
+\begin{align}
+&u_{kt}\ge 1-\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}-\sum_{j\in J_k}\beta_{jt} && \forall k,t \tag{M12}\\
+&\beta_{jt}\le 1-\textstyle\sum_{t'\le t}s_{jt'} && \forall j,t \tag{M13}\\
+&D_{k(j),t}-E_j\ge b-v_{k(j)}\Delta-M(1-\beta_{jt}) && \forall j,t \tag{M14}
+\end{align}
+(M13) allows the blocking witness only for parts not yet started and (M14) only when the
+part is at the end of the zone. The slack $v_k\Delta$ is the discretization tolerance: a
+conveyor may stop one step early instead of overshooting $b$ (the simulator stops
+exactly at $b$ with a partial step).
+
+\subsection{Objectives in linear form}
+\begin{itemize}[nosep]
+\item $C_{\max}\ge C_j$ and $L_{\max}\ge C_j-d_j$ for all $j$;
+\item flow and waiting: $\sum_j(C_j-r_j)$ and $\sum_j(S_j-r_j)$;
+\item downtime: $\Delta\sum_{k,t}(1-u_{kt})$;
+\item travel distance: add immediate-successor binaries $z_{ij}$ (with a dummy start
+$0$): $\sum_i z_{ij}=1$, $\sum_j z_{ij}\le 1$, $z_{ij}\le w_{ij}$,
+$w_{il}+w_{lj}\le 2-z_{ij}$ for all $l$ (nothing in between), $\xi_{ij}\ge\pm(X_j-X_i)$ and
+\[
+\Lambda_{ij}\ge |y_{k(i)}-y_{k(j)}|+c_x\,\xi_{ij}-M(1-z_{ij}),\qquad
+\Lambda_{ij}\ge \xi_{ij}+c_y\,|y_{k(i)}-y_{k(j)}|-M(1-z_{ij}),
+\]
+with objective $\sum_{i,j}\Lambda_{ij}$. This is exact because $\ell$ is convex in
+$\Delta x$, see \eqref{eq:ell}.
+\end{itemize}
+
+\subsection{Size}
+The model has $O(nH)$ binaries $s_{jt}$, $O(NH)$ binaries $u_{kt}$ and $O(n^2)$ order
+binaries. With $\Delta=0.1$ s and a $60$ s window this is a few thousand binaries for
+10--15 parts, which is tractable for CP-SAT or HiGHS on small instances and inside a
+rolling horizon. In CP-SAT, (M7)--(M8) are naturally written with interval variables
+and \texttt{NoOverlap}, and (M4) with \texttt{AddElement} over the odometer array.
+
+%====================================================================
+\section{Sequence-only view (decoder)}
+%====================================================================
+
+Under (C5), once the order $\pi$ is fixed, the \emph{earliest} schedule compatible with
+(C1)--(C5) is obtained by a deterministic forward pass: the laser leaves $P_{\pi(i)}$ at
+$C_{\pi(i)}$ and heads to the earliest interception point of $\pi(i+1)$, i.e.\ the
+smallest $t$ with $\tau\bigl(P_{\pi(i)},(x_{\pi(i+1)}(t),y)\bigr)\le t-C_{\pi(i)}$,
+recomputed whenever a conveyor changes state; the belts evolve according to
+(C3)--(C5). This map $\Phi:\pi\mapsto(S,u)$ is exactly what the simulator computes
+with a fixed sequence, hence
+\[
+\min_{\pi\in\mathfrak S_n} f\bigl(\Phi(\pi)\bigr)
+\]
+is a permutation problem that genetic algorithms, simulated annealing, tabu search or
+exhaustive search (small $n$) can attack with the simulator as evaluator.
+
+\begin{remark}
+Positions depend on start times, so delaying a start can move a part closer to the
+laser. The earliest (semi-active) schedule is therefore not guaranteed to dominate for
+every objective: $\Phi$ is a heuristic restriction of $\Pb$, while $\Pb_\Delta$
+explores all start times.
+\end{remark}
+
+\begin{remark}
+Dynamic programming over states (processed set, last part) is \emph{not} exact: the
+odometers $D_k$ depend on the whole history, so they would have to be part of the state.
+\end{remark}
+
+%====================================================================
+\section{Online version}
+%====================================================================
+
+In the real cell $r_j$ (and possibly $p_j$) is revealed only when the part arrives. A
+\emph{policy} maps the information available at a decision epoch (laser free) to the
+next part. The offline problem $\Pb$ with full knowledge of the future gives the
+\emph{clairvoyant} benchmark $f^\ast$, and a policy $\mu$ is evaluated by its expected
+performance over the arrival distribution and by the empirical ratio
+$\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances.
+
+The implemented policies (FIFO, nearest job, round robin, weighted score) add two
+restrictions with respect to $\Pb$: the laser only selects parts already inside the
+laser zone and never waits deliberately. They explore a subset of the feasible
+solutions of $\Pb$, so the optimum of $\Pb$ is a lower bound for all of them.
+
+\emph{Rolling horizon:} at each decision epoch, solve $\Pb_\Delta$ restricted to the
+parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply the
+first decision and re-solve at the next epoch.
+
+%====================================================================
+\section{Structural properties and complexity}
+%====================================================================
+
+\begin{proposition}[Rigid belts]
+On each conveyor the order of the parts never changes and, once two parts $i$ (earlier)
+and $j$ have entered, $x_i(t)-x_j(t)=E_j-E_i\ge\delta$. The laser may nevertheless
+process them in any order.
+\end{proposition}
+
+\begin{proposition}[Blocking cascade]
+On conveyor $k$ at time $t$ the binding cap is set by the most downstream unstarted part:
+\[
+D_k(t)\le\min\{E_j+b:\ j\in J_k,\ S_j>t\}.
+\]
+Processing the parts of a conveyor out of belt order therefore causes blocking.
+\end{proposition}
+
+\begin{proposition}[Feasibility]
+With blocking, $\Pb$ is always feasible. Even if $v_k\ge v_x$, so that the laser
+cannot catch a part ahead of it while it moves, the part stops at $b$ by (C4) and is
+then reachable.
+\end{proposition}
+
+\begin{proposition}[Lower bounds on the makespan]
+Every feasible schedule satisfies
+\[
+C_{\max}\ge\max_j\Bigl(r_j+\frac{a}{v_{k(j)}}+p_j\Bigr),\qquad
+C_{\max}\ge\min_j\Bigl(r_j+\frac{a}{v_{k(j)}}\Bigr)+\sum_j p_j .
+\]
+\end{proposition}
+\begin{proof}
+Part $j$ cannot reach $x=a$ before $r_j+a/v_{k(j)}$, giving the first bound. No
+processing can start before the earliest such time, and processing intervals are
+disjoint by (C2), giving the second.
+\end{proof}
+Adding a lower bound on the travel between consecutive processing points (e.g.\
+$|y_k-y_{k'}|/v_y$ for every change of conveyor) strengthens the second bound.
+
+\begin{proposition}[Complexity]
+$\Pb$ is NP-hard in the strong sense for the objectives $L_{\max}$ and $\sum C_j$.
+\end{proposition}
+\begin{proof}[Proof sketch]
+Take negligible travel ($v_x,v_y\to\infty$) and a laser zone long enough that blocking
+never binds. Then part $j$ becomes available at $r_j+a/v_{k(j)}$, and (C1)--(C3) reduce
+to the single-machine problems $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, both
+strongly NP-hard (Lenstra, Rinnooy Kan and Brucker, 1977). With all parts already in
+the zone and the conveyors stopped, the makespan version becomes a shortest Hamiltonian
+path in the metric $\tau$.
+\end{proof}
+
+Hence exact methods are realistic only for small instances or inside a rolling horizon,
+and heuristics are needed for the full dynamic problem. In Graham-style notation the
+problem is
+\[
+1\ \big|\ r_j,\ s_{ij}(t),\ \text{blocking},\ \text{time windows}\ \big|\ C_{\max},\ \textstyle\sum F_j,\ L_{\max},
+\]
+where the travel setup $s_{ij}(t)$ is both sequence- and time-dependent.
+
+%====================================================================
+\section{Correspondence with the simulator}
+%====================================================================
+
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth} X@{}}
+\toprule
+model element & simulator (\texttt{src/})\\
+\midrule
+odometer $D_k(t)$ & \texttt{Conveyor.displacement}\\
+$E_j$, $D_k(r_j)$, $D_k(S_j)$, $D_k(C_j)$, $X_j$ & \texttt{Part.entry\_coordinate}, \texttt{arrival\_displacement}, \texttt{start\_displacement}, \texttt{completion\_displacement}, \texttt{processing\_x} (exported in \texttt{parts.csv})\\
+upstream queue and spacing \eqref{eq:entry} & \texttt{Conveyor.can\_admit}, \texttt{Conveyor.admit}\\
+(C1) window & candidates are READY parts; processing starts on contact inside $[a,b]$\\
+(C2) interception & \texttt{motion.find\_intercept} and re-planning in \texttt{Simulation.\_drive\_laser}\\
+(C3) stop rule $\sigma$ & \texttt{stop\_policy.py}\\
+(C4)--(C5) blocking, non-idling & \texttt{Conveyor.advance(block\_unprocessed=True)}, \texttt{\_update\_blocking}\\
+$\tau$, $\ell$ & \texttt{motion.travel\_time}, \texttt{Laser.move\_towards}\\
+objectives & \texttt{metrics.summarize}, \texttt{optimization/objective\_functions.py}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\texttt{optimization/schedule\_check.py} takes a simulated run and verifies
+\eqref{eq:entry}, \eqref{eq:X}, \eqref{eq:C1}, \eqref{eq:C2} for every consecutive pair,
+(C3) through $D_k(C_j)=D_k(S_j)$, and the belt-kinematics bound
+$D_k(S_j)-D_k(S_i)\le v_k\cdot(\text{running time})$, with tolerances of the order of the
+simulator step. The tests run it for every policy, for stochastic instances, for an
+overloaded instance where blocking occurs and for the all-conveyors stop rule. Every
+schedule produced by a policy is therefore feasible for $\Pb$ (up to the step), and an
+optimal solution of $\Pb$ or $\Pb_\Delta$ is a valid benchmark for the policies.
+
+\begin{thebibliography}{9}
+\bibitem{lenstra77} J.K.~Lenstra, A.H.G.~Rinnooy Kan and P.~Brucker.
+Complexity of machine scheduling problems.
+\emph{Annals of Discrete Mathematics}, 1:343--362, 1977.
+\bibitem{graham79} R.L.~Graham, E.L.~Lawler, J.K.~Lenstra and A.H.G.~Rinnooy Kan.
+Optimization and approximation in deterministic sequencing and scheduling: a survey.
+\emph{Annals of Discrete Mathematics}, 5:287--326, 1979.
+\end{thebibliography}
+
+\end{document}

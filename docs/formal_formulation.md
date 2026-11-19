@@ -1,5 +1,7 @@
 # Formal mathematical formulation
 
+> PDF version: [docs/formulation/formal_formulation.pdf](formulation/formal_formulation.pdf) (LaTeX source alongside).
+
 This document states the laser–conveyor scheduling problem formally. It covers:
 
 1. an **exact continuous-time model** (the reference definition of the problem);
