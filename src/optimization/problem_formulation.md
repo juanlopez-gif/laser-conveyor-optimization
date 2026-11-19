@@ -1,4 +1,8 @@
-# Problem formulation (draft for the optimization phase)
+# Problem formulation (overview)
+
+> The rigorous version — exact continuous-time model, time-indexed MILP, decoder view,
+> online version and complexity — is in [docs/formal_formulation.md](../../docs/formal_formulation.md).
+> This page is the informal overview.
 
 ## Classification
 

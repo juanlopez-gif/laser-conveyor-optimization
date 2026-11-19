@@ -33,12 +33,11 @@ waits in an upstream queue (state **WAITING**) and enters as soon as possible.
 **B3.** States: WAITING (entry queue) → MOVING (entry zone) → READY (laser zone, not
 processed) → PROCESSING → COMPLETED (processed, travelling to the exit) → EXITED.
 
-**B4. Unprocessed part at the end of the laser zone.** The specification does not say
-what happens. By default (`unprocessed_at_zone_end: block`) **the conveyor stops** with
-the part at x = 45 cm until the laser processes it (no part is lost, *blocking*
-appears). Alternative `pass`: the part keeps going and exits unprocessed (counted in
-`parts_exited_unprocessed`). **This is the most important decision to validate with the
-real cell.**
+**B4. Unprocessed part at the end of the laser zone — CONFIRMED: the conveyor stops.**
+With `unprocessed_at_zone_end: block` (default) the conveyor stops with the part at
+x = 45 cm until the laser processes it (no part is lost; *blocking* appears). This was
+confirmed for the real cell. The alternative `pass` (the part exits unprocessed and is
+counted in `parts_exited_unprocessed`) is kept only for what-if studies.
 
 **B5.** Stopping rule during processing: only the part's conveyor
 (`processing_conveyor_only`); alternative `all_conveyors`. Extensible in

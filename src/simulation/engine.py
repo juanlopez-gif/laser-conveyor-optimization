@@ -145,6 +145,7 @@ class Simulation:
         if laser.state != LaserState.PROCESSING or t < laser.processing_end - EPS:
             return
         part = laser.finish_processing()
+        part.completion_displacement = self.conveyor_of(part).displacement
         part.status = PartStatus.COMPLETED
         part.completion_time = t
         self.n_completed += 1
@@ -161,6 +162,7 @@ class Simulation:
                         arrival_time=rec.time, processing_time=rec.processing_time,
                         due_date=rec.time + self.cfg.simulation.due_date_allowance,
                         x=0.0, y=conv.y)
+            part.arrival_displacement = conv.displacement
             self.parts.append(part)
             conv.buffer.append(part)
             self.log.log(t, EventKind.ARRIVAL, f"Part {part.id} arrived at Conveyor {conv.id}",
@@ -241,6 +243,8 @@ class Simulation:
         self.laser.start_processing(part, t)
         part.status = PartStatus.PROCESSING
         part.start_processing_time = t
+        part.processing_x = part.x
+        part.start_displacement = self.conveyor_of(part).displacement
         self.log.log(t, EventKind.LASER_ARRIVED,
                      f"Laser reached {part.id} at ({part.x:.1f}, {part.y:.1f})",
                      part.id, part.conveyor_id)

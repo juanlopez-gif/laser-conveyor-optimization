@@ -16,7 +16,7 @@ simulation:
   trace_interval: 0.1          # visualization / queue sampling period [s]
   min_part_spacing: 4.0        # min distance between consecutive parts on a belt [cm]
   # What happens when an UNPROCESSED part reaches the end of the laser zone:
-  #   block -> its conveyor stops until the laser processes it (no part is lost)
+  #   block -> its conveyor stops until the laser processes it (CONFIRMED for the real cell)
   #   pass  -> the part keeps going and leaves the system unprocessed ("missed")
   unprocessed_at_zone_end: block
   # Which conveyors stop while the laser processes a part:

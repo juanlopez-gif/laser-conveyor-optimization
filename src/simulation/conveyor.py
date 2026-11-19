@@ -26,6 +26,7 @@ class Conveyor:
     parts: list[Part] = field(default_factory=list)       # on the belt, upstream -> ordered by entry
     buffer: deque[Part] = field(default_factory=deque)    # WAITING parts before the entry
     stop_reasons: set[str] = field(default_factory=set)
+    displacement: float = 0.0     # belt odometer D_k(t): total distance travelled [cm]
 
     # ------------------------------------------------------------------ state
     @property
@@ -70,6 +71,7 @@ class Conveyor:
         part.x, part.y = 0.0, self.y
         part.status = PartStatus.MOVING
         part.entry_time = time
+        part.entry_coordinate = self.displacement      # E_j in the formal model
         self.parts.append(part)
         return part
 
@@ -100,4 +102,5 @@ class Conveyor:
                     distance = min(distance, end - p.x)
         for p in self.parts:
             p.x += distance
+        self.displacement += distance
         return distance

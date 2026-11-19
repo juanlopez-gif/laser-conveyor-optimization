@@ -50,6 +50,12 @@ class Part:
     start_processing_time: float | None = None
     completion_time: float | None = None
     exit_time: float | None = None
+    # Belt-odometer values (see docs/formal_formulation.md):
+    arrival_displacement: float | None = None   # D_k(r_j)
+    entry_coordinate: float | None = None       # E_j  (x_j(t) = D_k(t) - E_j on the belt)
+    start_displacement: float | None = None     # D_k(S_j)
+    completion_displacement: float | None = None  # D_k(C_j)
+    processing_x: float | None = None           # X_j = D_k(S_j) - E_j
 
     @property
     def number(self) -> int:
@@ -95,5 +101,9 @@ class Part:
             "completion_time": self.completion_time, "exit_time": self.exit_time,
             "waiting_time": self.waiting_time, "flow_time": self.flow_time,
             "lateness": self.lateness, "processed": self.is_processed,
+            "processing_x": self.processing_x, "entry_coordinate": self.entry_coordinate,
+            "arrival_displacement": self.arrival_displacement,
+            "start_displacement": self.start_displacement,
+            "completion_displacement": self.completion_displacement,
             "final_x": round(self.x, 4), "y": self.y,
         }

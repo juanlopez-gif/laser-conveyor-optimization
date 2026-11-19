@@ -82,7 +82,7 @@ It prints the head of the event log and a KPI summary, and writes
 | file | content |
 |---|---|
 | `summary.json`, `summary.csv` | every metric of the run |
-| `parts.csv` | one row per part (arrival, start, completion, exit, waiting, flow, lateness) |
+| `parts.csv` | one row per part (arrival, start, completion, exit, waiting, flow, lateness, processing position and belt-odometer values of the formal model) |
 | `events.log`, `events.csv` | readable / tabular event log |
 | `queue_lengths.csv` | queue length per conveyor every 0.1 s |
 | `trace.json` | state trace for the visualization |
@@ -205,6 +205,10 @@ Definitions in [src/simulation/metrics.py](src/simulation/metrics.py).
   plus a Pareto filter.
 * `arrivals.mode: explicit`: static instances for offline methods (MILP, CP-SAT, DP).
 * `src/simulation/stop_policy.py`: the conveyor stopping rule is swappable.
+* **Formal mathematical model:** [docs/formal_formulation.md](docs/formal_formulation.md) —
+  exact continuous-time model, time-indexed MILP, decoder view, online version and
+  complexity. `src/optimization/schedule_check.py` verifies that every simulated schedule
+  is feasible for that model (`tests/test_formulation.py`).
 * Documentation: [problem_formulation.md](src/optimization/problem_formulation.md),
   [decision_variables.md](src/optimization/decision_variables.md),
   [docs/future_optimization.md](docs/future_optimization.md),
@@ -242,7 +246,7 @@ laser-conveyor-optimization/
 ├── visualization/               HTML/JS canvas player
 ├── experiments/                 policy comparison
 ├── tests/                       pytest
-└── docs/                        description, assumptions, model, bicycle problem
+└── docs/                        description, assumptions, formal formulation, bicycle problem
 ```
 
 ## Tests
@@ -255,6 +259,6 @@ python -m pytest
 
 Summary (details and rationale in [docs/assumptions.md](docs/assumptions.md)): custom
 fixed-step engine instead of SimPy; the laser *intercepts* the moving part; an
-unprocessed part reaching the end of the laser zone **blocks its conveyor** (`block`
-mode, configurable to `pass`); parts queue upstream when the entry is occupied; no
+unprocessed part reaching the end of the laser zone **stops its conveyor** (`block`
+mode, confirmed for the real cell; `pass` kept for what-if studies); parts queue upstream when the entry is occupied; no
 accelerations; the laser only selects parts that are already inside the laser zone.
