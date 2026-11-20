@@ -241,7 +241,7 @@ consolidated results):
 | `rollout` policy | `src/policies/rollout.py` | online look-ahead policy; beats nearest_job on 28/30 seeds |
 | `nearest_head` policy (0.4.0) | `src/policies/nearest_head.py` | belt-order rule derived from the metaheuristics' best sequences |
 | `rl` policy (0.5.0, retrained 0.6.0) | `src/rl/`, `src/policies/rl_policy.py` | SMDP reinforcement learning: behaviour cloning of rollout + DAgger, γ = 1, validation-based selection; see [docs/methods/rl.md](docs/methods/rl.md) |
-| `rl2` (0.7.1, model only, untrained) | `src/rl2/` | set-of-tokens features and a Transformer pointer dispatcher with a value head, sizes S/M/L; see [docs/methods/rl2.md](docs/methods/rl2.md) |
+| `rl2` (0.7.1–0.7.2) | `src/rl2/` | set-of-tokens features and a Transformer pointer dispatcher with a value head (sizes S/M/L), trained by expert iteration on the general problem (N belts, per-belt speeds and rates); see [docs/methods/rl2.md](docs/methods/rl2.md). Training on a larger machine (GPU, resume, Slurm): [docs/methods/remote_training.md](docs/methods/remote_training.md) |
 | `fastsim` (0.7.0) | `src/fastsim/` | event-driven simulator, ~20× (vs `dt = 0.05`) to ~80× (vs `dt = 0.01`) faster, for training and search; see [docs/methods/fastsim.md](docs/methods/fastsim.md) |
 | hybrids (0.6.0) | `src/policies/hybrid.py` | `rl_rollout`, `rl_filter`, `rl_gated`, `rl_ensemble`; `rl_rollout` is the best policy at default load; see [docs/methods/hybrid.md](docs/methods/hybrid.md) |
 | lower bounds | `src/optimization/lower_bounds.py` | proved bounds to measure optimality gaps |

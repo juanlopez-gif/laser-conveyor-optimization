@@ -21,7 +21,8 @@ Token types and features (``docs/methods/rl2.md`` §2 has the full table)
   remaining processing time, committed target offset.
 * **context** (one), ``CTX_F``: laser speeds and motion model, mean processing time,
   total offered load, geometry, pre-positioning mode one-hot, blocking-penalty
-  weights λ_N and λ_T, and whether arrivals are still coming.
+  weights λ_N and λ_T, whether arrivals are still coming, and the time left until
+  the arrival horizon of the episode (training episodes are finite).
 
 Scales: lengths are divided by the belt length L, speeds by ``V_REF`` = 3 cm/s (the
 real belt), and times go through ``slog(t) = sign(t) log(1 + |t| / T_REF)`` with
@@ -49,7 +50,7 @@ UNREACHABLE = 5.0   # slog value used for "no meeting point"
 PART_F = 23
 CONV_F = 11
 LASER_F = 9
-CTX_F = 17
+CTX_F = 18
 
 MODES = ("none", "when_idle", "always")
 
@@ -207,6 +208,7 @@ def encode(sim: FastSim, candidates=None) -> Observation:
         slog(lam_n),
         lam_t,
         arrivals_left,
+        slog(max(cfg.simulation.arrival_horizon - t, 0.0)),
         len(rows) / 10.0,
         len(cands) / 5.0,
     ]

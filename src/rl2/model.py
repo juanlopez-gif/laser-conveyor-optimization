@@ -65,6 +65,10 @@ class Batch:
     laser: torch.Tensor       # (B, LASER_F)
     ctx: torch.Tensor         # (B, CTX_F)
 
+    def to(self, device) -> "Batch":
+        return Batch(*(getattr(self, f).to(device, non_blocking=True) for f in
+                       ("part", "part_valid", "cand", "conv", "conv_valid", "laser", "ctx")))
+
 
 def collate(obs: list[Observation]) -> Batch:
     B = len(obs)
@@ -126,7 +130,8 @@ class DispatchNet(nn.Module):
             self.emb_conv(b.conv) + te[TYPE_CONV],
             self.emb_part(b.part) + te[TYPE_PART],
         ], dim=1)
-        valid = torch.cat([torch.ones(B, 2, dtype=torch.bool), b.conv_valid, b.part_valid], 1)
+        valid = torch.cat([torch.ones(B, 2, dtype=torch.bool, device=b.part.device),
+                           b.conv_valid, b.part_valid], 1)
         h = self.norm(self.encoder(x, src_key_padding_mask=~valid))
         w = valid.unsqueeze(-1).to(h.dtype)
         g = (h * w).sum(1) / w.sum(1)
@@ -185,8 +190,21 @@ class NetPolicy:
 
 
 def save(net: DispatchNet, path, extra: dict | None = None) -> None:
-    torch.save({"config": asdict(net.cfg), "state": net.state_dict(), "extra": extra or {}},
-               path)
+    """Weights are always stored on the CPU, so a model trained on a GPU loads anywhere."""
+    state = {k: v.detach().cpu() for k, v in net.state_dict().items()}
+    torch.save({"config": asdict(net.cfg), "state": state, "extra": extra or {}}, path)
+
+
+def resolve_device(name: str = "auto") -> "torch.device":
+    """``auto``: CUDA if available, else Apple MPS, else CPU."""
+    if name == "auto":
+        if torch.cuda.is_available():
+            name = "cuda"
+        elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+            name = "mps"
+        else:
+            name = "cpu"
+    return torch.device(name)
 
 
 def load(path) -> DispatchNet:

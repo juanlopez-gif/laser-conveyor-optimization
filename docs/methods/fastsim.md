@@ -153,6 +153,19 @@ Full tables: `results/experiments/fastsim_val_dt01/summary.md`,
 * **`clone()` is independent:** playing the clone to the end leaves the original
   unchanged, and the original then continues exactly like a fresh run.
 
+### 4.4 General cells (0.7.2)
+
+* **Setup:** 40 general cells (1–6 belts, independent speeds and rates, other laser
+  speeds and geometry; `rl2.expert_iteration.general_config`).
+* **Result:** 0 checker violations.
+* **Agreement with the engine at `dt = 0.01`** is lower than on the real cell:
+  * identical order in 67 % of runs;
+  * mean |KPI diff| 0.97 %.
+* **Cause:** the engine's own lag. Rerunning the worst cases at `dt = 0.001` and
+  `0.0002` makes the difference shrink linearly to about 0.01 %.
+* **Consequence:** general-cell results need `dt ≤ 0.001` or this simulator. Details in
+  [rl2.md](rl2.md) §7.
+
 ## 5. Reproduce
 
 ```bash

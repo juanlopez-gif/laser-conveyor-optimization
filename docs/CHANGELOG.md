@@ -6,6 +6,131 @@ summarized from the git history.
 
 ---
 
+## 0.7.2 — 2026-11-20 — Strong-RL plan, phase 3: expert iteration on the general problem; portable training
+
+The user asked to start phase 3. During it, the user stated the target precisely:
+**the problem to solve is the general one**:
+
+* N conveyors with speeds v_1 … v_N;
+* arrival rates λ_1 … λ_N;
+* processing time t;
+* laser speeds vx, vy;
+* any other parameter that can be generalized.
+
+The real cell is one instance of it. The user approved the ranges below and asked to
+make training portable to a larger machine. Details: `docs/methods/rl2.md` §6–§9 and
+`docs/methods/remote_training.md`.
+
+### Search teacher (`src/rl2/search.py`)
+
+* **What:** a rollout teacher on the fast simulator.
+  * It tries each candidate (top 6 by the base policy, always including the base
+    policy's choice).
+  * The base policy then runs until every part known at the decision is processed.
+  * The cost is the sum of their completion times. The base choice is kept on ties.
+  * The base policy is `nearest_job` in iteration 0 and the current network afterwards
+    (as in `rl_rollout`).
+  * All look-aheads of one decision advance in lock-step, with one batched network
+    call per step.
+* **Why:** 0.7.1 showed that per-decision network calls are the bottleneck; batching
+  them removes most of that cost.
+* **Fairness:**
+  * new `FastSim.lookahead_clone(scenario, window_s)` drops the real future arrivals;
+  * a test checks that changing the real future does not change any cost;
+  * another test checks that lock-step batching gives exactly the costs of running each
+    look-ahead alone.
+* **Variants checked** (validation seeds 2000–2019, rule base, vs `nearest_job`):
+
+  | teacher | real cell | heavy example |
+  |---|---|---|
+  | known parts (**used**) | −3.8 % | −2.1 % |
+  | with the blocking penalty | −5.6 % | +5.8 % |
+  | with 4 sampled futures | +7.9 % | +13.2 % |
+
+  The penalty and sampled futures stay available as options but are not used (same
+  conclusion as the 0.4 penalty-aware look-ahead).
+
+### Expert iteration (`src/rl2/expert_iteration.py`, `experiments/rl2_train.py`)
+
+* **Iteration 0:** the rule teacher acts (10 % random actions) and labels every
+  decision with ≥ 2 candidates. Iterations k ≥ 1: the rollout over `net_{k-1}` labels,
+  while `net_{k-1}` acts and the teacher acts with probability 0.3 (DAgger).
+* **Losses:** cross-entropy to the softmin of the look-ahead costs (temperature 1 s),
+  plus 0.25 × MSE of the normalized cost-to-go.
+* **Gating:** validation on the real cell, the heavy example and general cells. A
+  network is kept only if the mean paired Δ vs `nearest_job` improves.
+* **Context token:** one more feature, the time left to the episode's arrival
+  horizon (`CTX_F` 17 → 18). *Why:* the value head predicts the episode's cost-to-go,
+  which depends on it.
+
+### General problem (`GENERAL`, `general_config`, `sample_config`)
+
+* **Training mix** (seeds 100000+): 25 % the real cell, 10 % the heavy example, 65 %
+  general cells with:
+  * N = 1–6 belts;
+  * v_k ~ U[1.5, 6] cm/s per belt;
+  * Poisson λ_k per belt, with processing load Σ λ_k · mean p ~ U[0.3, 0.95] split by
+    random weights;
+  * processing time mean U[1.5, 4] s, constant, uniform or normal;
+  * vx, vy ~ U[5, 20] cm/s each;
+  * simultaneous or sequential axes;
+  * geometry × U[0.5, 1.5];
+  * λ_N ~ U[0, 20] s, λ_T ~ U[0, 2];
+  * either conveyor stop rule;
+  * `none` (70 %) or `when_idle`.
+* **Validation:** the real cell and the heavy example (seeds 2000–2029, `none`), plus
+  60 general cells (seeds 2500–2559, `none`).
+* **Not generalized yet** (stated to the user):
+  * a processing-time distribution per belt or per part type;
+  * laser acceleration;
+  * the `pass` rule.
+* **First training run stopped.** `rl2_s` had sampled only a few parameters of the
+  3-belt cell, so it was stopped after its iteration 0 and replaced by `rl2_gen_s`.
+  * Its iteration-0 network alone gave −3.8 ±1.8 % (real) and −3.9 ±1.4 % (heavy) vs
+    `nearest_job`; the rollout over it gave −6.0 % and −4.9 %.
+  * Kept outside the repository in `results/experiments/rl2_s_narrow/`.
+
+### Fast simulator on general cells (`experiments/fastsim_validation.py --loads general`)
+
+* **Checker:** 0 violations on 40 general cells × 2 modes × 2 rules.
+* **Agreement with the engine at `dt = 0.01`** is lower than on the real cell
+  (identical order 67 %, mean |KPI diff| 0.97 %, max 6.4 %).
+* **The engine is wrong, not the fast simulator.** Rerunning the worst cases at
+  `dt = 0.001` and `0.0002` makes the difference shrink linearly to about 0.01 %: it is
+  the engine's O(dt) lag, larger with faster belts and laser.
+* **Consequence for phase 4:** general-cell numbers need `dt ≤ 0.001` or the exact
+  simulator.
+* `fastsim_validation.py` gained `--loads` (including `general`) and a shared
+  `make_config`.
+
+### Portable training (`docs/methods/remote_training.md`, `experiments/remote/`)
+
+* **Why:** network training is the bottleneck on the laptop (≈ 5 min per epoch of
+  50 000 decisions, CPU), and sizes M/L need a GPU. The user agreed to prepare the code
+  for a larger machine.
+* **What:**
+  * `--device auto|cpu|cuda|mps` for training. Workers stay on the CPU, and models are
+    saved with CPU weights (`model.save`, `Batch.to`, `resolve_device`).
+  * **Checkpoint/resume:** the full run state is written atomically to
+    `results/experiments/<tag>/state.pkl` after each iteration, and `--resume`
+    continues it. Experiment arguments are taken from the saved run; only machine and
+    stopping arguments may change.
+  * Repository-relative paths in logs, and a per-machine record in the log.
+  * `--workers` defaults to all CPUs; `--horizon` for quick checks.
+  * Scripts: `setup_env.sh` (venv, CUDA PyTorch, tests, 2-minute check),
+    `run_train.sh` (resume-aware launcher) and `slurm_train.sbatch` (requeue-safe
+    template).
+  * `.gitattributes` keeps shell scripts with LF line endings.
+* **Tests:** `tests/test_rl2_training.py`: device, CPU save, an end-to-end checkpoint
+  and resume, and a CUDA-vs-CPU check that runs only where CUDA exists.
+
+### Results
+
+General training run `rl2_gen_s` (laptop, size S): in progress; results will be added
+to `docs/methods/rl2.md` §8.2.
+
+---
+
 ## 0.7.1 — 2026-11-20 — Strong-RL plan, phase 2: token representation and Transformer pointer model
 
 The user accepted the revised phase-1 acceptance and asked to start phase 2

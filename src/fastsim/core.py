@@ -143,6 +143,21 @@ class FastSim:
         c._memo = dict(self._memo)
         return c
 
+    def lookahead_clone(self, scenario=(), window_s: float = 0.0) -> "FastSim":
+        """Clone for look-ahead search with **online information only**.
+
+        The real future arrivals are dropped; ``scenario`` (records with ``time``,
+        ``conveyor_index``, ``processing_time``, all after ``t``) replaces them, e.g.
+        arrivals sampled from the known rates. The clone's arrival horizon becomes
+        ``t + window_s`` so it drains after the synthetic window.
+        """
+        c = self.clone()
+        c.arr = tuple(sorted(((r.time, r.conveyor_index, r.processing_time) for r in scenario),
+                             key=lambda a: (a[0], a[1])))
+        c.next_arr = 0
+        c.horizon = self.t + (window_s if c.arr else 0.0)
+        return c
+
     # ---------------------------------------------------------------- helpers
     def x(self, j: int) -> float:
         """Current position of part j (0 while waiting)."""

@@ -43,11 +43,21 @@ MODES = ("none", "when_idle", "always")
 RULES = ("nearest_job", "nearest_head")
 
 
+def make_config(load, mode, rule, seed, dt):
+    """``load`` is a key of LOADS, or ``general``: a random cell of the general problem
+    (``rl2.expert_iteration.general_config``, 0.7.2)."""
+    items = [f"policy.name={rule}", f"simulation.dt={dt}"]
+    if load == "general":
+        from rl2.expert_iteration import general_config
+        return general_config(seed, mode=mode, extra=tuple(items))[0]
+    return load_config(LOADS[load], set_items=[
+        "arrivals.mode=stochastic", f"simulation.seed={seed}",
+        f"laser.prepositioning={mode}"] + items)
+
+
 def run_one(job: tuple) -> dict:
     load, mode, rule, seed, dt = job
-    cfg = load_config(LOADS[load], set_items=[
-        "arrivals.mode=stochastic", f"simulation.seed={seed}", f"policy.name={rule}",
-        f"laser.prepositioning={mode}", f"simulation.dt={dt}"])
+    cfg = make_config(load, mode, rule, seed, dt)
     t0 = time.perf_counter()
     res = Simulation(cfg, record_trace=False).run()
     t1 = time.perf_counter()
@@ -79,9 +89,7 @@ def engine_vs_engine(job: tuple) -> dict:
     load, mode, rule, seed, dt = job
 
     def run(step):
-        cfg = load_config(LOADS[load], set_items=[
-            "arrivals.mode=stochastic", f"simulation.seed={seed}", f"policy.name={rule}",
-            f"laser.prepositioning={mode}", f"simulation.dt={step}"])
+        cfg = make_config(load, mode, rule, seed, step)
         res = Simulation(cfg, record_trace=False).run()
         order = [p.number - 1 for p in sorted(
             (p for p in res.parts if p.start_processing_time is not None),
@@ -107,7 +115,7 @@ def summarize(rows: list[dict]) -> str:
             "max abs KPI diff [%] | max start-time diff while orders agree [s] | "
             "runs with checker errors | speed-up (wall) |\n|---|---|---|---|---|---|---|---|---|")
     lines = [head, block(rows, "**all**")]
-    for load in LOADS:
+    for load in list(LOADS) + ["general"]:
         for mode in MODES:
             sub = [r for r in rows if r["load"] == load and r["mode"] == mode]
             if sub:
@@ -128,11 +136,13 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--modes", nargs="+", choices=MODES, default=list(MODES))
     ap.add_argument("--tag", default="fastsim_validation")
+    ap.add_argument("--loads", nargs="+", choices=list(LOADS) + ["general"],
+                    default=list(LOADS))
     ap.add_argument("--engine-baseline", action="store_true",
                     help="compare the engine at --dt with itself at --dt/10 instead")
     args = ap.parse_args(argv)
     seeds = range(args.seed_base, args.seed_base + args.seeds)
-    jobs = [(l, m, r, s, args.dt) for l in LOADS for m in args.modes for r in RULES for s in seeds]
+    jobs = [(l, m, r, s, args.dt) for l in args.loads for m in args.modes for r in RULES for s in seeds]
     t0 = time.time()
     fn = engine_vs_engine if args.engine_baseline else run_one
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
