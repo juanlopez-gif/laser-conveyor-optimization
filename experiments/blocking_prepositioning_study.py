@@ -42,20 +42,26 @@ KPIS = ("avg_flow_time", "penalized_flow_time", "blocking_events", "total_blocke
 BASELINE = ("nearest_job", "none")
 
 
-def run_one(job: tuple[str, str, str, int]) -> dict:
-    load, mode, policy, seed = job
-    name, _, objective = policy.partition("@")
+def run_one(job: tuple) -> dict:
+    load, mode, policy, seed, *rest = job
+    extra_sets = rest[0] if rest else ()
+    name, *specs = policy.split("@")
     sets = ["arrivals.mode=stochastic", f"simulation.seed={seed}", f"policy.name={name}",
             f"laser.prepositioning={mode}"]
-    if objective:                      # rollout@avg_flow_time  or  rl@model=models/rl_bc.zip
-        key, eq, value = objective.partition("=")
+    for spec in specs:                 # rollout@avg_flow_time  or  rl@model=models/rl_bc.zip
+        key, eq, value = spec.partition("=")   # several: rl_filter@model=m.zip@top_k=3
         sets.append(f"policy.params.{name}.{key}={value}" if eq
-                    else f"policy.params.{name}.objective={objective}")
+                    else f"policy.params.{name}.objective={spec}")
+    sets += list(extra_sets)
     cfg = load_config(LOADS[load], set_items=sets)
     t0 = time.perf_counter()
-    s = Simulation(cfg, record_trace=False).run().summary
+    sim = Simulation(cfg, record_trace=False)
+    s = sim.run().summary
     row = {"load": load, "mode": mode, "policy": policy, "seed": seed,
            "wall_s": round(time.perf_counter() - t0, 3)}
+    stats = sim.policy.stats() if hasattr(sim.policy, "stats") else {}
+    row["decision_ms"] = round(stats.get("decision_time_mean_ms", float("nan")), 3)
+    row["rollout_share"] = round(stats.get("rollout_share", float("nan")), 4)
     for k in KPIS:
         row[k] = OBJECTIVES[k](s) if k in OBJECTIVES else s[k]
     row["parts_completed"] = s["parts_completed"]

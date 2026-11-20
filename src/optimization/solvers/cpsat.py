@@ -640,10 +640,13 @@ def solve_cpsat(inst: Instance, objective: str = "makespan", time_limit: float =
         info.update({"replay_objective": round(ev.objective, 4), "replay_feasible": ev.feasible,
                      "replay_violations": len(ev.violations),
                      "replay_minus_model": round(ev.objective - model_value, 4)})
-    # The P_Delta bound is reported as a lower bound of the problem. With ready_dispatch
-    # the model is a *restriction* of P (not a relaxation), so its bound is not a valid
-    # bound for P and is only kept in info["model_bound"].
-    return Solution(sequence=sequence, lower_bound=None if ready_dispatch else bound,
+    # The P_Delta bound is NOT returned as a lower bound of the problem (0.6.0, external
+    # audit 2026-11-19): P_Delta rounds releases and travel up to the 0.1 s grid, so it is
+    # not a relaxation of P and its proven optimum can exceed a feasible continuous
+    # schedule (one part: 5.90 s on the grid vs 5.85 s replayed at dt = 0.01). It stays in
+    # info["model_bound"] as the certificate *of the grid model*; ``proven_optimal`` also
+    # refers to P_Delta only. Rigorous bounds for P come from optimization.lower_bounds.
+    return Solution(sequence=sequence, lower_bound=None,
                     proven_optimal=status == cp_model.OPTIMAL, info=info)
 
 

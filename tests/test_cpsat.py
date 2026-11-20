@@ -56,7 +56,8 @@ def test_single_part_optimum_by_reasoning():
         assert sol.proven_optimal
         assert sol.sequence == ["P001"]
         assert sol.info["model_objective"] == pytest.approx(expected, abs=1e-6)
-        assert sol.lower_bound == pytest.approx(expected, abs=1e-6)
+        assert sol.info["model_bound"] == pytest.approx(expected, abs=1e-6)
+        assert sol.lower_bound is None          # grid bound is not a bound for P (0.6.0)
         assert sol.info["replay_feasible"]
 
 
@@ -91,7 +92,7 @@ def test_blocking_and_all_conveyors_stop_rule():
         sol = solve_cpsat(inst, "makespan", time_limit=15, seed=0)
         assert sol.sequence is not None and sol.info["replay_feasible"]
         assert sol.info["replay_violations"] == 0
-        assert sol.lower_bound <= sol.info["replay_objective"] + TOL
+        assert sol.info["model_bound"] <= sol.info["replay_objective"] + TOL
 
 
 def test_discrete_decoder_respects_window():
@@ -157,7 +158,7 @@ def test_agreement_with_exhaustive(enumerated, seed, objective):
     sol = solve_cpsat(inst, objective, time_limit=20, seed=0)
     assert sol.proven_optimal
     assert sol.info["model_objective"] <= ex_val + TOL
-    assert sol.lower_bound <= sol.info["replay_objective"] + TOL
+    assert sol.info["model_bound"] <= sol.info["replay_objective"] + TOL
     assert sol.info["replay_feasible"] and sol.info["replay_violations"] == 0
 
     # simulator semantics: the replayed CP-SAT order matches the exhaustive optimum
@@ -165,3 +166,19 @@ def test_agreement_with_exhaustive(enumerated, seed, objective):
     assert ready.proven_optimal and ready.info["replay_feasible"]
     assert abs(ready.info["replay_objective"] - ex_val) <= TOL
     assert abs(ready.info["replay_objective"] - ready.info["model_objective"]) <= TOL
+
+
+def test_benchmark_never_reports_negative_gap_to_lower_bound():
+    """External audit 2026-11-19: the CP-SAT grid optimum can exceed a feasible continuous
+    schedule (reported case: one part, 5.90 s on the grid vs 5.85 s at dt = 0.01). The
+    grid value must not be used as a lower bound, so the gap to the reported bound is
+    never negative."""
+    from optimization.benchmark import run_benchmark
+    inst = make_instance([(0.0, 1, 2.5)], "single")
+    rows = run_benchmark([inst], ["cpsat"], "makespan", time_limit=10, seed=0)
+    r = rows[0]
+    assert r["proven_optimal_model"] and r["feasible"]
+    assert r["solver_lower_bound"] is None              # grid bound kept apart
+    assert r["lower_bound"] < r["model_bound"]          # rigorous bound, not the grid one
+    assert r["lower_bound"] <= r["objective"] + 1e-9
+    assert r["gap_to_lb_pct"] is None or r["gap_to_lb_pct"] >= -1e-9

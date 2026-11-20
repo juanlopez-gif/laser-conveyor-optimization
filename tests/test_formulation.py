@@ -45,3 +45,25 @@ def test_checker_detects_a_violation():
     part.processing_x = cfg.geometry.active_end + 5.0           # outside the laser zone
     errors = check_schedule(result)
     assert any(part.id in e for e in errors)
+
+
+# ------------------------------------------------ negative controls (0.6.0, external audit)
+def test_checker_detects_zero_processing_duration():
+    """External audit 2026-11-19: C_j = S_j (zero-length processing) used to pass."""
+    cfg = load_config(set_items=["simulation.arrival_horizon=60"])
+    result = Simulation(cfg, record_trace=False).run()
+    assert check_schedule(result) == []
+    part = next(p for p in result.parts if p.completion_time is not None)
+    part.completion_time = part.start_processing_time
+    errors = check_schedule(result)
+    assert any(part.id in e and "processed for" in e for e in errors)
+
+
+def test_checker_detects_a_truncated_run():
+    """External audit 2026-11-19: a run stopped before finishing its parts used to pass."""
+    cfg = load_config(set_items=["simulation.arrival_horizon=60", "simulation.max_time=3"])
+    result = Simulation(cfg, record_trace=False).run()
+    assert result.summary["parts_completed"] < len(result.parts)
+    assert any("truncated run" in e for e in check_schedule(result))
+    # a deliberately partial look can opt out
+    assert check_schedule(result, require_complete=False) == []

@@ -27,7 +27,7 @@
 \title{\textbf{Scheduling a Shared XY Laser over Parallel Conveyors}\\[0.3em]
 \large Formal mathematical formulation}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- version 0.4.0}
+\date{November 2026 --- version 0.6.0}
 
 \begin{document}
 \maketitle
@@ -420,6 +420,21 @@ part is at the end of the zone. The slack $v_k\Delta$ is the discretization tole
 conveyor may stop one step early instead of overshooting $b$ (the simulator stops
 exactly at $b$ with a partial step).
 
+\paragraph{Blocking witness tied to the physical state (version 0.6.0).} (M13)--(M14)
+only \emph{allow} $\beta_{jt}=1$. When the belt is already stopped by a processing
+operation, (M12) does not need $\beta$, so a penalized objective could set
+$\beta_{jt}=0$ although $j$ sits at the zone end (external audit, 2026-11-19), whereas
+the simulator and the continuous definition $(S_j-B_j)^+$ count that interval as
+blocked. When $\Pi$ is in the objective we therefore add
+\begin{equation}
+D_{k(j),t}-E_j\le b-v_{k(j)}\Delta-\varepsilon+M\Big(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Big)
+\qquad\forall j,t \tag{M15}
+\end{equation}
+with a small $\varepsilon>0$: an unstarted part inside the last step of the zone
+\emph{is} blocking. With (M13)--(M15), $\beta_{jt}=1$ exactly when $j$ has not started
+and lies within $v_k\Delta$ of $b$, whatever the reason the belt is stopped, so $T_B$ and
+$N_B$ match the simulator up to the $O(\Delta)$ tolerance of (M14).
+
 \subsection{Objectives in linear form}
 \begin{itemize}[nosep]
 \item $C_{\max}\ge C_j$ and $L_{\max}\ge C_j-d_j$ for all $j$;
@@ -427,9 +442,10 @@ exactly at $b$ with a partial step).
 \item downtime: $\Delta\sum_{k,t}(1-u_{kt})$;
 \item blocking: with the variables $\beta_{jt}$ of the non-idling constraints,
 $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with $\gamma_j\in\{0,1\}$,
-$\gamma_j\ge\beta_{jt}$ for all $t$, and $\Pi=\lambda_N N_B+\lambda_T T_B$. Under
-non-idling, $\beta_{jt}=1$ is forced exactly when the belt must stop for $j$; minimizing
-$\Pi$ keeps it at $0$ otherwise. (Not yet implemented in the CP-SAT model.)
+$\gamma_j\ge\beta_{jt}$ for all $t$, and $\Pi=\lambda_N N_B+\lambda_T T_B$, together with
+(M15), which makes $\beta_{jt}$ the physical blocking indicator (without it, blocked steps
+that overlap a processing stop could be dropped; corrected in version 0.6.0). (Not yet
+implemented in the CP-SAT model.)
 \item travel distance: add immediate-successor binaries $z_{ij}$ (with a dummy start
 $0$): $\sum_i z_{ij}=1$, $\sum_j z_{ij}\le 1$, $z_{ij}\le w_{ij}$,
 $w_{il}+w_{lj}\le 2-z_{ij}$ for all $l$ (nothing in between), $\xi_{ij}\ge\pm(X_j-X_i)$ and

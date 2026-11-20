@@ -96,30 +96,37 @@ def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float
     def gap(t: float) -> float:                    # >0: laser still late at time t
         return tt(x0 + part_speed * (t - t0)) - t
 
-    if gap(t_lim) > 0:                             # cannot meet before the limit
-        if hold_at_limit:                          # part waits at the limit for the laser
-            return Intercept(max(tt(x_limit), t_lim), x_limit, py)
-        return None
+    # Exact earliest root of gap() on [t0, t_lim] (fixed in 0.6.0 after the external
+    # audit of 2026-11-19). Both travel-time models are piecewise linear in the target
+    # x, with kinks at x = lx and x = lx +- vx * |dy| / vy, so gap() is piecewise linear
+    # in t: check the segments between kinks in order and solve the first one that
+    # reaches gap <= 0 by linear interpolation. The previous version assumed gap() to be
+    # decreasing and returned early when gap(t_lim) > 0; that holds while the belt is
+    # slower than the laser's X axis (always the case in the default cell and in every
+    # study so far), but misses an earlier meeting when a faster belt carries the part
+    # towards the laser. ``samples`` and ``iterations`` are kept for backward
+    # compatibility (unused).
     if gap(t0) <= 0:
         return Intercept(t0, x0, py)
-
-    # gap() is continuous; scan for the first sign change, then bisect.
-    lo, hi = t0, t_lim
-    prev = t0
-    for k in range(1, samples + 1):
-        t = t0 + (t_lim - t0) * k / samples
-        if gap(t) <= 0:
-            lo, hi = prev, t
-            break
-        prev = t
-    for _ in range(iterations):
-        mid = 0.5 * (lo + hi)
-        if gap(mid) <= 0:
-            hi = mid
-        else:
-            lo = mid
-    x = x0 + part_speed * (hi - t0)
-    return Intercept(hi, x, py)
+    dy_t = abs(py - ly) / vy
+    kinks = {t0, t_lim}
+    for xk in (lx, lx - vx * dy_t, lx + vx * dy_t):
+        tk = t0 + (xk - x0) / part_speed
+        if t0 < tk < t_lim:
+            kinks.add(tk)
+    pts = sorted(kinks)
+    for a, b in zip(pts, pts[1:]):
+        ga, gb = gap(a), gap(b)
+        if gb <= 0:
+            t = a + (b - a) * ga / (ga - gb) if ga > gb else b
+            t = min(max(t, a), b)
+            if gap(t) > 1e-9:                      # guard against round-off
+                t = b
+            return Intercept(t, x0 + part_speed * (t - t0), py)
+    # cannot meet before the limit
+    if hold_at_limit:                              # part waits at the limit for the laser
+        return Intercept(max(tt(x_limit), t_lim), x_limit, py)
+    return None
 
 
 def path_length(dx: float, dy: float) -> float:

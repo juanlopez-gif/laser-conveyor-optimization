@@ -37,7 +37,7 @@ complete PRISMA counts.
 | review point | status in our work | action |
 |---|---|---|
 | **A. Belt order is not automatically processing order**: head-only actions are a restricted policy class; measure the restriction gap. | Correct. `nearest_head` and the RL action space only serve conveyor heads. The belt-order observation of phase 2 is empirical (metaheuristic sequences), not a dominance theorem. | **Done (0.5.2):** belt order is not dominant; gap 0 % at default load, up to 3.5 % with bursts (`docs/methods/restriction_gap.md`). |
-| **B. NP-hardness needs a realizable reduction**: check whether it holds for fixed N = 3, whether release dates stay exogenous, which stop rule. | The old sketch used limiting cases (infinite speeds, infinite zone). | **Done (0.5.2):** replaced by a realizable reduction (time scaling by $M>n^2	au_{\max}$, one part per conveyor, $\sigma=I$, general N); fixed N and `all_conveyors` stated as open; makespan not claimed. |
+| **B. NP-hardness needs a realizable reduction**: check whether it holds for fixed N = 3, whether release dates stay exogenous, which stop rule. | The old sketch used limiting cases (infinite speeds, infinite zone). | **Done (0.5.2):** replaced by a realizable reduction (time scaling by $M>n^2\tau_{\max}$, one part per conveyor, $\sigma=I$, general N); fixed N and `all_conveyors` stated as open; makespan not claimed. |
 | **C. CP-SAT exactness is for the discretized model.** | Already stated (`docs/methods/exact_cpsat.md`, agent_architecture "optimal up to discretization"). | none |
 | **D. Time windows are endogenous; write $s_{ij}(t,z)$.** | Correct: windows and travel depend on the belt state (stops caused by earlier decisions). | **Done (0.5.2):** classification rewritten with $s_{ij}(t,z)$ and endogenous windows. |
 | **E. Return = objective only with γ = 1 and consistent 1/M scaling.** | The undiscounted return equals $-(\sum F_j+\Pi)$ (tested); divided by the exogenous $n$ it is exactly `penalized_flow_time`. **But PPO was trained with γ = 0.99 per decision**, so the trained objective is a discounted proxy. | **Done (0.5.2):** caveat in `docs/methods/rl.md`; γ = 1 / average reward remains for the next RL iteration. |
@@ -70,4 +70,31 @@ complete PRISMA counts.
 4. RL: γ = 1 / average reward, several training seeds, DAgger (point E + rl.md §5).
 5. Additional experiments suggested by the map: event-only vs duration-only vs joint
    penalty; own-belt vs all-belts stop rule; decision-time tails.
-6. Read the six closest papers; later, an export-based search for a complete SLR.
+6. ~~Read the six closest papers~~ Done 0.6.0 ([closest_papers.md](closest_papers.md)); later,
+   an export-based search for a complete SLR.
+
+## 5. Corrections after reading the six closest papers in full (0.6.0)
+
+All six were read in full text (open access / preprints; sources in
+[closest_papers.md](closest_papers.md)). Claims of the evidence map that turned out wrong
+or overstated:
+
+* **S04** has no geometric interception (pick windows are input data, every mission has
+  a constant duration); its "speed control" is a decision on the *output* conveyor, not
+  a stop caused by processing; its local search is over per-robot item/slot counts, not
+  over processing orders; its "look-ahead" is a 5–10 s camera horizon, not robot
+  pre-positioning.
+* **S11** has no moving-job interception; its decision is an offline storage assignment
+  with random box routing, not dispatching. That it minimises blockage time is correct.
+* **S03**: belt stops come from a tray-weight rule and unpicked items leave the system
+  instead of blocking; the mapping "stationary tray = stop on processing" is only
+  partial.
+* **S10**: the exact DP is polynomial only for a fixed number of carton sizes.
+* **S02, S08**: confirmed. S02's non-optimality of greedy rules is an example, not a bound.
+* `references.bib`, S11: the publisher page abbreviates the author list; the four-author
+  entry may be incomplete — check before citing.
+
+Consequence: the novelty statement is unchanged and if anything safer — none of the six
+models a processing-induced stop of the *source* belt, endogenous interception windows,
+one head shared by several belts, or an event + duration blocking cost. S03/S04 are the
+closest on conveyor motion and must be distinguished precisely in a paper.

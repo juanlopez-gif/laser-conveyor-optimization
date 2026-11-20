@@ -103,7 +103,17 @@ Model size (default config, $\Delta=0.1$): $n=6$: 3 000–9 200 variables; $n=15
 
 ## 4. Lower bound: meaning and relation to $\mathcal P$
 
-`Solution.lower_bound` (method `cpsat`) is CP-SAT's proven best objective bound of
+**Change in 0.6.0 (external audit, 2026-11-19).** `Solution.lower_bound` of `cpsat` is now
+`None`; the CP-SAT bound is reported only as `info["model_bound"]` (certificate of the grid
+model), and `proven_optimal` means *optimal for $\mathcal P_\Delta$*. The benchmark keeps
+the columns `objective` (replay at dt = 0.01), `lower_bound` (rigorous bounds of
+`optimization.lower_bounds` only), `proven_optimal_model`, `model_objective` and
+`model_bound` apart. Reason: as explained below the grid bound is not a bound for
+$\mathcal P$; before 0.6.0 the benchmark merged it into `lower_bound`, which could print a
+negative gap next to `proven_optimal = True` (the audit reproduced one part: 5.90 s on the
+grid vs 5.85 s replayed). The rest of this section describes the grid bound itself.
+
+The CP-SAT bound is the proven best objective bound of
 $\mathcal P_\Delta$, converted to seconds. It is a valid bound **for $\mathcal P_\Delta$** (start
 times on the 0.1 s grid, releases rounded up, travel rounded up to whole steps). With respect to
 the continuous model $\mathcal P$:

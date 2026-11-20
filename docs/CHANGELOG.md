@@ -6,6 +6,174 @@ summarized from the git history.
 
 ---
 
+## 0.6.0 — 2026-11-20 — DAgger agents, hybrids, sensitivity, external audit fixes
+
+Closed on 2026-11-20 after the sensitivity sweep finished. New method pages:
+`docs/methods/hybrid.md`, `docs/methods/sensitivity.md`; `docs/methods/rl.md` §6.
+Merged paired summary: `results/experiments/v0.6_summary/summary.md`.
+`README.md` lists the hybrids and links the new pages.
+
+**Main results** (30 seeds, paired Δ of penalized flow vs `nearest_job`/`none`):
+
+| policy | default load | heavy load |
+|---|---|---|
+| `rl_rollout` (rollout with the agent as base policy) | **−11.4 %** (−13.0, −9.8) | −3.7 % (−5.4, −2.1) |
+| `rl_ensemble` (vote of 3 agents) | −7.0 % | **−4.0 %** (−5.4, −2.5) |
+| best rollout of 0.5 (`rollout@avg_flow_time`, `when_idle`) | −10.1 % | −2.0 % |
+| `rl` alone (`rl06_wi_s0`, new default) | −6.2 % | −3.0 % |
+| `nearest_head` / `when_idle` | −6.4 % | −0.1 % |
+
+These use the evaluation seeds 1000–1029, which earlier choices have already seen;
+the confirmatory rerun on fresh seeds 3000+ is pending (see the audit section).
+
+### User decisions (2026-11-19)
+
+* The real cell uses a Longer Ray5 5 W laser, but the model **keeps laser 10 cm/s, no
+  acceleration and processing 2.5 s**. The user's reason: acceleration complicates the
+  model too much.
+* Belt speed and job time are adjustable in the real cell, so they are studied in the
+  sensitivity sweep instead of changing the default.
+* A Ray5-specific config was drafted and then removed for the same reason.
+
+### RL training (`src/rl/train.py`, `tests/test_rl.py`)
+
+* **DAgger** (Ross et al. 2011) after behaviour cloning: the learner drives, the teacher
+  (`rollout`) labels every visited state, with mixing β_i = β0^i. Reason: plain cloning
+  only sees the teacher's state distribution.
+* **γ = 1** and reward scale 1000. The return now equals minus the episode objective;
+  before it was a discounted proxy (review point E).
+* **Checkpoint selection on validation seeds 2000+**, never on the evaluation seeds
+  1000–1029. Score = mean ratio of the episode cost to `nearest_head` on the same
+  episode. The delivered model is the best checkpoint among BC, DAgger and PPO.
+* Parallel episode collection (`ProcessPoolExecutor`).
+* Result (validation ratio, lower is better):
+
+  | model | ratio | selected stage |
+  |---|---|---|
+  | `rl06_wi_s0` | 0.980 | DAgger 3 |
+  | `rl06_wi_s1` | 0.985 | DAgger 2 |
+  | `rl06_wi_s2` | 0.988 | PPO 15k |
+  | `rl06_none_s0` | 0.985 | DAgger 3 |
+
+* **Longer PPO fine-tuning degraded the cloned/DAgger policy in every run.** Validation
+  selection kept the degraded checkpoints out of the delivered models. Only
+  `rl06_wi_s2` kept its first PPO checkpoint (15k decisions, 0.988 vs 0.994 after
+  DAgger), a difference within validation noise. (Corrected on 2026-11-20: the
+  selected stages of s1, s2 and `none_s0` were missing from the table above.)
+* **Default model of the policy `rl` changed** from `models/rl_bc.zip` to
+  `models/rl06_wi_s0.zip` (`src/policies/rl_policy.py`).
+  * Reason: it has the best validation score.
+  * On the evaluation seeds it improves on `rl_bc` from −1.4 % to −6.2 % at default
+    load and from −1.8 % to −3.0 % at heavy load (part of this is pre-positioning
+    `when_idle`).
+  * `rl06_wi_s1` is slightly better on the evaluation seeds, but it was not chosen,
+    so that those seeds are not used for selection.
+  * It was trained with `when_idle`; with `none`, use `models/rl06_none_s0.zip`.
+
+### Hybrid policies (`src/policies/hybrid.py`, `tests/test_hybrid.py`)
+
+* Four hybrids:
+  * `rl_rollout`: rollout with the RL agent as base policy.
+  * `rl_filter`: the RL proposes its top-k conveyors and the rollout decides among them.
+  * `rl_gated`: the RL decides when it is confident, the rollout otherwise.
+  * `rl_ensemble`: majority vote of several agents.
+* The study harness accepts `name@k=v@k2=v2` policy specs and records `decision_ms` and
+  `rollout_share`.
+* Results (30 seeds, `when_idle`; paired Δ vs `nearest_job`/`none`; full table in
+  `docs/methods/hybrid.md` §3):
+
+  | policy | default load | heavy load | time per decision (default / heavy) |
+  |---|---|---|---|
+  | `rl_rollout` | −11.4 % (−13.0, −9.8) | −3.7 % (−5.4, −2.1) | 101 / 550 ms |
+  | `rl_filter` (top 2) | −8.9 % (−11.4, −6.5) | −0.8 % (−2.2, +0.7) | 26 / 172 ms |
+  | `rl_gated` (0.8) | −7.6 % (−9.6, −5.5) | −2.9 % (−4.7, −1.0) | 7 / 4 ms |
+  | `rl_ensemble` | −7.0 % (−8.6, −5.3) | −4.0 % (−5.4, −2.5) | ms |
+
+* `rl_rollout` improves on the best plain rollout (−10.1 % / −2.0 %). This matches the
+  rollout-improvement property: the agent is a better base policy than `nearest_job`.
+* `rl_gated` sent only 14 % (default) and 0.3 % (heavy) of the decisions to the
+  rollout, so it behaves almost like the agent alone.
+* `rl_filter` loses at heavy load: pruning to the agent's top two conveyors too often
+  removes the option the rollout would have chosen.
+
+### Sensitivity sweep (`experiments/sensitivity_sweep.py`)
+
+* One-at-a-time sweep around the default cell: belt speed, laser speed, processing time
+  and arrival rate.
+* Every policy is compared with `nearest_job`/`none` in the same cell, with common random
+  numbers.
+* 10 seeds per cell (1000–1009), 1360 runs, 3574 s on 2 workers. Full tables and
+  caveats: `docs/methods/sensitivity.md`.
+* Findings (Δ vs the reference in the same cell):
+  * `rl_rollout` is the best or near-best policy in 11 of the 14 distinct cells: every
+    belt speed (−6.3 to −11.0 %), every laser speed (−8.3 to −11.9 %), and processing
+    times up to 3 s.
+  * The plain `rollout` is better when the cell is congested:
+    * arrival factor 0.6: −4.8 % vs −0.6 %;
+    * arrival factor 0.8: −8.7 % vs −6.6 %;
+    * processing 4 s: −4.6 % vs −3.1 %.
+  * The agents were trained only in the default cell and do not generalize to much
+    higher load: at arrival factor 0.6, `rl` alone gets +2.3 %, worse than the
+    reference.
+  * The agent alone performs about like `nearest_head` across the sweep.
+  * Processing time is the dominant parameter: the reference goes from 11 s (1.5 s
+    jobs) to 72 s (4 s jobs). Belt speed barely matters (25–27 s from 1.5 to
+    6 cm/s).
+  * With 10 seeds the half-widths are ±2 to ±6 points, so the sweep shows trends, not
+    rankings.
+
+### Literature and plans
+
+* `docs/literature/closest_papers.md`: full reading of the six closest papers.
+  `review_assessment.md` §5 corrects earlier claims about them.
+* `docs/plans/strong_rl_plan.md`: working plan for a stronger learned dispatcher:
+  * fast event-driven simulator;
+  * Transformer over parts with pointer and value heads;
+  * expert iteration with a search teacher;
+  * domain randomization;
+  * S/M/L scaling ladder.
+
+### Fixes after the external audit (2026-11-19)
+
+An independent audit covered the public commit 2a28321 and the local 0.6 copy. Each
+finding below was reproduced before fixing and now has a regression test.
+
+| finding | fix | files / tests |
+|---|---|---|
+| The benchmark used the CP-SAT grid bound as a lower bound of P. P_Δ rounds up and is not a relaxation, so a negative gap could appear next to `proven_optimal`. | `cpsat` returns `lower_bound=None` and keeps the grid certificate in `info["model_bound"]`. New benchmark columns: `objective` (replay), `lower_bound` (rigorous bounds only), `proven_optimal_model`, `model_objective`, `model_bound`. | `solvers/cpsat.py`, `benchmark.py`, `docs/methods/exact_cpsat.md` §4; `test_cpsat.py::test_benchmark_never_reports_negative_gap_to_lower_bound` |
+| The schedule checker accepted zero-length processing and truncated runs. | New checks: C_j − S_j = p_j, and completeness (on by default when `simulation.drain` is set; `require_complete=False` for deliberately partial runs). | `schedule_check.py`; `test_formulation.py` (two negative controls) |
+| In the MILP penalty, β could be 0 while a part sat at b if processing had already stopped the belt. | New constraint (M15) ties β to the physical state. | `docs/formal_formulation.md`, `docs/formulation/formal_formulation.tex/.pdf` (doc only; CP-SAT does not implement Π) |
+| Interception missed an earlier meeting when the belt is faster than the laser's X axis, because the search assumed a decreasing gap. | Exact solution: travel time is piecewise linear in x, so the earliest root is found segment by segment. In every configuration studied the belt is slower than the laser, where old and new agree to ≤ 3·10⁻¹³ s (20 000 random nominal cases). Such round-off can still flip an *exact* tie between two decisions, so a rerun may differ on rare tied decisions; no systematic effect. One test (`test_rollout.py::test_no_future_information_is_used`) relied on round-off to break an exact tie (9.04 s either way) and was rewritten to check the tie and the strict preference explicitly. | `simulation/motion.py`; `test_blocking_prepositioning.py` (audit counterexample + brute-force check), `test_rollout.py` |
+| An RL episode with only forced decisions ran entirely inside `reset`, so its cost was never reported. | `reset` returns `summary` and `episode_cost` when the episode ends there, and the collector keeps them. | `rl/env.py`, `rl/train.py`; `test_rl.py::test_decision_free_episode_reports_its_cost` |
+| The README said OR-Tools is not used. | Dependency text corrected. | `README.md` |
+
+Also fixed: in the 0.5.2 entry and in `review_assessment.md`, two formulas had `\t`
+turned into a tab (`\tau`, `\text`).
+
+**Methodological points accepted from the audit.** They will be applied before the
+final tables.
+
+1. The rollout objective and the BC model were chosen after looking at evaluation seeds
+   1000–1029. The confirmatory comparison of the final variants will therefore use
+   **fresh seeds** (3000+).
+2. The −10.1 % of `rollout`/`when_idle` against `nearest_job`/`none` combines two
+   effects: the policy itself (−5.4 % at equal pre-positioning, per the audit) and
+   pre-positioning. The tables will report the two separately.
+3. The repository has no licence yet; choosing one is the owner's decision.
+
+**Chain incident.**
+
+* The step that picked the best `when_idle` agent for the hybrid and sensitivity runs
+  had a shell-quoting error and passed an empty model path, so the first hybrid run used
+  the old default model.
+  * It was stopped and rerun with `rl06_wi_s0`.
+  * The hybrid results above come from the rerun.
+* Summary printing also failed on Windows, because cp1252 cannot encode "Δ".
+  * Runs now set `PYTHONIOENCODING=utf-8`.
+  * The result files were not affected.
+
+---
+
 ## 0.5.2 — 2026-11-19 — Technical points of the literature review
 
 Closes points A, B, D, E (documentation), G and the blocked-time overlap of
@@ -21,11 +189,11 @@ Closes points A, B, D, E (documentation), G and the blocked-time overlap of
   not dominant").
 * **NP-hardness (point B).** The sketch based on limiting cases (infinite speeds,
   infinite zone) was replaced by a realizable reduction from $1|r_j|L_{\max}$ and
-  $1|r_j|\sum C_j$ (time scaling by $M>n^2	au_{\max}$, one part per conveyor). Scope
+  $1|r_j|\sum C_j$ (time scaling by $M>n^2\tau_{\max}$, one part per conveyor). Scope
   stated: stop rule $\sigma=I$, number of conveyors part of the input. Open: fixed
   $N$ (e.g. 3) and `all_conveyors`. The makespan/TSP-path remark is no longer claimed.
 * **Notation (point D).** Classification rewritten as
-  $1|r_j, s_{ij}(t,z), 	ext{blocking}, 	ext{endogenous windows}|\ldots$: travel and
+  $1|r_j, s_{ij}(t,z), \text{blocking}, \text{endogenous windows}|\ldots$: travel and
   accessibility windows depend on the belt state, i.e. on the schedule.
 * **Pre-positioning semantics (point G).** §1.5: decision epochs, candidate sets per
   mode, irrevocable vs revocable commitments, what happens on revocation, `dt`

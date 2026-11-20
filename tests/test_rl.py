@@ -93,3 +93,58 @@ def test_trained_policy_runs_and_is_feasible(tmp_path):
         "simulation.arrival_horizon=120"]), record_trace=False).run()
     assert r.summary["parts_completed"] == r.summary["parts_generated"]
     assert check_schedule(r) == []
+
+
+def test_dagger_collection_and_validation(tmp_path):
+    """0.6.0: learner-driven roll-outs are labelled by the teacher; validation is paired."""
+    pytest.importorskip("sb3_contrib")
+    from sb3_contrib import MaskablePPO
+
+    from rl.train import collect, evaluate, run_episodes, score, validation_set
+    kw = {"dt": 0.05, "prepositioning": "when_idle", "reward_scale": 1000.0}
+    env = LaserConveyorEnv(seed=0, **kw)
+    model = MaskablePPO("MlpPolicy", env, n_steps=64, batch_size=32, seed=0, device="cpu")
+    path = tmp_path / "m.zip"
+    model.save(path)
+    # learner acts (beta = 0) but every stored label is the teacher's (nearest_head)
+    d = collect("nearest_head", {}, 2, 1.0, kw, seed=0, learner=str(path), beta=0.0)
+    assert len(d["actions"]) == len(d["obs"]) == len(d["masks"]) == len(d["returns"]) > 0
+    assert all(m[a] for m, a in zip(d["masks"], d["actions"]))
+    # gamma = 1: the first return of an episode is minus its whole cost / scale
+    first = run_episodes({"teacher": "nearest_head", "teacher_params": {}, "env_kwargs": kw,
+                          "seed": 3, "load_indices": [0], "gamma": 1.0, "learner": None,
+                          "sim_seeds": [2000]})
+    assert first["returns"][0] * 1000.0 == pytest.approx(-first["costs"][0]["episode_cost"],
+                                                         rel=1e-4)
+    # validation: fixed seeds, the reference policy scores exactly 1
+    loads, seeds = validation_set(2)
+    assert loads == [0, 0, 1, 1] and seeds == [2000, 2001, 2000, 2001]
+    ref_costs = evaluate(kw, 2, workers=1)
+    ref = {(c["load"], c["sim_seed"]): c["episode_cost"] for c in ref_costs}
+    assert score(ref_costs, ref) == pytest.approx(1.0)
+
+
+def test_decision_free_episode_reports_its_cost():
+    """0.6.0 (external audit 2026-11-19): when every decision of an episode is forced,
+    the whole run happens inside reset(); its cost must still be reported (reset info,
+    same keys as a terminal step) and kept by the episode collector."""
+    from rl.env import episode_cost_of
+    from rl.train import run_episodes
+    kw = {"dt": 0.05, "set_items": ["simulation.arrival_horizon=12"]}
+    env = LaserConveyorEnv(seed=0, **kw)
+    found = None
+    for s in range(50):
+        _, info = env.reset(options={"load_index": 0, "sim_seed": 5000 + s})
+        if not info["alive"] and info["summary"]["parts_completed"] >= 1:
+            found = 5000 + s
+            break
+    assert found is not None, "no decision-free episode found"
+    assert info["episode_cost"] > 0
+    # the WIP integral is accumulated per step: within one dt per part of sum F_j + Pi
+    n = info["summary"]["parts_completed"]
+    assert info["episode_cost"] == pytest.approx(episode_cost_of(env.sim), abs=0.05 * n + 1e-9)
+    out = run_episodes({"teacher": "nearest_head", "teacher_params": {}, "env_kwargs": kw,
+                        "seed": 0, "load_indices": [0], "gamma": 1.0, "learner": None,
+                        "sim_seeds": [found]})
+    assert len(out["costs"]) == 1 and out["costs"][0]["episode_cost"] == pytest.approx(
+        info["episode_cost"])

@@ -8,6 +8,18 @@ with the formulation checker, and compared with the best lower bound available
 (``optimization.lower_bounds.best_lower_bound`` if that module exists, otherwise
 the trivial bounds of the formulation). Output: results/benchmark/<tag>/results.csv
 and a summary table (mean gap to the best solution found and to the lower bound).
+
+Certificates (0.6.0, after the external audit of 2026-11-19) are reported separately:
+
+* ``objective``            value of the schedule replayed in the simulator at dt = 0.01;
+* ``lower_bound``          rigorous bound for that objective (``optimization.lower_bounds``;
+                           a solver bound only if the solver states it is valid for P);
+* ``proven_optimal_model`` the method certifies optimality *of its own model* (for
+                           ``cpsat`` the 0.1 s grid model P_Delta, not P or the simulator);
+* ``model_objective`` / ``model_bound``  value and bound inside that model.
+
+Before 0.6.0 the CP-SAT grid bound was merged into ``lower_bound``; since the grid model
+is not a relaxation of P, that could produce negative gaps next to ``proven_optimal``.
 """
 
 from __future__ import annotations
@@ -68,8 +80,10 @@ def run_benchmark(instances: list[Instance], methods: list[str] | None, objectiv
             rows.append({"instance": inst.name, "n": inst.n, "method": name,
                          "objective": ev.objective, "feasible": ev.feasible,
                          "violations": len(ev.violations), "time_s": round(elapsed, 3),
-                         "proven_optimal": sol.proven_optimal,
+                         "proven_optimal_model": sol.proven_optimal,
                          "solver_lower_bound": sol.lower_bound,
+                         "model_objective": sol.info.get("model_objective"),
+                         "model_bound": sol.info.get("model_bound"),
                          "sequence": " ".join(ev.sequence), "info": json.dumps(sol.info)})
         best = min((r["objective"] for r in rows if r["instance"] == inst.name), default=math.inf)
         for r in rows:

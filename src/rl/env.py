@@ -125,7 +125,18 @@ class LaserConveyorEnv(gym.Env):
         self.episode_cost = 0.0
         alive = self._advance()
         # cost accrued before the first decision belongs to the first transition
-        return self._obs(), {"load": self.load_name, "sim_seed": sim_seed, "alive": alive}
+        info = {"load": self.load_name, "sim_seed": sim_seed, "alive": alive}
+        if not alive:
+            # Decision-free episode (every decision was forced): there is no transition
+            # to carry the cost, so it is reported here (0.6.0, external audit
+            # 2026-11-19: such episodes used to show a physical cost but no reward and
+            # were dropped from the validation averages). Same keys as a terminal step.
+            w, tb, nb = self._cost_state()
+            w0, tb0, nb0 = self._last
+            self.episode_cost = (w - w0) + self._lambda_t * (tb - tb0) + self._lambda_n * (nb - nb0)
+            self._last = (w, tb, nb)
+            info.update(summary=self.sim.result().summary, episode_cost=self.episode_cost)
+        return self._obs(), info
 
     def step(self, action):
         if not self.candidates:                     # episode already over

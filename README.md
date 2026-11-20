@@ -70,8 +70,10 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Dependencies: `pyyaml` (config), `pytest` (tests) and `matplotlib` (only for the
-comparison plots). SimPy, OR-Tools and Pyomo are intentionally not used yet.
+Dependencies: `pyyaml` (config), `pytest` (tests), `matplotlib` (plots) and `ortools`
+(CP-SAT, used only by the exact solver `src/optimization/solvers/cpsat.py`, which is
+skipped with a warning if it is missing). The RL stack is in `requirements-rl.txt`. The
+simulator itself is plain Python (no SimPy or Pyomo).
 
 ## 4. Run a simulation
 
@@ -238,12 +240,15 @@ consolidated results):
 | `sa`, `ils` | `src/optimization/solvers/metaheuristics.py` | simulated annealing / iterated local search over processing orders |
 | `rollout` policy | `src/policies/rollout.py` | online look-ahead policy; beats nearest_job on 28/30 seeds |
 | `nearest_head` policy (0.4.0) | `src/policies/nearest_head.py` | belt-order rule derived from the metaheuristics' best sequences |
-| `rl` policy (0.5.0) | `src/rl/`, `src/policies/rl_policy.py` | SMDP reinforcement learning: behaviour cloning of rollout (+ PPO); see [docs/methods/rl.md](docs/methods/rl.md) |
+| `rl` policy (0.5.0, retrained 0.6.0) | `src/rl/`, `src/policies/rl_policy.py` | SMDP reinforcement learning: behaviour cloning of rollout + DAgger, γ = 1, validation-based selection; see [docs/methods/rl.md](docs/methods/rl.md) |
+| hybrids (0.6.0) | `src/policies/hybrid.py` | `rl_rollout`, `rl_filter`, `rl_gated`, `rl_ensemble`; `rl_rollout` is the best policy at default load; see [docs/methods/hybrid.md](docs/methods/hybrid.md) |
 | lower bounds | `src/optimization/lower_bounds.py` | proved bounds to measure optimality gaps |
 
 Results of version 0.4.0 (blocking penalty, `nearest_head`, pre-positioning) are in
 [docs/methods/nearest_head_prepositioning.md](docs/methods/nearest_head_prepositioning.md);
-the RL agent of 0.5.0 in [docs/methods/rl.md](docs/methods/rl.md). Optional RL
+the RL agent in [docs/methods/rl.md](docs/methods/rl.md); the hybrids and the sensitivity
+sweep of 0.6.0 in [docs/methods/hybrid.md](docs/methods/hybrid.md) and
+[docs/methods/sensitivity.md](docs/methods/sensitivity.md). Optional RL
 dependencies: `pip install -r requirements-rl.txt`.
 
 ```bash

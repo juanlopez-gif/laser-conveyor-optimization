@@ -389,6 +389,26 @@ The slack $v_k\Delta$ is the discretization tolerance: a conveyor may stop one s
 early instead of overshooting $b$ (the simulator stops exactly at $b$ with a partial
 step).
 
+**Blocking witness tied to the physical state (0.6.0).** (M13)–(M14) only *allow*
+$\beta_{jt}=1$. When the belt is already stopped by a processing operation, (M12) does
+not need $\beta$, so a penalized objective could set $\beta_{jt}=0$ although $j$ sits at
+the zone end (external audit, 2026-11-19). The simulator, like the continuous
+definition $(S_j-B_j)^+$ of §1.4, counts that interval as blocked. When $\Pi$ is in the
+objective we therefore add the converse implication
+
+$$
+D_{k(j),t}-E_j\ \le\ b-v_{k(j)}\Delta-\varepsilon+M\Big(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Big)
+\qquad\forall j,t \qquad\text{(M15)}
+$$
+
+with a small $\varepsilon>0$ (e.g. $10^{-3}$ cm): an unstarted part inside the last step of
+the zone *is* blocking. With (M13)–(M15), $\beta_{jt}=1$ exactly when $j$ has not started
+and lies within $v_k\Delta$ of $b$, whatever the reason the belt is stopped, so $T_B$ and
+$N_B$ match the simulator's accounting up to the same $O(\Delta)$ tolerance as (M14) (a
+part may be charged one step while it moves through the last step of the zone, which it
+can only leave by being processed or by blocking). (M15) is not part of the implemented
+CP-SAT model, which does not support the penalized objectives.
+
 ### Objectives (linear forms)
 
 * $C_{\max}\ge C_j\ \forall j$; $\ L_{\max}\ge C_j-d_j\ \forall j$;
@@ -397,9 +417,10 @@ step).
 * blocking (0.4.0): with the variables $\beta_{jt}$ of (C5),
   $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with
   $\gamma_j\in\lbrace 0,1\rbrace$, $\gamma_j\ge\beta_{jt}\ \forall t$; penalty
-  $\Pi=\lambda_N N_B+\lambda_T T_B$. Under (C5) $\beta_{jt}$ is forced to 1 exactly when
-  the belt must stop for $j$ (otherwise $u_{kt}=1$ would carry $j$ beyond $b$,
-  contradicting (M4)–(M5)); minimizing $\Pi$ keeps it at 0 otherwise. The CP-SAT
+  $\Pi=\lambda_N N_B+\lambda_T T_B$, **together with (M15)**. Without (M15), (C5) forces
+  $\beta_{jt}=1$ only when the belt must stop for $j$ and nothing else stops it, so
+  minimizing $\Pi$ would drop the blocked steps that overlap a processing stop
+  (corrected in 0.6.0); with (M15) $\beta_{jt}$ is the physical indicator. The CP-SAT
   implementation (`solvers/cpsat.py`) does not include these terms yet: for the
   penalized objectives it is skipped and the simulation-based methods are used.
 * travel distance: add immediate-successor binaries $z_{ij}$ (with a dummy start $0$):

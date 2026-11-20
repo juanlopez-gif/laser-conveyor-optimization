@@ -106,10 +106,20 @@ def test_no_future_information_is_used():
     with_future = make_instance(FAIR_JOBS + [FUTURE_JOB])
     t_future = FUTURE_JOB[0]
 
-    # The instance is discriminating: a clairvoyant look-ahead reacts to the future part.
-    clair_a = _assignments(_run(without, _ClairvoyantRollout()), t_future)
-    clair_b = _assignments(_run(with_future, _ClairvoyantRollout()), t_future)
-    assert clair_a != clair_b
+    # The instance is discriminating: without the future part the two first choices are
+    # exactly tied (9.04 s either way), with it serving P002 first is strictly better
+    # (8.373 vs 8.593 s), and a clairvoyant look-ahead does pick P002 first.
+    # (0.6.0: this used to compare two clairvoyant runs, which relied on round-off noise
+    # to break the tie and flipped with the exact interception of simulation/motion.py.)
+    from optimization.evaluate import evaluate_sequence
+
+    def flow(inst, seq):
+        return evaluate_sequence(inst, seq, "avg_flow_time", dt=0.01).objective
+    assert flow(without, ["P001", "P002"]) == pytest.approx(flow(without, ["P002", "P001"]))
+    assert flow(with_future, ["P002", "P001", "P003"]) < \
+        flow(with_future, ["P001", "P002", "P003"]) - 0.1
+    clair = _assignments(_run(with_future, _ClairvoyantRollout()), t_future)
+    assert clair[0][1] == "P002"
 
     # The real rollout makes exactly the same decisions before the part arrives.
     for params in ({}, {"dt_lookahead": None, "max_candidates": None},

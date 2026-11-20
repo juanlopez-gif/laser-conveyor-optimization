@@ -10,6 +10,12 @@ schedule satisfies the identities and constraints of the continuous-time model
 * (C2)  S_next >= C_prev + tau(P_prev, P_next), first part from P_0
 * (C3)  the belt does not move while its part is processed: D_k(C_j) = D_k(S_j)
 * belt kinematics: D_k(S_j) - D_k(S_i) <= v_k * (S_j - S_i - stopped-for-processing time)
+* processing duration  C_j - S_j = p_j  (within the time tolerance)            [0.6.0]
+* completeness: a drained run must process every part that arrived (in ``pass``
+  mode a part may instead leave unprocessed); a truncated run is reported   [0.6.0]
+
+Both 0.6.0 checks were added after the external audit of 2026-11-19, which showed
+that a zero-length processing interval and a truncated run were accepted.
 
 The function returns a list of human-readable violations (empty = consistent).
 It is used by tests/test_formulation.py and can be applied to any future solver
@@ -27,7 +33,15 @@ def _overlap(a0: float, a1: float, b0: float, b1: float) -> float:
 
 
 def check_schedule(result: SimulationResult, time_tol: float | None = None,
-                   dist_tol: float | None = None) -> list[str]:
+                   dist_tol: float | None = None,
+                   require_complete: bool | None = None) -> list[str]:
+    """Violations of the formal model (empty list = consistent).
+
+    ``require_complete``: demand that every arrived part be processed (or, in ``pass``
+    mode, have left the belt). Default: True when ``simulation.drain`` is set, i.e. the
+    run is supposed to finish all its work; pass False to check a deliberately
+    truncated run (e.g. one stopped at ``max_time`` for a partial look).
+    """
     cfg = result.config
     dt = cfg.simulation.dt
     vmax = max(c.speed for c in cfg.conveyors)
@@ -43,6 +57,16 @@ def check_schedule(result: SimulationResult, time_tol: float | None = None,
     if any(p.completion_time is None for p in done):
         errors.append("a part started processing but never completed")
         return errors
+    if require_complete is None:
+        require_complete = cfg.simulation.drain
+    if require_complete:
+        passing = cfg.simulation.unprocessed_at_zone_end == "pass"
+        unfinished = [p.id for p in result.parts if p.completion_time is None
+                      and not (passing and p.exit_time is not None)]
+        if unfinished:
+            errors.append(f"run ended with {len(unfinished)} unfinished part(s) "
+                          f"({', '.join(unfinished[:5])}{'...' if len(unfinished) > 5 else ''}): "
+                          "truncated run")
 
     # §1.1 entry coordinates (FIFO per conveyor, minimum spacing)
     for cid in speed:
@@ -65,6 +89,10 @@ def check_schedule(result: SimulationResult, time_tol: float | None = None,
         # (C1) window
         if not (g.active_start - d_tol <= p.processing_x <= g.active_end + 1e-9):
             errors.append(f"{p.id}: X_j={p.processing_x:.3f} outside [{g.active_start}, {g.active_end}]")
+        # processing duration C_j - S_j = p_j
+        dur = p.completion_time - p.start_processing_time
+        if abs(dur - p.processing_time) > t_tol:
+            errors.append(f"{p.id}: processed for {dur:.3f} s, requires {p.processing_time:.3f} s")
         # (C3) belt frozen during processing
         if abs(p.completion_displacement - p.start_displacement) > 1e-9:
             errors.append(f"{p.id}: belt moved {p.completion_displacement - p.start_displacement:.4f} "

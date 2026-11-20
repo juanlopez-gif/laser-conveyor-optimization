@@ -233,3 +233,40 @@ def test_rollout_with_penalized_objective_runs():
     ev = evaluate_policy(inst, "rollout", {"objective": "penalized_flow_time"},
                          objective="penalized_flow_time")
     assert ev.feasible and math.isfinite(ev.objective)
+
+
+def test_intercept_when_belt_outruns_the_laser():
+    """External audit 2026-11-19: laser at x = 26, part at x = 20 on a 6 cm/s belt, laser
+    X axis at 2 cm/s. They can meet at t = 0.75 s, x = 24.5 (the part comes towards the
+    laser); the old search assumed a decreasing gap and returned the zone end (9.5 s,
+    ``block``) or no meeting (``pass``)."""
+    for hold in (True, False):
+        icp = find_intercept(26.0, 10.0, 20.0, 10.0, 6.0, 45.0, hold, 2.0, 2.0,
+                             "simultaneous")
+        assert icp is not None
+        assert icp.time == pytest.approx(0.75) and icp.x == pytest.approx(24.5)
+
+
+def test_intercept_matches_brute_force():
+    """The exact piecewise-linear solution equals a fine time scan on random cases,
+    including belts faster than the laser and both motion models."""
+    import random
+
+    from simulation.motion import travel_time
+    rng = random.Random(7)
+    for _ in range(300):
+        lx, ly, px, py = (rng.uniform(0, 45) for _ in range(4))
+        v, vx, vy = rng.uniform(0.5, 8), rng.uniform(1, 12), rng.uniform(1, 12)
+        model = rng.choice(["simultaneous", "sequential"])
+        icp = find_intercept(lx, ly, px, py, v, 45.0, False, vx, vy, model)
+        t_lim = (45.0 - px) / v
+        grid = [t_lim * k / 2000 for k in range(2001)]
+        first = next((t for t in grid
+                      if travel_time(lx, ly, px + v * t, py, vx, vy, model) - t <= 1e-9), None)
+        if first is None:
+            # no grid point meets; an exact meeting may still lie between grid points
+            assert icp is None or icp.time <= t_lim + 1e-9
+            continue
+        assert icp is not None and icp.time <= first + 1e-9
+        assert icp.time >= first - t_lim / 2000 - 1e-9
+        assert travel_time(lx, ly, icp.x, py, vx, vy, model) <= icp.time + 1e-6

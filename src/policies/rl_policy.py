@@ -3,8 +3,10 @@
 The agent chooses a conveyor; the policy serves the head of that conveyor (same
 action space as :mod:`rl.env`). Parameters (``policy.params.rl``):
 
-model:          path of the saved MaskablePPO model (default ``models/rl_bc.zip``, the
-                behaviour-cloned agent, best in the 30-seed evaluation, docs/methods/rl.md)
+model:          path of the saved MaskablePPO model (default ``models/rl06_wi_s0.zip``,
+                the 0.6.0 DAgger agent trained with pre-positioning ``when_idle`` and
+                selected on validation seeds 2000+; docs/methods/rl.md §6. Until 0.5.2
+                the default was ``models/rl_bc.zip``)
 deterministic:  greedy action (default True)
 
 It is ``parametric`` (needs a trained model and the optional RL dependencies), so it
@@ -21,7 +23,7 @@ from simulation.config import PROJECT_ROOT
 from . import register_policy
 from .base_policy import BasePolicy
 
-DEFAULT_MODEL = PROJECT_ROOT / "models" / "rl_bc.zip"
+DEFAULT_MODEL = PROJECT_ROOT / "models" / "rl06_wi_s0.zip"   # 0.6.0 (was rl_bc.zip)
 _MODEL_CACHE: dict[str, object] = {}
 
 

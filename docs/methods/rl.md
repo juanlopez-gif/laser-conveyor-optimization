@@ -1,4 +1,9 @@
-# Reinforcement learning dispatcher (version 0.5.0)
+# Reinforcement learning dispatcher (version 0.5.0, updated 0.6.0)
+
+> **0.6.0:** §1–§5 describe the 0.5 agent and are kept as the historical record. The
+> 0.6 training (DAgger, γ = 1, validation-based selection) and its results are in §6.
+> The default model of the policy `rl` is now `models/rl06_wi_s0.zip`. The hybrids
+> that combine the agent with the rollout are in [hybrid.md](hybrid.md).
 
 Code: `src/rl/` (environment, features, training) and the policy `rl`
 (`src/policies/rl_policy.py`). Formulation: [../formal_formulation.md](../formal_formulation.md)
@@ -83,19 +88,99 @@ python experiments/blocking_prepositioning_study.py \
    ~15 min on 2 cores). This is a common failure mode (the critic and the entropy
    bonus pull the actor away from the teacher before the value estimates are good);
    it is reported as is.
-3. Hence the default model of the policy `rl` is `models/rl_bc.zip`.
+3. Hence the default model of the policy `rl` was `models/rl_bc.zip` (until 0.5.2;
+   superseded in 0.6.0, see §6).
 4. Taken together with phase 2: the structure of the problem (belt order,
    revocable pre-positioning) gives most of the attainable improvement cheaply;
    learning adds little at this scale **so far**.
 
-## 5. Open items (not done)
+## 5. Open items after 0.5 (status in 0.6.0 marked in brackets)
 
 * DAgger (query the teacher on the states visited by the learner) to fix the
-  distribution shift of behaviour cloning; more teacher data (teacher at `dt = 0.01`).
+  distribution shift of behaviour cloning **[done in 0.6.0]**; more teacher data
+  (teacher at `dt = 0.01`) [open].
 * PPO with a larger budget on a many-core machine, KL penalty towards the cloned
   policy, critic pre-trained longer; sweep of γ and of the reward scale.
 * $\gamma=1$ (or average reward) so that the trained objective is exactly the
-  evaluated one (see the caveat in §1); several training seeds.
+  evaluated one (see the caveat in §1); several training seeds **[both done in 0.6.0]**.
 * Train with pre-positioning `when_idle` (the best mode for rollout and
-  `nearest_head`); the current agent was trained and evaluated with `none` only.
+  `nearest_head`); the 0.5 agent was trained and evaluated with `none` only
+  **[done in 0.6.0]**.
 * Calibrate the cell parameters before investing in large-scale training.
+
+## 6. Version 0.6.0: DAgger, γ = 1, validation-based selection
+
+Code: `src/rl/train.py`. Each run writes `models/<tag>.zip` and
+`models/<tag>_training.json` (arguments, teacher data, validation history).
+
+### 6.1 Training changes and why
+
+| change | reason |
+|---|---|
+| **DAgger** after behaviour cloning (3 iterations × 24 episodes; mixing β_i = 0.5^i; 30 epochs per iteration). The learner drives and the teacher (`rollout`) labels every visited state. | Plain cloning only sees the teacher's state distribution (Ross et al. 2011). |
+| **γ = 1**, reward scale 1/1000 | The return is now exactly minus the episode objective (removes the caveat in §1). |
+| **Checkpoint selection on validation seeds 2000+** (10 episodes per check). Score = mean ratio of the episode cost to `nearest_head` on the same episode; lower is better. | The evaluation seeds 1000–1029 are never used for selection. The delivered model is the best checkpoint among BC, DAgger and PPO. |
+| PPO fine-tuning reduced to 60 000 decisions, validated every 15 000 | In 0.5 PPO degraded the cloned policy, so it is now only kept if validation says it helps. |
+| Pre-positioning `when_idle` (3 seeds) and `none` (1 seed) | `when_idle` is the best mode for rollout and `nearest_head`. |
+| Parallel episode collection, 40 teacher episodes (default + heavy load) | Time: about 37 min per agent on 2 cores. |
+
+### 6.2 Validation history (score, lower is better; selected stage in bold)
+
+| agent | BC | DAgger 1 | DAgger 2 | DAgger 3 | PPO 15k | PPO 30k | PPO 45k | PPO 60k |
+|---|---|---|---|---|---|---|---|---|
+| `rl06_wi_s0` | 1.003 | 0.992 | 0.988 | **0.980** | 0.984 | 0.999 | 1.006 | 1.026 |
+| `rl06_wi_s1` | 1.000 | 0.991 | **0.985** | 0.994 | 0.990 | 1.010 | 1.007 | 1.015 |
+| `rl06_wi_s2` | 0.997 | 1.011 | 1.005 | 0.994 | **0.988** | 1.015 | 1.012 | 1.034 |
+| `rl06_none_s0` | 1.027 | 1.003 | 1.001 | **0.985** | 0.988 | 1.021 | 1.013 | 0.998 |
+
+* DAgger improved on cloning in all four runs. The gain over `nearest_head` on
+  validation is small (1.2–2 %).
+* Longer PPO always made things worse. Only `rl06_wi_s2` kept its first PPO checkpoint
+  (0.988 vs 0.994 after DAgger), a difference within the noise of 10 validation
+  episodes.
+
+### 6.3 Evaluation (30 seeds 1000–1029, paired Δ of penalized flow vs `nearest_job`/`none`)
+
+| agent | pre-positioning | default load | heavy load |
+|---|---|---|---|
+| `rl06_wi_s0` (new default) | `when_idle` | −6.2 % (−8.4, −4.1), 26/30 | −3.0 % (−4.8, −1.3), 24/30 |
+| `rl06_wi_s1` | `when_idle` | −7.1 % (−8.8, −5.3), 28/30 | −2.8 % (−4.4, −1.2), 21/30 |
+| `rl06_wi_s2` | `when_idle` | −5.8 % (−7.9, −3.6), 25/30 | −2.8 % (−4.6, −0.9), 23/30 |
+| `rl_ensemble` (the 3 above) | `when_idle` | −7.0 % (−8.6, −5.3), 28/30 | −4.0 % (−5.4, −2.5), 26/30 |
+| `rl06_none_s0` | `none` | −1.4 % (−3.8, +1.0), 19/30 | −3.4 % (−4.9, −1.8), 24/30 |
+| `rl_bc` (0.5 default) | `none` | −1.4 % (−3.3, +0.5), 18/30 | −1.8 % (−3.3, −0.3), 23/30 |
+| `nearest_head` | `when_idle` | −6.4 % (−9.0, −3.9), 29/30 | −0.1 % (−1.5, +1.3), 15/30 |
+| `nearest_job` | `when_idle` | −4.9 % (−6.9, −2.8), 23/30 | −0.5 % (−1.9, +0.8), 21/30 |
+
+Source: `results/experiments/v0.6_summary/summary.md` (tags `rl06_agents`,
+`rl06_agents_none`).
+
+### 6.4 Findings
+
+1. **At equal pre-positioning the 0.6 agent beats the 0.5 agent at heavy load**:
+   `rl06_none_s0` gets −3.4 % against −1.8 % for `rl_bc`, as good as the 0.5
+   rollout (−3.7 %). At default load it does not improve (−1.4 % for both).
+2. **With `when_idle`, the agent alone is about as good as `nearest_head`** at default
+   load (−6.2 % vs −6.4 %). It is clearly better at heavy load (−3.0 % vs −0.1 %).
+3. **The three training seeds give similar agents** (−5.8 to −7.1 % default). The
+   majority vote is the best agent-only policy at heavy load (−4.0 %).
+4. **The agent is most useful inside the rollout.** `rl_rollout` is the best policy at
+   default load (−11.4 %); see [hybrid.md](hybrid.md).
+5. **Out of its training cell the agent degrades.** With 40 % more arrivals it is worse
+   than the reference; see [sensitivity.md](sensitivity.md). Domain randomization is
+   planned in `docs/plans/strong_rl_plan.md`.
+6. Default model: `rl06_wi_s0`. It has the best validation score. On the evaluation
+   seeds `rl06_wi_s1` is slightly better, but choosing it on those seeds would reuse
+   them for selection.
+
+### 6.5 Reproduce
+
+```bash
+PYTHONPATH=src python -m rl.train --teacher rollout --prepositioning when_idle \
+    --episodes 40 --dagger-iters 3 --dagger-episodes 24 --ppo-steps 60000 \
+    --gamma 1 --reward-scale 1000 --seed 0 --tag rl06_wi_s0 --workers 2 --n-envs 2
+python experiments/blocking_prepositioning_study.py --modes when_idle --tag rl06_agents \
+    --policies "rl@model=models/rl06_wi_s0.zip" "rl@model=models/rl06_wi_s1.zip" \
+    "rl@model=models/rl06_wi_s2.zip" \
+    "rl_ensemble@models=models/rl06_wi_s0.zip,models/rl06_wi_s1.zip,models/rl06_wi_s2.zip"
+```
