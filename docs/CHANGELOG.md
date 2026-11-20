@@ -6,7 +6,7 @@ summarized from the git history.
 
 ---
 
-## 0.6.2 — 2026-11-20 — The real cell cannot pre-position (documentation only)
+## 0.6.2 — 2026-11-20 — The real cell cannot pre-position; agent check for `none`
 
 * **What:** the owner confirmed that the real cell cannot detect parts before the laser
   zone for now.
@@ -19,7 +19,21 @@ summarized from the git history.
   with `none`, at −4.4 % (real load) and −3.7 % (heavy load) vs `nearest_job`, both
   significant. The plain rollout (−4.0 % / −2.1 %) is the fallback without RL
   dependencies.
-* No code or configuration changed.
+* **Agent check** (`docs/methods/confirmatory.md` §5.1):
+  * Question: since the real cell runs with `none`, is `rl_rollout` better with the
+    agent trained with `none` (`rl06_none_s0`) than with the default `rl06_wi_s0`?
+  * Run: 120 runs on seeds 3000–3029.
+  * Answer: no significant difference (−0.5 ±0.9 % at the real load, +0.6 ±1.1 % at
+    heavy load).
+  * Decision: the recommendation keeps the default model, because one model for every
+    mode is simpler.
+* **`experiments/decompose_effects.py`:**
+  * `--merge` combines runs of several tags on the same seeds, and `--out` names the
+    output.
+  * Model paths are shortened to the model name in the tables, so two agents of the
+    same policy can be told apart.
+  * Reason: comparing the new runs with the confirmatory ones without rerunning them.
+* No model, configuration or simulator code changed.
 
 ---
 

@@ -138,8 +138,36 @@ before the laser zone. In that mode:
 * At the real load the plain rollout is statistically equivalent and needs no trained
   model, so it is the fallback if the RL dependencies are unwanted on the controller.
 * The agent used here (`rl06_wi_s0`) was trained with `when_idle`. The agent trained
-  with `none` (`rl06_none_s0`) has not yet been tried inside `rl_rollout`.
+  with `none` (`rl06_none_s0`) was tested in §5.1; it makes no significant difference.
 * An entry sensor would add about 9 points on top of the policy, at the real load.
+
+### 5.1 Does the agent trained without pre-positioning help? (2026-11-20)
+
+* **Question:** the real cell runs with `none`, but the agent inside `rl_rollout` was
+  trained with `when_idle`. Is `rl06_none_s0`, trained with `none`, a better base
+  policy?
+* **Setup:** `rl_rollout` and `rl` with `rl06_none_s0`, seeds 3000–3029, `none`, both
+  loads (120 runs, tag `v0.6_confirmatory_none_agent`). They were compared with the
+  runs above on the same seeds using
+  `decompose_effects.py --merge` (output `v0.6_confirmatory_merged`).
+
+| comparison (mode `none`) | default (real) load | heavy load |
+|---|---|---|
+| `rl_rollout`, `none_s0` vs reference | **−4.9 ±1.7** (25/30) | **−3.1 ±1.6** (24/30) |
+| `rl_rollout`, `wi_s0` vs reference | **−4.4 ±1.8** (24/30) | **−3.7 ±1.4** (26/30) |
+| `rl_rollout`: `none_s0` vs `wi_s0` | −0.5 ±0.9 (12/30) | +0.6 ±1.1 (14/30) |
+| `rl_rollout` `none_s0` vs `rollout@avg_flow_time` | **−0.9 ±0.6** (20/30) | −1.1 ±1.6 (22/30) |
+| `rl`: `none_s0` vs `wi_s0` | −0.0 ±1.6 | +0.6 ±1.1 |
+
+* **Answer: no significant difference** between the two agents, alone or inside the
+  rollout. The two point estimates go in opposite directions at the two loads.
+* With `none_s0` as base, `rl_rollout` is slightly but significantly better than the
+  plain rollout at the real load (−0.9 ±0.6 %). With `wi_s0` the same comparison was
+  not significant (−0.4 ±0.8 %).
+* **Decision:** the recommendation stays `rl_rollout` with `rl06_wi_s0`, the default
+  model. Either agent is acceptable, and keeping one model for every mode is simpler.
+* Decision time with `none_s0`: 42 ms mean (114 ms max) at the real load and 305 ms
+  mean (719 ms max) at heavy load. Even the maximum is below one processing time.
 
 ## 6. Reproduce
 
@@ -154,4 +182,7 @@ PYTHONIOENCODING=utf-8 python experiments/decompose_effects.py --tag v0.6_confir
     --pairs "rl_rollout@model=models/rl06_wi_s0.zip" "rl_ensemble@models=models/rl06_wi_s0.zip,models/rl06_wi_s1.zip,models/rl06_wi_s2.zip" \
     --pairs "rl@model=models/rl06_wi_s0.zip" nearest_head \
     --pairs "rl_ensemble@models=models/rl06_wi_s0.zip,models/rl06_wi_s1.zip,models/rl06_wi_s2.zip" "rl@model=models/rl06_wi_s0.zip"
+# §5.1
+PYTHONIOENCODING=utf-8 python experiments/blocking_prepositioning_study.py --seeds 30     --seed-base 3000 --workers 2 --modes none --tag v0.6_confirmatory_none_agent     --policies "rl_rollout@model=models/rl06_none_s0.zip" "rl@model=models/rl06_none_s0.zip"
+PYTHONIOENCODING=utf-8 python experiments/decompose_effects.py --tag v0.6_confirmatory     --merge v0.6_confirmatory_none_agent --out v0.6_confirmatory_merged     --pairs "rl_rollout@model=models/rl06_none_s0.zip" "rl_rollout@model=models/rl06_wi_s0.zip"     --pairs "rl_rollout@model=models/rl06_none_s0.zip" rollout@avg_flow_time
 ```
