@@ -6,6 +6,66 @@ summarized from the git history.
 
 ---
 
+## 0.7.1 — 2026-11-20 — Strong-RL plan, phase 2: token representation and Transformer pointer model
+
+The user accepted the revised phase-1 acceptance and asked to start phase 2
+(`docs/plans/strong_rl_plan.md` §3). This entry adds the model only. It is untrained,
+and no published result changes.
+
+### What was added (`src/rl2/`, `docs/methods/rl2.md`)
+
+* **`rl2/features.py`:** the state as an unordered set of tokens:
+  * one per arrived unfinished part (23 features);
+  * one per conveyor (11);
+  * one laser token (9);
+  * one context token with the cell parameters (17).
+  * *Why:* the 0.5–0.6 agent saw 3 slots per belt and was tied to N = 3. Tokens carry
+    no list position and no conveyor index, so the model sees the whole queue and does
+    not depend on the number of parts or belts. Belt membership is given by the y
+    offset from the laser and a copy of the belt state. Times use
+    `slog(t) = sign(t)·log(1 + |t|/10 s)`, so long waits at heavy load stay bounded.
+* **`rl2/model.py`:**
+  * `DispatchNet`: type embeddings; a pre-norm Transformer encoder without positional
+    encoding; a pointer policy over **any candidate part** (non-candidates masked to
+    −∞); a value head for the normalized cost-to-go.
+  * Also: `collate` (padding), `NetPolicy` (dispatcher for `FastSim.run`),
+    `RunningScale`, and `save` / `load`.
+  * Sizes S (0.88 M parameters), M (6.7 M) and L (39 M) share the code.
+  * *Why a pointer:* a head-only action loses up to 3.5 % with bursts (plan §1).
+* **Activation ReLU instead of GELU** in the feed-forward layers, and `inference_mode`
+  in `NetPolicy`. *Why:* about 10 % lower latency for size S. The plan does not fix
+  the activation.
+* **Tests:** `tests/test_rl2_model.py`, 10 tests: permutation invariance, masking,
+  batching equals single calls, features, non-head candidates, a valid episode
+  checked by the formal checker, save/load, latency.
+* **Benchmark:** `experiments/rl2_latency.py`.
+
+### Acceptance
+
+* **Permutation invariance and masking:** both pass.
+* **Latency, one state, 1 thread:**
+  * S: median 4.1 ms (default load) and 4.7 ms (heavy), so the plan's 5 ms budget is
+    met on the median; p95 is 5.3–5.8 ms.
+  * M: 15–19 ms. L: 64–81 ms.
+  * Size S stays the main track, as in §0 of the plan.
+
+### Finding that shapes phase 3
+
+* A FastSim episode driven by S runs at 340 decisions/s, against 5 500 for the
+  simulator with a rule. The network is now the bottleneck.
+* A batch of 64 states gives 1 600–2 400 states/s.
+* The phase-3 search will therefore advance its candidate × scenario rollouts in
+  lock-step with one batched forward pass per step, and truncate with the value
+  head (`docs/methods/rl2.md` §5).
+
+### Not done yet
+
+* No engine adapter: the `rl2` policy for the fixed-step engine (used for the final
+  phase-4 numbers) needs the same features computed from `simulation.engine` state.
+  It will be added in phase 4.
+
+---
+
 ## 0.7.0 — 2026-11-20 — Strong-RL plan, phase 1: event-driven fast simulator; tie-break fix
 
 The user asked to start the strong-RL plan (`docs/plans/strong_rl_plan.md`). This entry

@@ -55,8 +55,8 @@ Facts learned after this plan was written:
 | phase | status |
 |---|---|
 | 1 — fast simulator | **done**, with a revised acceptance (`docs/methods/fastsim.md` §4): exact event-driven simulation agrees with the engine better than the engine agrees with itself across `dt`; ≥ 99 % identical order vs `dt = 0.01` is unreachable by construction. Speed 20.6× (real load) / 16.8× (heavy) vs `dt = 0.05`, plus 4× from cores. Found and fixed: round-off was deciding exact ties in the engine. |
-| 2 — representation and model | next |
-| 3 — expert iteration | pending |
+| 2 — representation and model | **done** (0.7.1, `docs/methods/rl2.md`): token features, Transformer pointer over any candidate, value head; permutation invariance and masking pass; S = 0.88 M parameters, 4.1 / 4.7 ms median per decision (default / heavy, 1 thread), p95 5.3–5.8 ms. The network is now the bottleneck (340 decisions/s when it drives an episode), so phase 3 search must batch network calls across rollouts. |
+| 3 — expert iteration | next |
 | 4 — evaluation | pending |
 
 ## 1. Why the current RL is weak (diagnosis)
