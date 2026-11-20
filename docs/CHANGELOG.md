@@ -6,6 +6,23 @@ summarized from the git history.
 
 ---
 
+## 0.6.2 — 2026-11-20 — The real cell cannot pre-position (documentation only)
+
+* **What:** the owner confirmed that the real cell cannot detect parts before the laser
+  zone for now.
+* **Consequences:**
+  * `laser.prepositioning: none` stays the default and is now the confirmed mode of the
+    real cell (`docs/assumptions.md` C4).
+  * `when_idle` and `always` remain what-if studies of a possible entry sensor. On
+    fresh seeds it would be worth −7 to −9 % at the real load.
+* **Recommendation for the real cell** (`docs/methods/confirmatory.md` §5): `rl_rollout`
+  with `none`, at −4.4 % (real load) and −3.7 % (heavy load) vs `nearest_job`, both
+  significant. The plain rollout (−4.0 % / −2.1 %) is the fallback without RL
+  dependencies.
+* No code or configuration changed.
+
+---
+
 ## 0.6.1 — 2026-11-20 — Confirmatory evaluation, effect decomposition, licence, real cell values
 
 ### Confirmatory evaluation on fresh seeds (`docs/methods/confirmatory.md`)

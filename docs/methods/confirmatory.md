@@ -110,8 +110,9 @@ What changes the reading of earlier results:
    the "−6.2 % of the RL agent" in 0.6.0 was this effect: the agent's own policy
    effect at default load is −0.2 ±1.9, not significant. **In practice, the most
    valuable change for the real cell at its real load is to pre-position the laser.**
-   This needs the cell to detect parts before they enter the laser zone, which is still
-   unconfirmed (assumption C4).
+   This needs the cell to detect parts before they enter the laser zone. **On
+   2026-11-20 the owner confirmed that the real cell cannot do this for now**
+   (assumption C4), so it is a possible hardware upgrade, not an option today.
 5. **At heavy load, pre-positioning does nothing** (−0.8 to +1.1 %, not significant):
    the laser is never idle, so it never moves early. There, all the gain comes from
    the policy.
@@ -121,7 +122,26 @@ What changes the reading of earlier results:
    1000–1029). This is sampling variation of 300 s of Poisson arrivals and shows why
    the paired design is needed.
 
-## 5. Reproduce
+## 5. Recommendation for the real cell (2026-11-20)
+
+The real cell runs without pre-positioning (`none`), because it cannot detect parts
+before the laser zone. In that mode:
+
+| policy | default (real) load | heavy load | decision time |
+|---|---|---|---|
+| **`rl_rollout`** (recommended) | **−4.4 ±1.8 %** (24/30) | **−3.7 ±1.4 %** (26/30) | ≈ 40 ms / 280 ms mean |
+| `rollout@avg_flow_time` | −4.0 ±1.6 % (25/30) | −2.1 ±1.2 % (20/30) | ≈ 30 ms / 215 ms mean |
+| `rl` | −1.7 ±1.9 % | −1.7 ±1.6 % | ms |
+| `nearest_head` | −1.2 ±1.7 % | +0.8 ±1.3 % | µs |
+
+* `rl_rollout` is the recommendation: it is the best at both loads and is fast enough.
+* At the real load the plain rollout is statistically equivalent and needs no trained
+  model, so it is the fallback if the RL dependencies are unwanted on the controller.
+* The agent used here (`rl06_wi_s0`) was trained with `when_idle`. The agent trained
+  with `none` (`rl06_none_s0`) has not yet been tried inside `rl_rollout`.
+* An entry sensor would add about 9 points on top of the policy, at the real load.
+
+## 6. Reproduce
 
 ```bash
 PYTHONIOENCODING=utf-8 python experiments/blocking_prepositioning_study.py --seeds 30 \

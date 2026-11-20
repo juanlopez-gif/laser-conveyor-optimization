@@ -65,7 +65,11 @@ optionally be sent to a part still in the entry zone: it moves to the meeting po
 x ≥ a and waits (`always`), or does so only when no part is READY and gives the
 pre-positioning up as soon as one becomes READY (`when_idle`). The default stays `none`
 because pre-positioning needs to know that a part is on the entry zone (an entry
-sensor), which has **not been confirmed** for the real cell. The assignment is
+sensor). **Status (2026-11-20): the real cell cannot detect parts before the laser
+zone for now** (owner's answer), so `none` is the mode of the real cell and the other
+modes are what-if studies. On fresh seeds, pre-positioning `when_idle` would be worth
+−7 to −9 % at the real load (docs/methods/confirmatory.md), so an entry sensor is a
+hardware change worth considering. The assignment is
 committed (as for READY parts) in `always` mode. Rationale and results:
 docs/CHANGELOG.md (0.4.0), docs/methods/nearest_head_prepositioning.md.
 
