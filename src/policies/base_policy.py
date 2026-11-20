@@ -50,6 +50,13 @@ class DecisionContext:
         icp = self._intercept(part)
         return math.inf if icp is None else icp.time
 
+    def travel_key(self, part: Part) -> float:
+        """``travel_time`` rounded to 1e-9 s, for comparisons with tie-breaks (0.7.0).
+        Two parts with the same physical travel time can differ by round-off
+        (e.g. a part stopped at b = 45 - 1e-15 cm); rounding lets the documented
+        tie-break (earliest arrival, then id) decide instead."""
+        return round(self.travel_time(part), 9)
+
     def waiting_time(self, part: Part) -> float:
         return self.time - part.arrival_time
 

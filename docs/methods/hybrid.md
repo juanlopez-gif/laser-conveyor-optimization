@@ -1,5 +1,8 @@
 # Hybrid policies: learned dispatcher + look-ahead (version 0.6.0)
 
+> **0.7.0:** the engine's tie-break was corrected and the reference `nearest_job`
+> became about 2.5 % stronger at the real load. Current numbers: [confirmatory.md](confirmatory.md) §7.
+
 Code: `src/policies/hybrid.py`, tests `tests/test_hybrid.py`. Agent:
 [rl.md](rl.md). Rollout: [online_rollout.md](online_rollout.md). Changes and rationale:
 [../CHANGELOG.md](../CHANGELOG.md) (0.6.0).

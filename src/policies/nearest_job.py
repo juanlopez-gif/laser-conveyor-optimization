@@ -9,4 +9,4 @@ from .base_policy import BasePolicy
 @register_policy("nearest_job")
 class NearestJobPolicy(BasePolicy):
     def select(self, candidates, ctx):
-        return min(candidates, key=lambda p: (ctx.travel_time(p), p.arrival_time, p.number))
+        return min(candidates, key=lambda p: (ctx.travel_key(p), p.arrival_time, p.number))

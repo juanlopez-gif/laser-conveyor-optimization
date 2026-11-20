@@ -6,6 +6,82 @@ summarized from the git history.
 
 ---
 
+## 0.7.0 — 2026-11-20 — Strong-RL plan, phase 1: event-driven fast simulator; tie-break fix
+
+The user asked to start the strong-RL plan (`docs/plans/strong_rl_plan.md`). This entry
+covers phase 1. The plan now has a status section (§0) with the facts learned since it
+was written:
+
+* the real cell runs with `none`;
+* the reference results are those of `docs/methods/confirmatory.md`;
+* already-used seeds, and fresh seeds 7000–7029 for the final evaluation;
+* hardware: Ryzen 7 5700U, 8 cores / 16 threads, 15 GB, no CUDA GPU, hence model size S
+  and up to 8 workers.
+
+### Fast simulator (`src/fastsim/`, `docs/methods/fastsim.md`)
+
+* **What it is:** an event-driven simulator with the same model and per-instant rules
+  as the engine. Crossing times are computed in closed form, and interception uses the
+  same function as the engine.
+  * Decision API: `run_until_decision`, `candidates`, `apply`, `clone` (about 10 µs),
+    `cost_so_far`, `result()` for the checker.
+  * Rules: `nearest_job`, `nearest_head`.
+  * Scope: `block` mode only.
+* **Why:** the strong-RL plan needs millions of decisions and cheap state copies for
+  search.
+* **Speed:** 5 150–5 770 decisions/s on one core:
+  * 20.6× (real load) and 16.8× (heavy) faster than the engine at `dt = 0.05`;
+  * 73–81× faster than the engine at `dt = 0.01`.
+  Using 8 workers instead of 2 adds about 4×.
+* **Agreement** (`experiments/fastsim_validation.py`, 2400 + 240 runs):
+  * 0 formal-checker violations at tolerance 1e-6;
+  * against the engine at `dt = 0.001`: identical order in 95.8 % of runs, mean
+    |KPI diff| 0.09 %;
+  * against the engine at `dt = 0.01`: 84.7 % and 0.40 %.
+* **Acceptance criterion revised:**
+  * The plan's target (≥ 99 % identical order vs `dt = 0.01`) is unreachable by
+    construction: the engine agrees with *itself* across `dt = 0.01` / `0.001` in only
+    90.8 % of runs.
+  * The residual differences were traced to exact continuous-time coincidences (equal
+    travel times, simultaneous events). The engine breaks these with an O(v·dt) bias.
+  * Mean KPI bias is below 0.1 %.
+  * Details in `docs/methods/fastsim.md` §4.
+* **Bug found by the new tests:** processing a part upstream of a blocking part
+  released the block (T_B undercounted). It was fixed before any result was produced.
+* Tests: `tests/test_fastsim.py` (21). Benchmark: `experiments/fastsim_benchmark.py`.
+
+### Tie-break fix in the engine (changes results)
+
+* **The problem:** exact ties between candidates are frequent:
+  * equal Y moves between belts (1.2 s);
+  * several parts stopped at b.
+  The interception root carried ~1e-16 s of round-off, and positions at b were
+  45 − 1e-15. That noise, not the documented rule (earliest arrival, then id), decided
+  these ties.
+* **Fix:**
+  * `simulation/motion.py`: `find_intercept` polishes the root to the fixed point
+    t = τ(x(t)), which returns the dominant constant travel time bit for bit;
+  * `policies/base_policy.py`: new `DecisionContext.travel_key` (travel time rounded to
+    1e-9 s);
+  * `nearest_job`, `nearest_head` and the candidate ranking of `rollout` now use it.
+* **Effect,** measured on seeds 3000–3029 against the previous commit:
+  * `nearest_job` / `none` at the real load changes its order on 26 of 30 seeds and
+    improves by 2.5 %;
+  * smaller effects elsewhere (`docs/methods/fastsim.md` §3).
+* **Consequence:**
+  * The reference of every Δ % up to 0.6.2 was about 2.5 % weaker than the documented
+    rule at the real load.
+  * The confirmatory comparison was rerun (tag `v0.7_confirmatory_ties`,
+    `docs/methods/confirmatory.md` §7).
+  * At the real load with `none`, the gains are now `rl_rollout` −2.3 ±1.5 % and
+    `rollout` −1.9 ±1.3 % (both significant; they were −4.4 % and −4.0 %).
+  * At heavy load: `rl_rollout` −3.4 %.
+  * The recommendation (`rl_rollout` with `none`) is unchanged.
+  * Earlier result pages keep their numbers as historical record, with pointers to §7.
+* All 192 tests pass with the fix.
+
+---
+
 ## 0.6.2 — 2026-11-20 — The real cell cannot pre-position; agent check for `none`
 
 * **What:** the owner confirmed that the real cell cannot detect parts before the laser

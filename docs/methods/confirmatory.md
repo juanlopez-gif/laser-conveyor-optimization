@@ -5,6 +5,14 @@ Code: `experiments/blocking_prepositioning_study.py` (runs) and
 `results/experiments/v0.6_confirmatory/` (`runs.csv`, `summary.md`,
 `decomposition.md`). Changes and rationale: [../CHANGELOG.md](../CHANGELOG.md) (0.6.1).
 
+> **Update 0.7.0 (2026-11-20): rerun with the corrected tie-break, §7.**
+> * In the engine, exact ties between candidates were decided by floating-point
+>   round-off instead of the documented rule (earliest arrival first); see
+>   [fastsim.md](fastsim.md) §3.
+> * With the rule applied, the reference `nearest_job` is about 2.5 % better at the
+>   real load, so every gain against it shrinks.
+> * **The current numbers are in §7.** §3–§5 are kept as the record of the 0.6.1 run.
+
 ## 1. Why
 
 The external audit of 2026-11-19 raised two methodological points, and both were
@@ -186,3 +194,59 @@ PYTHONIOENCODING=utf-8 python experiments/decompose_effects.py --tag v0.6_confir
 PYTHONIOENCODING=utf-8 python experiments/blocking_prepositioning_study.py --seeds 30     --seed-base 3000 --workers 2 --modes none --tag v0.6_confirmatory_none_agent     --policies "rl_rollout@model=models/rl06_none_s0.zip" "rl@model=models/rl06_none_s0.zip"
 PYTHONIOENCODING=utf-8 python experiments/decompose_effects.py --tag v0.6_confirmatory     --merge v0.6_confirmatory_none_agent --out v0.6_confirmatory_merged     --pairs "rl_rollout@model=models/rl06_none_s0.zip" "rl_rollout@model=models/rl06_wi_s0.zip"     --pairs "rl_rollout@model=models/rl06_none_s0.zip" rollout@avg_flow_time
 ```
+
+## 7. Rerun with the corrected tie-break (0.7.0, 2026-11-20)
+
+* **What changed:** the same design, seeds 3000–3029 and policies as §2, rerun on the
+  engine with the tie fix of [fastsim.md](fastsim.md) §3. Tag `v0.7_confirmatory_ties`,
+  720 runs on 8 workers.
+* **What did not change:** the RL agents were not retrained. Their behaviour changes
+  only through the slightly different states they now visit.
+
+### Real cell: default load, pre-positioning `none`
+
+Reference `nearest_job` / `none`: 17.23 s. It was 17.66 s with the old tie-breaking.
+
+| policy | penalized flow [s] | Δ vs `nearest_job` (95 % CI), wins | in 0.6.1 (§5) |
+|---|---|---|---|
+| **`rl_rollout`** | 16.82 | **−2.3 ±1.5 %**, 21/30 | −4.4 % |
+| `rollout@avg_flow_time` | 16.87 | **−1.9 ±1.3 %**, 21/30 | −4.0 % |
+| `nearest_head` | 17.27 | +0.4 ±1.6 %, 11/30 | −1.2 % |
+| `rl_ensemble` | 17.29 | +0.4 ±1.6 %, 12/30 | −1.8 % |
+| `rl` | 17.32 | +0.5 ±1.8 %, 13/30 | −1.7 % |
+
+### Heavy load, `none`
+
+| policy | Δ vs `nearest_job` | in 0.6.1 |
+|---|---|---|
+| **`rl_rollout`** | **−3.4 ±1.4 %**, 25/30 | −3.7 % |
+| `rl_ensemble` | **−2.0 ±1.6 %** | −2.3 % |
+| `rollout@avg_flow_time` | **−1.7 ±1.4 %** | −2.1 % |
+| `rl` | −1.4 ±1.6 % | −1.7 % |
+| `nearest_head` | +1.0 ±1.3 % | +0.8 % |
+
+### Other results of the rerun
+
+* **Pre-positioning effect** at default load: −7.3 to −9.1 % for every policy, as
+  before. At heavy load there is no effect.
+* **`rl_rollout` vs `rollout`:**
+  * default load: −0.4 ±1.1 % (`none`) and −0.2 ±1.2 % (`when_idle`), not significant;
+  * heavy load with `when_idle`: −2.4 ±1.4 %, significant.
+* **`rl` vs `nearest_head`:** equal at default load; −2.3 % (`none`) and −3.0 %
+  (`when_idle`) at heavy load.
+
+### Conclusions after the rerun
+
+1. **The recommendation is unchanged:** `rl_rollout` with `none` is the best policy
+   for the real cell, at both loads.
+2. **At the real load the attainable gain over a well-specified nearest-job rule is
+   small:**
+   * about 2 % (`rl_rollout` −2.3 %, `rollout` −1.9 %);
+   * `nearest_head` and the agents alone give nothing there.
+   * Half of the 0.6.1 gain at the real load came from the reference being handicapped
+     by round-off.
+3. **At heavy load the learned policies clearly help:** `rl_rollout` −3.4 %; the
+   agent alone beats `nearest_head` by 2–3 %.
+4. This sets the bar for the strong-RL plan at the real load:
+   * beat `nearest_job` / `none` by clearly more than 2 %;
+   * beat `rl_rollout` / `none` significantly.

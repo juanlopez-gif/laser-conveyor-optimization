@@ -29,6 +29,36 @@ technical specification it refers to.
 
 ---
 
+## 0. Status and adjustments (2026-11-20, start of execution)
+
+Facts learned after this plan was written:
+
+* **Pre-positioning.** The real cell **cannot pre-position** (no detection of parts
+  before the laser zone), so `none` is its mode (`docs/assumptions.md` C4). The default
+  cell values are the real ones (§F).
+* **References for the success targets.** At the real load, on fresh seeds and with
+  `none`, they are `rollout@avg_flow_time` and `rl_rollout`
+  (`docs/methods/confirmatory.md`). This replaces the `rollout`/`when_idle` −10.1 %
+  of §5, which mixed in the pre-positioning effect. Training keeps randomizing the
+  mode; evaluation reports `none` first.
+* **Seeds.**
+  * Already seen: 1000–1029 (exploratory) and 3000–3029 (confirmatory). Used by
+    phase 1: 5000+ (simulator validation) and 6000+ (benchmark).
+  * The final phase-4 evaluation will use **fresh seeds 7000–7029**.
+  * Training uses 100000+ and validation 2000+, as before.
+* **Hardware.** AMD Ryzen 7 5700U: 8 cores / 16 threads, 15 GB RAM, no CUDA GPU.
+  * Model size **S** (CPU) is the main track.
+  * M is possible on CPU only with small batches and long runs.
+  * L is out of reach locally.
+  * Up to 8 worker processes (0.6 used 2).
+
+| phase | status |
+|---|---|
+| 1 — fast simulator | **done**, with a revised acceptance (`docs/methods/fastsim.md` §4): exact event-driven simulation agrees with the engine better than the engine agrees with itself across `dt`; ≥ 99 % identical order vs `dt = 0.01` is unreachable by construction. Speed 20.6× (real load) / 16.8× (heavy) vs `dt = 0.05`, plus 4× from cores. Found and fixed: round-off was deciding exact ties in the engine. |
+| 2 — representation and model | next |
+| 3 — expert iteration | pending |
+| 4 — evaluation | pending |
+
 ## 1. Why the current RL is weak (diagnosis)
 
 | limitation | effect | fix in this plan |

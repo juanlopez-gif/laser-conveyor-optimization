@@ -1,5 +1,8 @@
 # Reinforcement learning dispatcher (version 0.5.0, updated 0.6.0)
 
+> **0.7.0:** the engine's tie-break was corrected and the reference `nearest_job`
+> became about 2.5 % stronger at the real load. Current numbers: [confirmatory.md](confirmatory.md) §7.
+
 > **0.6.0:** §1–§5 describe the 0.5 agent and are kept as the historical record. The
 > 0.6 training (DAgger, γ = 1, validation-based selection) and its results are in §6.
 > The default model of the policy `rl` is now `models/rl06_wi_s0.zip`. The hybrids

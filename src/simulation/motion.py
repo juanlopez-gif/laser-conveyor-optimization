@@ -120,6 +120,14 @@ def find_intercept(lx: float, ly: float, px: float, py: float, part_speed: float
         if gb <= 0:
             t = a + (b - a) * ga / (ga - gb) if ga > gb else b
             t = min(max(t, a), b)
+            # Fixed-point polish (0.7.0): at the root t = tt(x(t)). Where one axis
+            # dominates with a constant travel time (typically the Y move between
+            # belts, |dy| / vy), this returns that constant bit for bit, so two parts
+            # with the same dominant move get *identical* times and the policies'
+            # documented tie-break (earliest arrival) applies instead of round-off.
+            tp = tt(x0 + part_speed * (t - t0))
+            if a <= tp <= b and abs(tp - t) <= 1e-9:
+                t = tp
             if gap(t) > 1e-9:                      # guard against round-off
                 t = b
             return Intercept(t, x0 + part_speed * (t - t0), py)
