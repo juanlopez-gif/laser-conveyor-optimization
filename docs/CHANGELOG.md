@@ -6,6 +6,62 @@ summarized from the git history.
 
 ---
 
+## 0.6.1 — 2026-11-20 — Confirmatory evaluation, effect decomposition, licence, real cell values
+
+### Confirmatory evaluation on fresh seeds (`docs/methods/confirmatory.md`)
+
+* **What was done:**
+  * 6 policies × pre-positioning `none`/`when_idle` × 2 loads × seeds 3000–3029, for
+    720 runs.
+  * The design was fixed before running.
+* **Why:** it applies audit points 1 and 2, which were accepted in 0.6.0. The seeds
+  1000–1029 had already influenced several choices, and the headline numbers mixed the
+  policy effect with the pre-positioning effect.
+* **New script `experiments/decompose_effects.py`.** It reports three effects:
+  * total: vs `nearest_job`/`none`;
+  * policy: vs `nearest_job` at the same pre-positioning;
+  * pre-positioning: the same policy, `when_idle` vs `none`.
+
+  It also reports head-to-head pairs. It was checked on the old `rollout_objective`
+  data: the rollout's own effect there is −5.3 %, consistent with the audit's −5.4 %.
+* **Confirmed:**
+  * `rl_rollout` is the best policy at both loads: total −13.1 % default and −4.0 %
+    heavy.
+  * Its own policy effect is significant at both loads (−4.7 % and −4.0 % with
+    `when_idle`).
+  * At heavy load the agent beats `nearest_head` (−2.7 %).
+* **Not confirmed (exploratory 0.6.0 claims withdrawn):**
+  * `rl_rollout` beats the plain rollout only at heavy load (−2.9 %). At default load
+    the difference is not significant (−1.1 ±1.3 %).
+  * The ensemble does not improve on one agent.
+  * The agent's −6.2 % at default load was almost entirely pre-positioning: its own
+    effect is −0.2 ±1.9 %.
+* **New finding:** at the real (default) load, pre-positioning (`when_idle`) gives −7
+  to −9 % with any policy, including `nearest_job`. It is the most valuable single
+  change for the real cell, but it needs part detection before the laser zone
+  (assumption C4, still unconfirmed). At heavy load it has no effect.
+* Pointers to the confirmatory page were added to `hybrid.md`, `rl.md` §6.4,
+  `sensitivity.md` and `README.md`. The exploratory tables were kept unchanged, as the
+  record of what was seen on seeds 1000–1029.
+
+### Licence
+
+* **What:** MIT (`LICENSE`, README section). It covers code, documentation, trained
+  models and configuration.
+* **Why:** the owner delegated the choice. MIT is the shortest permissive licence and
+  the usual one for academic research code. It lets others reuse the simulator, which
+  helps citations. The code has no patent-sensitive parts, so the patent clause of
+  Apache-2.0 adds nothing here. CC-BY is meant for text and media, not code.
+
+### Cell parameters are the real ones
+
+* On 2026-11-20 the owner stated that the data we have are the real values: belt
+  3 cm/s, laser 10 cm/s, processing 2.5 s, arrivals 10/12/14 s.
+* This is recorded in `docs/assumptions.md` §F.
+* The "measure the real cell" item is closed. The heavy load stays a stress scenario.
+
+---
+
 ## 0.6.0 — 2026-11-20 — DAgger agents, hybrids, sensitivity, external audit fixes
 
 Closed on 2026-11-20 after the sensitivity sweep finished. New method pages:

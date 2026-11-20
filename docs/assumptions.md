@@ -118,6 +118,14 @@ see blocking.
 
 ## F. Load of the default case
 
+**Status (2026-11-20): these are the real values of the cell.** Asked whether the cell
+still had to be measured, the owner answered that the data we have are the real ones.
+This covers belt speed, laser speed, processing time and mean inter-arrival times. The
+default configuration is therefore a model of the real cell, not a placeholder.
+The heavy-load case stays a stress scenario, and the sensitivity sweep
+(`docs/methods/sensitivity.md`) stays a what-if study: belt speed and job time can be
+adjusted in the cell.
+
 Defaults (updated after the first review): conveyors 3 cm/s, laser 10 cm/s, processing
 2.5 s, arrivals every 10 / 12 / 14 s. The processing-only load is
 2.5·(1/10 + 1/12 + 1/14) ≈ **0.64**; adding laser travel brings the laser utilization to

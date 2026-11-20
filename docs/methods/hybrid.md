@@ -4,6 +4,13 @@ Code: `src/policies/hybrid.py`, tests `tests/test_hybrid.py`. Agent:
 [rl.md](rl.md). Rollout: [online_rollout.md](online_rollout.md). Changes and rationale:
 [../CHANGELOG.md](../CHANGELOG.md) (0.6.0).
 
+> **Confirmatory results (0.6.1, fresh seeds 3000–3029):** see
+> [confirmatory.md](confirmatory.md). `rl_rollout` is confirmed as the best policy at
+> both loads, with a significant policy effect of its own. It beats the plain rollout
+> only at heavy load. At default load most of the gain in §3 comes from pre-positioning,
+> and the ensemble adds nothing over one agent. §3–§4 below are the exploratory
+> results on seeds 1000–1029.
+
 ## 1. Motivation
 
 Up to 0.5 the RL agent alone had about the same cost as the zero-cost rule

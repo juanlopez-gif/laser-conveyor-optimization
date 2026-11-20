@@ -248,7 +248,9 @@ Results of version 0.4.0 (blocking penalty, `nearest_head`, pre-positioning) are
 [docs/methods/nearest_head_prepositioning.md](docs/methods/nearest_head_prepositioning.md);
 the RL agent in [docs/methods/rl.md](docs/methods/rl.md); the hybrids and the sensitivity
 sweep of 0.6.0 in [docs/methods/hybrid.md](docs/methods/hybrid.md) and
-[docs/methods/sensitivity.md](docs/methods/sensitivity.md). Optional RL
+[docs/methods/sensitivity.md](docs/methods/sensitivity.md); the confirmatory evaluation on fresh
+seeds (0.6.1), with the policy and pre-positioning effects separated, in
+[docs/methods/confirmatory.md](docs/methods/confirmatory.md). Optional RL
 dependencies: `pip install -r requirements-rl.txt`.
 
 ```bash
@@ -307,3 +309,9 @@ blocking event is penalized in the objective; parts queue upstream when the entr
 occupied; no accelerations; by default the laser only selects parts that are already
 inside the laser zone (pre-positioning is optional). All changes are logged with their
 rationale in [docs/CHANGELOG.md](docs/CHANGELOG.md).
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). It covers the code, the documentation, the trained models
+in `models/` and the configuration files. The reason for the choice is in
+[docs/CHANGELOG.md](docs/CHANGELOG.md) (0.6.1).

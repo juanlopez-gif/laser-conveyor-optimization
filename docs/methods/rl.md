@@ -157,6 +157,14 @@ Source: `results/experiments/v0.6_summary/summary.md` (tags `rl06_agents`,
 
 ### 6.4 Findings
 
+> **Revised by the confirmatory run (0.6.1, [confirmatory.md](confirmatory.md)).**
+> * On fresh seeds the agent's own policy effect at default load is −0.2 ±1.9 %, not
+>   significant. The −6.2 % below was almost entirely the pre-positioning effect.
+> * At heavy load it is −2.4 % and significant, and the agent beats `nearest_head` by
+>   about 2.5 %.
+> * The ensemble does not improve on a single agent.
+
+
 1. **At equal pre-positioning the 0.6 agent beats the 0.5 agent at heavy load**:
    `rl06_none_s0` gets −3.4 % against −1.8 % for `rl_bc`, as good as the 0.5
    rollout (−3.7 %). At default load it does not improve (−1.4 % for both).

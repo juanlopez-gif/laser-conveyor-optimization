@@ -1,0 +1,112 @@
+"""Separate the policy effect from the pre-positioning effect (version 0.6.1).
+
+Reads ``results/experiments/<tag>/runs.csv`` written by
+``blocking_prepositioning_study.py`` (every policy run with pre-positioning ``none`` and
+``when_idle`` on the same seeds) and reports, per load, paired relative differences of
+penalized flow time with a normal 95 % CI:
+
+* **total**      policy/mode   vs  nearest_job/none   (the column used up to 0.6.0)
+* **policy**     policy/mode   vs  nearest_job/mode   (same pre-positioning)
+* **prepos.**    policy/when_idle  vs  policy/none    (same policy)
+* **head-to-head** pairs given with ``--pairs A B`` (same mode), e.g. the hybrid
+  against the plain rollout.
+
+The total is not exactly the sum of the other two (ratios compose multiplicatively and
+the means are of per-seed ratios), but it is close.
+
+    python experiments/decompose_effects.py --tag v0.6_confirmatory \
+        --pairs "rl_rollout@model=models/rl06_wi_s0.zip" rollout@avg_flow_time
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+from collections import defaultdict
+from pathlib import Path
+from statistics import mean, stdev
+
+ROOT = Path(__file__).resolve().parents[1]
+KPI = "penalized_flow_time"
+REF = "nearest_job"
+MODES = ("none", "when_idle")
+
+
+def short(policy: str) -> str:
+    """Readable policy name: drop model paths."""
+    name, *specs = policy.split("@")
+    keep = [s for s in specs if "model" not in s]
+    return "@".join([name, *keep])
+
+
+def paired(a: dict[int, float], b: dict[int, float]) -> tuple[float, float, int, int] | None:
+    """Mean relative difference a/b - 1 in %, 95 % half-width, wins of a, n."""
+    seeds = sorted(set(a) & set(b))
+    if len(seeds) < 2:
+        return None
+    rel = [100 * (a[s] / b[s] - 1) for s in seeds]
+    half = 1.96 * stdev(rel) / len(rel) ** 0.5
+    wins = sum(a[s] < b[s] - 1e-9 for s in seeds)
+    return mean(rel), half, wins, len(seeds)
+
+
+def fmt(r) -> str:
+    if r is None:
+        return "–"
+    m, h, w, n = r
+    star = "**" if abs(m) > h else ""          # CI excludes 0
+    return f"{star}{m:+.1f} ±{h:.1f}{star} ({w}/{n})"
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--tag", required=True)
+    ap.add_argument("--pairs", nargs=2, action="append", default=[], metavar=("A", "B"),
+                    help="head-to-head comparison A vs B at the same pre-positioning")
+    args = ap.parse_args(argv)
+
+    out = ROOT / "results" / "experiments" / args.tag
+    data: dict[tuple, dict[int, float]] = defaultdict(dict)   # (load, policy, mode) -> seed -> KPI
+    with open(out / "runs.csv", encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            data[(r["load"], r["policy"], r["mode"])][int(r["seed"])] = float(r[KPI])
+    loads = sorted({k[0] for k in data}, key=lambda l: (l != "default", l))
+    policies = sorted({k[1] for k in data})
+    seeds = sorted({s for v in data.values() for s in v})
+
+    lines = [f"# Policy vs pre-positioning effects: {args.tag}", "",
+             f"Seeds {seeds[0]}..{seeds[-1]} ({len(seeds)}), common random numbers. "
+             f"Paired relative difference of {KPI} in % with a normal 95 % half-width and "
+             "(wins / seeds); bold = the CI excludes 0. Negative = better.", ""]
+    for load in loads:
+        base = data.get((load, REF, "none"), {})
+        order = sorted(policies, key=lambda p: mean(data[(load, p, "when_idle")].values())
+                       if data.get((load, p, "when_idle")) else float("inf"))
+        lines += [f"## Load: {load}", "",
+                  f"Reference {REF}/none: {mean(base.values()):.2f} s.", "",
+                  "| policy | flow none [s] | flow when_idle [s] | total (when_idle vs ref/none) "
+                  "| policy effect, none | policy effect, when_idle | pre-positioning effect |",
+                  "|---|---|---|---|---|---|---|"]
+        for p in order:
+            cn, cw = data.get((load, p, "none"), {}), data.get((load, p, "when_idle"), {})
+            pol_n = paired(cn, data.get((load, REF, "none"), {})) if p != REF else None
+            pol_w = paired(cw, data.get((load, REF, "when_idle"), {})) if p != REF else None
+            lines.append(
+                f"| {short(p)} | {mean(cn.values()):.2f} | {mean(cw.values()):.2f} | "
+                f"{fmt(paired(cw, base))} | {fmt(pol_n)} | {fmt(pol_w)} | {fmt(paired(cw, cn))} |")
+        if args.pairs:
+            lines += ["", "| head-to-head | none | when_idle |", "|---|---|---|"]
+            for a, b in args.pairs:
+                cells = [fmt(paired(data.get((load, a, m), {}), data.get((load, b, m), {})))
+                         for m in MODES]
+                lines.append(f"| {short(a)} vs {short(b)} | {cells[0]} | {cells[1]} |")
+        lines.append("")
+    text = "\n".join(lines)
+    (out / "decomposition.md").write_text(text, encoding="utf-8")
+    print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -4,6 +4,11 @@ Code: `experiments/sensitivity_sweep.py`. Outputs (not versioned):
 `results/experiments/v0.6_sensitivity/` (`runs.csv`, `summary.md`, `sensitivity.png`).
 Changes and rationale: [../CHANGELOG.md](../CHANGELOG.md) (0.6.0).
 
+> In every cell the policies run with `when_idle` and are compared with `nearest_job` /
+> `none`, so the numbers mix the policy and pre-positioning effects. The fresh-seed run
+> of 0.6.1 separates them at the default and heavy loads
+> ([confirmatory.md](confirmatory.md)).
+
 ## 1. Why
 
 * On 2026-11-19 the user decided to keep the default cell: laser 10 cm/s with no
