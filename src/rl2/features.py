@@ -29,6 +29,11 @@ real belt), and times go through ``slog(t) = sign(t) log(1 + |t| / T_REF)`` with
 ``T_REF`` = 10 s, so long waits at heavy load stay bounded but distinguishable.
 Features of the real cell lie roughly in [-3, 3].
 
+**Information model (0.7.3).** Only parts the controller can observe
+(``simulation.observation``) become tokens, and the belt counts include only them.
+In the real cell (``belts``) parts waiting upstream of the belt entry are not seen. The context token
+carries the observation level one-hot.
+
 The encoder reads a :class:`fastsim.FastSim` at an open decision. The fixed-step
 engine will need an adapter with the same features (phase 4).
 """
@@ -50,9 +55,10 @@ UNREACHABLE = 5.0   # slog value used for "no meeting point"
 PART_F = 23
 CONV_F = 11
 LASER_F = 9
-CTX_F = 18
+CTX_F = 21
 
 MODES = ("none", "when_idle", "always")
+OBSERVATIONS = ("zone", "belts", "full")
 
 
 def slog(t: float) -> float:
@@ -116,8 +122,8 @@ def encode(sim: FastSim, candidates=None) -> Observation:
         # belt parts downstream first, then the buffer (FIFO): the natural belt order
         for j in list(sim.belt[k]) + list(sim.buf[k]):
             st = sim.pst[j]
-            if st not in (WAITING, MOVING, READY, PROCESSING):
-                continue
+            if st not in (WAITING, MOVING, READY, PROCESSING) or not sim.observable(j):
+                continue                      # finished, or not observable (0.7.3)
             x = sim.x(j)
             to_b = max(sim.b - x, 0.0)
             if st in (MOVING, READY):
@@ -162,7 +168,9 @@ def encode(sim: FastSim, candidates=None) -> Observation:
 
     conv = []
     for k in range(sim.n):
-        on_belt = sum(1 for j in sim.belt[k] if sim.pst[j] in (MOVING, READY, PROCESSING))
+        on_belt = sum(1 for j in sim.belt[k]
+                      if sim.pst[j] in (MOVING, READY, PROCESSING) and sim.observable(j))
+        n_buf = sum(1 for j in sim.buf[k] if sim.observable(j))
         conv.append([
             (sim.yk[k] - ly) / H,
             sim.v[k] / V_REF,
@@ -170,7 +178,7 @@ def encode(sim: FastSim, candidates=None) -> Observation:
             1.0 if sim.running(k) else 0.0,
             1.0 if sim.s_proc[k] else 0.0,
             1.0 if sim.s_blk[k] else 0.0,
-            len(sim.buf[k]) / 5.0,
+            n_buf / 5.0,
             on_belt / 5.0,
             rates[k] * T_REF,
             rates[k] * p_mean,
@@ -205,6 +213,7 @@ def encode(sim: FastSim, candidates=None) -> Observation:
         sim.spacing / L,
         H / L,
         *[1.0 if sim.mode == m else 0.0 for m in MODES],
+        *[1.0 if sim.observation == o else 0.0 for o in OBSERVATIONS],
         slog(lam_n),
         lam_t,
         arrivals_left,

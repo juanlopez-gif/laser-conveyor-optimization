@@ -287,7 +287,19 @@ against the engine on 40 general cells × 2 modes × 2 rules
 * The run was stopped to switch to the general problem (§6). The model and log are
   kept outside the repository, in `results/experiments/rl2_s_narrow/`.
 
-### 8.2 General training (`rl2_gen_s`)
+### 8.2 General training with full information (`rl2_gen_s`, stopped)
+
+* **What happened:** the first general run was stopped during its iteration 0, when
+  it became clear that the controller of the real cell does not see the parts waiting
+  upstream of the belts. The model and the teacher had been using them.
+* **Fix and restart (0.7.3):** the tokens and the look-ahead now hold observable parts
+  only (`simulation.observation`; real cell: `belts`). The context token gained the
+  observation level (`CTX_F` 18 → 21), so earlier checkpoints no longer fit the model.
+  The run was restarted from scratch.
+* Its log is kept outside the repository in
+  `results/experiments/archive/rl2_gen_s_fullinfo_stopped/`.
+
+### 8.3 General training with the real information model (`rl2_gen_s`, 0.7.3)
 
 RESULTS_PLACEHOLDER
 

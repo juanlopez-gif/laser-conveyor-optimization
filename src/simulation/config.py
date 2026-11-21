@@ -120,6 +120,9 @@ class SimulationSpec:
     unprocessed_at_zone_end: str
     conveyor_stop_policy: str
     due_date_allowance: float
+    #: information model (0.7.3): zone | belts | full, resolved from 'auto'
+    #: (simulation/observation.py)
+    observation: str = "belts"
 
 
 @dataclass(frozen=True)
@@ -271,6 +274,10 @@ def build_config(raw: dict) -> Config:
         prepositioning=_prepositioning_mode(l.get("prepositioning", "none")))
     if laser.motion_model not in ("simultaneous", "sequential"):
         raise ValueError("laser.motion_model must be 'simultaneous' or 'sequential'")
+    from dataclasses import replace as _replace
+    from .observation import resolve_observation
+    sim = _replace(sim, observation=resolve_observation(s.get("observation", "auto"),
+                                                        laser.prepositioning))
 
     det, sto = a.get("deterministic", {}), a.get("stochastic", {})
     mode = str(a["mode"])

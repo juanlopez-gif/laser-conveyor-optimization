@@ -24,6 +24,14 @@ simulation:
   #   all_conveyors            -> every conveyor stops
   conveyor_stop_policy: processing_conveyor_only
   due_date_allowance: 20.0     # due date = arrival_time + allowance [s] (for lateness)
+  # Information model (0.7.3): which parts a POLICY may observe (physics unchanged).
+  #   belts -> every part on the belts (entry zone + laser zone) with its position.
+  #            REAL CELL: an overhead camera sees all belts and their working area.
+  #   zone  -> only parts inside the laser zone (what-if: no camera)
+  #   full  -> also parts waiting upstream of the belt entry (what-if upper bound;
+  #            behaviour of every version before 0.7.3)
+  #   auto  -> belts
+  observation: auto
 
 geometry:
   entry_length: 10.0           # entry zone   (laser cannot reach)

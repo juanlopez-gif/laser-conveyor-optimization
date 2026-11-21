@@ -27,7 +27,7 @@
 \title{\textbf{Scheduling a Shared XY Laser over Parallel Conveyors}\\[0.3em]
 \large Formal mathematical formulation}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- version 0.6.0}
+\date{November 2026 --- version 0.7.3}
 
 \begin{document}
 \maketitle
@@ -41,7 +41,9 @@ time-indexed mixed-integer linear program, describe the sequence-only (decoder) 
 used by heuristics, discuss the online version and give structural properties and
 complexity results. Every schedule produced by the simulator is checked automatically
 against this model. Version 0.4.0 adds an explicit penalty for blocking events, a
-pre-positioning option for the laser and a belt-order dispatching policy.
+pre-positioning option for the laser and a belt-order dispatching policy. Version 0.7.3
+adds the information model of the controller and the general stochastic problem over a
+family of cells that the learned policies target.
 \end{abstract}
 
 \tableofcontents
@@ -120,6 +122,8 @@ $\delta$ & minimum spacing between consecutive parts on a belt & $4$ cm\\
 $v_x,\ v_y$ & laser axis speeds & $10,\ 10$ cm/s\\
 $P_0=(x_0,y_0)$ & initial laser position & workspace centre\\
 $\sigma_{kk'}\in\{0,1\}$ & $1$ if processing a part of conveyor $k'$ stops conveyor $k$ & $\sigma=I$\\
+$\lambda_k$ & arrival rate of conveyor $k$ (online model) & $\tfrac1{10},\tfrac1{12},\tfrac1{14}$ s$^{-1}$\\
+$G$ & distribution of the processing time (online model) & constant $2.5$ s\\
 \bottomrule
 \end{tabularx}
 
@@ -519,9 +523,11 @@ with the smallest interception time, so its schedules keep belt order inside eve
 conveyor, the structure of the good sequences found by the metaheuristics.
 
 \emph{Reinforcement learning.} The online problem is a semi-Markov decision process:
-decision epochs are the instants at which the laser is free and at least two conveyors
-have a dispatch candidate. The action is the conveyor whose head is served (actions
-without candidates are masked). The cost accrued between epochs $t$ and $t'$ is
+decision epochs are the instants at which the laser is free and there are at least two
+candidates (a single candidate is taken without a decision). In the 0.5--0.6 agents the
+action is the conveyor whose head is served (a restricted class); in the strong-RL model
+of version 0.7 the action is any candidate part. The cost accrued between epochs $t$
+and $t'$ is
 \[
 c(t,t')=\int_t^{t'}\bigl|\{j:\ r_j\le s<C_j\}\bigr|\,ds+\lambda_T\,T_B(t,t')+\lambda_N\,N_B(t,t'),
 \]
@@ -529,8 +535,77 @@ and since $\int_0^\infty|\{j:r_j\le s<C_j\}|\,ds=\sum_jF_j$, the undiscounted re
 an episode equals $-(\sum_jF_j+\Pi)=-n\,\overline F_\Pi$.
 
 \emph{Rolling horizon:} at each decision epoch, solve $\Pb_\Delta$ restricted to the
-parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply the
-first decision and re-solve at the next epoch.
+observable parts (\S\ref{sec:info}, plus forecast arrivals, if any) over a window of $H$
+steps, apply the first decision and re-solve at the next epoch.
+
+\emph{Tie-break.} Rules that rank candidates by travel time compare the times rounded to
+$10^{-9}$\,s and break exact ties by earliest arrival, then by part number. Exact ties
+are frequent (equal moves $\Delta y/v_y$, several parts stopped at $b$), so the tie rule
+is part of the definition of a policy.
+
+\subsection{Information model}\label{sec:info}
+A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts
+observable at $t$. The information at a decision epoch is
+\[
+\mathcal I_t=\Bigl(t,\ \text{laser state},\ \text{belt states},\
+\bigl\{(k(j),x_j(t),r_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta\Bigr),
+\]
+where $\theta$ are the cell parameters (\S\ref{sec:general}), known statistically and not
+an observation. A policy maps $\mathcal I_t$ to a candidate; a look-ahead may simulate
+only the parts of $O(t)$ plus synthetic arrivals drawn from $\theta$, never the real
+future.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{0.3\linewidth}@{}}
+\toprule
+level & $O(t)$ & use\\
+\midrule
+\texttt{belts} & parts on a belt (entry zone and laser zone) with their positions & \textbf{real cell}: an overhead camera sees every belt and its working area\\
+\texttt{zone} & parts in the laser zone only & what-if without camera; incompatible with pre-positioning\\
+\texttt{full} & also parts waiting upstream of the belt entry & what-if upper bound; implicit in every version before 0.7.3\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Up to version 0.7.2 the look-ahead policies and the reinforcement-learning observations
+also used the parts waiting upstream, which the real cell does not see. Version 0.7.3
+removes them, and the tests check that changing unobservable parts never changes a
+decision. The rules \texttt{nearest\_job}, \texttt{nearest\_head}, \texttt{fifo} and
+\texttt{weighted\_score} choose among candidates only, which are always observable. The
+processing time $p_j$ is assumed known once the part is observed (it is constant in the
+real cell). Whether the laser may be \emph{sent} to an entry-zone part is a separate
+question (\texttt{laser.prepositioning}); the real cell uses \texttt{none}.
+
+\subsection{The general stochastic problem}\label{sec:general}
+The learned policies target a family of cells. A cell is the parameter vector
+\begin{multline*}
+\theta=\bigl(N,\ (y_k,v_k,\lambda_k)_{k=1}^N,\ G,\ v_x,v_y,\ \text{motion model},\\
+a,b,L,\delta,\ \sigma,\ \lambda_N,\lambda_T,\ \text{pre-positioning},\ \text{observation level}\bigr).
+\end{multline*}
+Given $\theta$, the arrivals of conveyor $k$ form a Poisson process of rate $\lambda_k$
+(or a deterministic one of period $1/\lambda_k$), independent between conveyors. The
+processing times are i.i.d.\ with distribution $G$ (constant, uniform or truncated
+normal). An instance $\omega$ is a realization up to the arrival horizon $T_A$, after
+which the system drains. For a policy $\mu$,
+\[
+J(\mu;\theta)=\mathbb E_\omega\bigl[\overline F_\Pi(\mu;\theta,\omega)\bigr],\qquad
+\min_\mu\ \mathbb E_{\theta\sim\Theta}\Bigl[J(\mu;\theta)\,/\,J(\mu_{\mathrm{NJ}};\theta)\Bigr],
+\]
+where the policy receives $\theta$ as input and the ratio to \texttt{nearest\_job} on the
+same instance (common random numbers) makes cells of different scale comparable.
+$J$ is estimated by the mean over seeds of the paired per-episode ratio, with a normal
+95\,\% confidence interval.
+
+\emph{Load and stability.} The processing load is $\rho_p=\sum_k\lambda_k\mathbb E[p]$.
+The effective laser load $\rho=\sum_k\lambda_k(\mathbb E[p]+\bar\tau)$ also includes the
+mean travel time $\bar\tau$ per part, which depends on the policy. If $\rho\ge 1$ the
+queues grow without bound: finite episodes with drain stay well defined, a long-run
+average does not. The real cell has $\rho_p=0.64$ and $\rho\approx0.9$ (stable); the
+heavy example has $\rho_p=0.93$ and is overloaded. The training distribution draws
+$\rho_p\in[0.3,0.95]$ and therefore deliberately includes overloaded cells.
+
+\emph{Not covered by $\theta$ yet:} a processing-time distribution per conveyor or per
+part type, laser acceleration, and the \texttt{pass} rule in the exact simulator.
 
 %====================================================================
 \section{Structural properties and complexity}
@@ -635,6 +710,8 @@ upstream queue and spacing \eqref{eq:entry} & \texttt{Conveyor.can\_admit}, \tex
 $\tau$, $\ell$ & \texttt{motion.travel\_time}, \texttt{Laser.move\_towards}\\
 $B_j$, $\beta_j$, $N_B$, $T_B$, $\Pi$ & \texttt{Part.block\_time}, \texttt{Part.caused\_block}, summary keys \texttt{blocking\_events}, \texttt{total\_blocked\_time}, \texttt{blocking\_penalty}\\
 objectives & \texttt{metrics.summarize}, \texttt{optimization/objective\_functions.py}\\
+information model $O(t)$ & \texttt{simulation.observation}; \texttt{Simulation.observable}, \texttt{FastSim.observable}; enforced in \texttt{policies/rollout.py}, \texttt{rl/features.py}, \texttt{rl2/}\\
+exact continuous-time realisation (block mode) & \texttt{src/fastsim/} (event driven): checker tolerance $10^{-6}$; the fixed-step engine converges to it as the step goes to $0$\\
 \bottomrule
 \end{tabularx}
 \end{center}

@@ -250,3 +250,36 @@ Reference `nearest_job` / `none`: 17.23 s. It was 17.66 s with the old tie-break
 4. This sets the bar for the strong-RL plan at the real load:
    * beat `nearest_job` / `none` by clearly more than 2 %;
    * beat `rl_rollout` / `none` significantly.
+
+## 8. Rerun with the real information model (0.7.3, 2026-11-20)
+
+**Why.** The real cell has an overhead camera that sees every belt (entry zone and
+laser zone) and the positions of the parts, but not the parts waiting upstream of the
+belt entry (`docs/assumptions.md` C4b). Up to 0.7.2:
+
+* `rollout` copied every arrived part into its look-ahead, including the waiting ones;
+* the RL agent saw the upstream buffer length.
+
+Version 0.7.3 removes that information (`simulation.observation: belts`,
+`docs/formal_formulation.md` §4.1). The same design as §7 was rerun: seeds 3000–3029,
+`none`, tag `v0.7.3_confirmatory_belts`. The agents were not retrained; the agent now
+receives a zero buffer length.
+
+**Paired Δ of penalized flow time vs `nearest_job` / `none`** (95 % CI, wins out of 30):
+
+| policy | real cell, 0.7.3 | real cell, §7 (0.7.0) | heavy load, 0.7.3 | heavy load, §7 |
+|---|---|---|---|---|
+| `rollout@avg_flow_time` | **−2.4 ±1.3 %**, 22/30 | −1.9 ±1.3 % | −0.9 ±1.3 %, 17/30 | −1.7 ±1.4 % |
+| `rl_rollout` | **−2.3 ±1.4 %**, 22/30 | −2.3 ±1.5 % | **−2.1 ±1.5 %**, 20/30 | −3.4 ±1.4 % |
+| `rl` | −0.1 ±1.3 % | +0.5 ±1.8 % | −0.7 ±1.4 % | −1.4 ±1.6 % |
+| `nearest_head` | +0.4 ±1.6 % | +0.4 % | +1.0 ±1.3 % | +1.0 % |
+
+* **Control.** `nearest_job` and `nearest_head` give results identical to §7 on all
+  60 runs: they never used unobservable parts.
+* **Real cell:** the gains do not depend on the waiting parts. `rollout` and
+  `rl_rollout` are equivalent (−2.4 % and −2.3 %, both significant).
+* **Heavy load:** about one point of the earlier gains came from knowing the parts
+  queued upstream, which are many at that load. `rl_rollout` stays significant
+  (−2.1 %); the plain `rollout` no longer is.
+* **Recommendation for the real cell:** `rollout@avg_flow_time` or `rl_rollout` with
+  `none`. The two are equivalent; the plain rollout needs no trained model.

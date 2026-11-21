@@ -26,6 +26,11 @@ Fairness (online information only)
 ----------------------------------
 The clone is built with :func:`copy.deepcopy` and then:
 
+* (0.7.3) every unfinished part the controller cannot observe
+  (``simulation.observation``; the real cell sees the belts, not the parts waiting
+  upstream of them) is removed
+  from the clone, so the look-ahead uses observable parts only;
+
 * ``pending_arrivals`` (the pre-computed list of FUTURE arrivals) is replaced by
   an empty deque before anything runs, so the clone never sees a part that has
   not arrived yet. Optionally (``future_samples > 0``) it is filled with
@@ -74,6 +79,23 @@ _TIE_TOL = 1e-9
 def _settled(part: Part) -> bool:
     """Processed, or gone for good (``pass`` mode: exited unprocessed)."""
     return part.completion_time is not None or part.exit_time is not None
+
+
+def _hide_unobservable(clone: Simulation, original: Simulation) -> None:
+    """Information model (0.7.3): remove from the look-ahead every unfinished part the
+    controller cannot observe (``simulation.observation``). In the real cell
+    (``belts``) the parts waiting upstream of the belt entry are dropped, exactly like
+    future arrivals; with ``zone`` also the entry-zone parts."""
+    if getattr(original, "observation", "full") == "full":
+        return
+    hidden = {id(p) for p in clone.parts
+              if not _settled(p) and not original.observable(p)}
+    if not hidden:
+        return
+    for c in clone.conveyors:
+        c.parts = [p for p in c.parts if id(p) not in hidden]
+        c.buffer = deque(p for p in c.buffer if id(p) not in hidden)
+    clone.parts = [p for p in clone.parts if id(p) not in hidden]
 
 
 class _NullEventLog(EventLog):
@@ -260,6 +282,7 @@ class RolloutPolicy(BasePolicy):
         if sim.trace is not None:
             memo[id(sim.trace)] = None
         clone = copy.deepcopy(sim, memo)
+        _hide_unobservable(clone, sim)
         clone.__class__ = _LookaheadSimulation
         if self.dt_lookahead is not None and self.dt_lookahead != sim.dt:
             clone.dt = self.dt_lookahead
@@ -287,7 +310,7 @@ class RolloutPolicy(BasePolicy):
         t0 = sim.time
         clone = self.clone(sim, _ForcedFirstPolicy(forced_id, self._new_base()))
         self._strip_future(clone, sim, scenario)
-        n_known = len(sim.parts)
+        n_known = len(clone.parts)           # observable known parts (0.7.3)
         tracked = [p for p in clone.parts if p.completion_time is None and p.exit_time is None]
         stop0 = sum(clone.metrics.stopped_time)
         dist0 = clone.laser.distance

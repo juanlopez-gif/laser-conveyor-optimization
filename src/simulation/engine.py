@@ -77,6 +77,7 @@ class Simulation:
         self.stop_policy = get_stop_policy(config.simulation.conveyor_stop_policy)
         self.block = config.simulation.unprocessed_at_zone_end == "block"
         self.prepositioning = config.laser.prepositioning      # none | when_idle | always
+        self.observation = config.simulation.observation        # zone | belts | full (0.7.3)
 
         self.conveyors = [Conveyor(spec, config.geometry) for spec in config.conveyors]
         self.laser = Laser.from_spec(config.laser)
@@ -405,6 +406,13 @@ class Simulation:
                      f"Simulation finished: {self.n_completed} completed, {self.n_exited} exited, "
                      f"{len(self.parts) - self.n_exited} still in system")
         self.finished = True
+
+    def observable(self, part) -> bool:
+        """True if a policy may observe ``part`` (information model, 0.7.3;
+        simulation/observation.py). The physics never depends on it."""
+        from .observation import visible_status
+        return visible_status(part.status.value if hasattr(part.status, "value")
+                              else str(part.status), self.observation)
 
     # ---------------------------------------------------------------- output
     def result(self) -> SimulationResult:

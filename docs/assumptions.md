@@ -73,6 +73,14 @@ hardware change worth considering. The assignment is
 committed (as for READY parts) in `always` mode. Rationale and results:
 docs/CHANGELOG.md (0.4.0), docs/methods/nearest_head_prepositioning.md.
 
+**C4b. Information model (0.7.3).** An overhead camera sees every belt and its whole
+working area (owner, 2026-11-20): the controller knows every part on a belt, in the
+entry zone and in the laser zone, with its position (`simulation.observation: belts`,
+the default). Parts waiting upstream of the belt entry are not seen; look-ahead
+policies and learned policies may not use them (they did up to 0.7.2). Seeing the entry
+zone does not change C4: the cell still runs pre-positioning `none`. Details:
+`docs/formal_formulation.md` §4.1, `src/simulation/observation.py`.
+
 **C5.** Laser workspace = laser zone in X (10–45 cm) × [min y, max y] of the conveyors.
 The laser never leaves it (tested).
 

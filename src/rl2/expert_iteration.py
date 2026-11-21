@@ -218,7 +218,8 @@ def play_episode(job: dict) -> dict:
         best = teacher.choose(costs)
         for i, j in enumerate(obs.part_ids):
             if j in costs:
-                cvec[i] = costs[j] - costs[best]
+                # >= -1e-9 by the tie tolerance of choose(); clip the round-off
+                cvec[i] = max(costs[j] - costs[best], 0.0)
         samples.append([obs, cvec])
         marks.append((sim.wip_area, sim.n_block_events, sim.blocked_area))
         if actor is None or rng.random() < job["beta"]:

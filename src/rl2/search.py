@@ -3,7 +3,8 @@
 At a decision the teacher scores each kept candidate c by a look-ahead:
 
 1. clone the state with :meth:`FastSim.lookahead_clone`, so the real future
-   arrivals are dropped (online information only). With ``scenarios > 0`` they are
+   arrivals and every part the controller cannot observe are dropped (online
+   information only; the real cell does not see parts waiting upstream, 0.7.3). With ``scenarios > 0`` they are
    replaced by arrivals sampled from the **known** rates in a window of
    ``window_s`` seconds;
 2. force c, then let the **base policy** drive the clone until every part known at the
@@ -134,7 +135,7 @@ class SearchTeacher:
         """Look-ahead cost of every kept candidate (base choice first in the dict)."""
         pref = self.preference(sim, cands)
         kept = pref[: self.k] if self.k else pref
-        known = [j for j in range(len(sim.pk)) if sim.pC[j] is None]
+        known = [j for j in range(len(sim.pk)) if sim.pC[j] is None and sim.observable(j)]
         scen = sample_scenarios(sim, self.m, self.window, self.key) if self.m > 0 else [[]]
         looks = []
         for c in kept:

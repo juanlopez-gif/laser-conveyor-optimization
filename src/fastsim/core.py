@@ -73,6 +73,9 @@ class FastSim:
         if s.conveyor_stop_policy not in ("processing_conveyor_only", "all_conveyors"):
             raise NotImplementedError(f"stop policy {s.conveyor_stop_policy}")
         self.mode = cfg.laser.prepositioning
+        self.observation = s.observation          # information model (0.7.3)
+        self._seen = {"zone": (READY, PROCESSING), "belts": (MOVING, READY, PROCESSING),
+                      "full": (WAITING, MOVING, READY, PROCESSING)}[s.observation]
         self.n = len(cfg.conveyors)
         self.v = [c.speed for c in cfg.conveyors]
         self.yk = [c.y for c in cfg.conveyors]
@@ -143,15 +146,33 @@ class FastSim:
         c._memo = dict(self._memo)
         return c
 
+    def observable(self, j: int) -> bool:
+        """True if a policy may observe unfinished part j (0.7.3)."""
+        return self.pst[j] in self._seen
+
     def lookahead_clone(self, scenario=(), window_s: float = 0.0) -> "FastSim":
         """Clone for look-ahead search with **online information only**.
 
-        The real future arrivals are dropped; ``scenario`` (records with ``time``,
+        Unfinished parts the controller cannot observe (``simulation.observation``;
+        the real cell does not see parts waiting upstream of the belts) are dropped
+        too (0.7.3). The real
+        future arrivals are dropped; ``scenario`` (records with ``time``,
         ``conveyor_index``, ``processing_time``, all after ``t``) replaces them, e.g.
         arrivals sampled from the known rates. The clone's arrival horizon becomes
         ``t + window_s`` so it drains after the synthetic window.
         """
         c = self.clone()
+        # information model (0.7.3): unobservable parts are unknown to the controller
+        if self.observation != "full":
+            hide = {j for j in range(len(self.pk))
+                    if self.pst[j] in (WAITING, MOVING, READY, PROCESSING)
+                    and not self.observable(j)}
+            if hide:
+                c.belt = [[j for j in q if j not in hide] for q in c.belt]
+                c.buf = [[j for j in q if j not in hide] for q in c.buf]
+                for j in hide:
+                    c.pst[j] = EXITED            # gone for the look-ahead
+                c.n_completed += len(hide)       # keep the WIP count of the clone right
         c.arr = tuple(sorted(((r.time, r.conveyor_index, r.processing_time) for r in scenario),
                              key=lambda a: (a[0], a[1])))
         c.next_arr = 0

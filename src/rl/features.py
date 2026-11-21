@@ -20,6 +20,10 @@ Observation (all features roughly in [0, 1])
 * global: unfinished parts / 20
 
 Size = 2 + N * (4 + 8 K) + 1  (87 for N = 3).
+
+Information model (0.7.3): only parts the controller can observe
+(``simulation.observation``) enter the slots and the counts; in the real cell
+(``belts``) the upstream buffer length is always 0.
 """
 
 from __future__ import annotations
@@ -78,13 +82,17 @@ def encode(sim, candidates) -> np.ndarray:
     obs[1] = _clip01((sim.laser.y - ws.y_min) / max(ws.y_max - ws.y_min, 1e-9))
     i = 2
     unfinished = 0
+    # information model (0.7.3): only parts the controller can observe
+    seen = getattr(sim, "observable", None) or (lambda p: True)
     for c in sim.conveyors:
-        unstarted = sorted((p for p in c.parts if p.needs_processing),
+        unstarted = sorted((p for p in c.parts if p.needs_processing and seen(p)),
                            key=lambda p: -p.x)
-        unfinished += len(c.buffer) + sum(1 for p in c.parts if p.completion_time is None)
+        buf = [p for p in c.buffer if seen(p)]
+        unfinished += len(buf) + sum(1 for p in c.parts
+                                     if p.completion_time is None and seen(p))
         obs[i] = 1.0 if c.is_running else 0.0
         obs[i + 1] = 1.0 if STOP_BLOCKED in c.stop_reasons else 0.0
-        obs[i + 2] = _clip01(len(c.buffer) / 5.0)
+        obs[i + 2] = _clip01(len(buf) / 5.0)
         obs[i + 3] = 1.0 if any(p.id in cand_ids for p in unstarted) else 0.0
         i += CONVEYOR_FEATURES
         for s in range(K_SLOTS):

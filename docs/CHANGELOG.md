@@ -6,6 +6,104 @@ summarized from the git history.
 
 ---
 
+## 0.7.3 — 2026-11-20 — Information model of the controller; general stochastic problem in the formulation
+
+The user asked whether the mathematical formulation was correct. The review found that
+the deterministic model is right but two things were missing:
+
+1. the **information** the controller may use;
+2. the **general stochastic problem** that the learned policies target.
+
+The user then stated what the real cell observes: an **overhead camera sees every
+belt and its whole working area** (entry zone and laser zone), so parts and their
+positions are known. Parts waiting upstream of the belt entry are not seen.
+Pre-positioning stays `none` (C4).
+
+### Information model (`src/simulation/observation.py`)
+
+* **New option `simulation.observation`:**
+  * `belts` is the real cell and the default (`auto`): parts on the belts are
+    observable;
+  * `zone` is a what-if: laser-zone parts only, incompatible with pre-positioning;
+  * `full` is a what-if: also the parts waiting upstream, i.e. the implicit behaviour
+    of every earlier version.
+* **Why:** a policy may only use what the cell observes. Up to 0.7.2:
+  * the look-ahead (`rollout`, hybrids) and the 0.7 search teacher simulated the
+    waiting parts too;
+  * the RL agent saw the upstream buffer length;
+  * the `rl2` tokens included waiting parts.
+* **Where it is enforced:**
+  * `Simulation.observable` and `FastSim.observable`;
+  * `policies/rollout.py`: unobservable parts are removed from the look-ahead clone;
+  * `rl/features.py`: slots and counts use observable parts only;
+  * `FastSim.lookahead_clone`, `rl2/search.py` (known parts) and `rl2/features.py`
+    (tokens and belt counts, plus the observation level in the context token,
+    `CTX_F` 18 → 21).
+* The rule policies select among candidates only, which are always observable, so
+  they are unchanged.
+* **Tests:** `tests/test_observation.py` (13 tests). For the `belts` and `zone` levels,
+  changing or removing the unobservable parts at a decision never changes:
+  * the engine rollout costs;
+  * the RL observation;
+  * the fast-simulator teacher costs;
+  * the `rl2` tokens.
+
+  The same change is checked to be visible under `full`, so each test can detect a
+  leak. The suite has 231 tests, all passing; one is skipped (CUDA).
+
+### Effect on the results (`docs/methods/confirmatory.md` §8)
+
+The real-cell comparison was rerun (seeds 3000–3029, `none`, tag
+`v0.7.3_confirmatory_belts`):
+
+| policy | real cell | heavy load |
+|---|---|---|
+| `rollout@avg_flow_time` | −2.4 ±1.3 % (was −1.9 %) | −0.9 % (was −1.7 %) |
+| `rl_rollout` | −2.3 ±1.4 % (unchanged) | −2.1 % (was −3.4 %) |
+
+* `nearest_job` and `nearest_head` are identical to before on all 60 runs.
+* The real-cell gains do not depend on the waiting parts. At heavy load about one point
+  did.
+* Recommendation: `rollout@avg_flow_time` or `rl_rollout` with `none` (equivalent).
+
+### Formulation (`docs/formal_formulation.md`, `docs/formulation/formal_formulation.tex`, PDF rebuilt)
+
+* **§4.1 Information model:** the information set $\mathcal I_t$ with observable
+  parts $O(t)$, the three levels, and what changed in 0.7.3.
+* **§4.2 The general stochastic problem:**
+  * the cell parameter vector θ (N, per-belt y, v, λ, G, vx, vy, motion model,
+    geometry, stop rule, λ_N, λ_T, pre-positioning, observation);
+  * Poisson or deterministic arrivals per belt, i.i.d. processing times;
+  * finite episodes with drain;
+  * the single-cell objective $J(\mu;\theta)$ and the general objective
+    $\mathbb E_\theta[J(\mu;\theta)/J(\mu_{NJ};\theta)]$, and how it is estimated;
+  * load $\rho_p$ vs effective load ρ. Overloaded cells are deliberately included
+    in the training distribution.
+* **Updated:**
+  * the RL paragraph: decisions with ≥ 2 candidates, any-part action in `rl2`;
+  * the tie-break rule (0.7.0), now part of the definition of a policy;
+  * notation (λ_k, G);
+  * the simulator correspondence: information model and the exact event-driven
+    simulator.
+* **Checked and correct (no change):** odometer and entry coordinates, (C1)–(C7), the
+  blocking penalty, the Little identity of the RL cost, the lower bounds, and the
+  strong NP-hardness proof.
+* `docs/assumptions.md` C4b records the camera.
+
+### Training
+
+* The general run `rl2_gen_s` (0.7.2) was stopped during iteration 0 because it used
+  the waiting parts. Its log is in
+  `results/experiments/archive/rl2_gen_s_fullinfo_stopped/`.
+* It is restarted with the real information model (`docs/methods/rl2.md` §8.2–8.3).
+
+### Small fix
+
+* `play_episode` clips relative look-ahead costs below the tie tolerance (−5.7·10⁻¹⁴
+  round-off) to 0, so the best candidate of a label always has cost exactly 0.
+
+---
+
 ## 0.7.2 — 2026-11-20 — Strong-RL plan, phase 3: expert iteration on the general problem; portable training
 
 The user asked to start phase 3. During it, the user stated the target precisely:

@@ -7,7 +7,9 @@ This document states the laser–conveyor scheduling problem formally. It covers
 1. an **exact continuous-time model** (the reference definition of the problem);
 2. a **time-indexed MILP** that implements it up to a time discretization $\Delta$;
 3. the **sequence-only (decoder) view** used by heuristics and metaheuristics;
-4. the **online** version actually faced by the cell;
+4. the **online** version actually faced by the cell, with its **information model**
+   (§4.1) and the **general stochastic problem** that the learned policies target
+   (§4.2, 0.7.3);
 5. structural properties and complexity;
 6. the correspondence with the simulator, which is checked automatically
    (`src/optimization/schedule_check.py`, `tests/test_formulation.py`).
@@ -47,6 +49,8 @@ zone yet (§1.5). Changes are logged in [CHANGELOG.md](CHANGELOG.md).
 | $v_x,\ v_y$ | laser axis speeds | 10, 10 cm/s |
 | $P_0=(x_0,y_0)$ | initial laser position | workspace centre |
 | $\sigma_{kk'}\in\lbrace 0,1\rbrace$ | stop rule: 1 if processing a part of conveyor $k'$ stops conveyor $k$ | $\sigma=I$ (own conveyor only) |
+| $\lambda_k$ | arrival rate of conveyor $k$ (online model, §4.2) | 1/10, 1/12, 1/14 s⁻¹ |
+| $G$ | distribution of the processing time $p_j$ (online model, §4.2) | constant 2.5 s |
 
 We assume $\sigma_{kk}=1$ for all $k$ (a part never moves while it is being processed).
 
@@ -495,11 +499,13 @@ unstarted part) and picks the head with the smallest interception time. Its sche
 keep belt order inside every conveyor, which is the structure of the good sequences
 found by the metaheuristics.
 
-**Reinforcement learning (0.5.0).** The online problem is a semi-Markov decision
-process: decision epochs are the instants at which the laser is free and at least two
-conveyors have a dispatch candidate; the sojourn time between epochs is random. The
-action is the conveyor $k$ whose head is served (actions without candidates are
-masked). The cost accrued between epochs $t$ and $t'$ is
+**Reinforcement learning (0.5.0; any-part action 0.7.1).** The online problem is a
+semi-Markov decision process: decision epochs are the instants at which the laser is
+free and the candidate set has at least two parts (a single candidate is taken without
+a decision); the sojourn time between epochs is random. In the 0.5–0.6 agents the
+action is the conveyor $k$ whose head is served (a restricted class, §5 property 2);
+in the strong-RL model (`docs/methods/rl2.md`) the action is **any candidate part**.
+The cost accrued between epochs $t$ and $t'$ is
 
 $$
 c(t,t')=\int_t^{t'} \lvert\lbrace j:\ r_j\le s<C_j\rbrace\rvert\,ds+\lambda_T\,T_B(t,t')+\lambda_N\,N_B(t,t'),
@@ -510,8 +516,100 @@ and since $\int_0^\infty \lvert\lbrace j: r_j\le s<C_j\rbrace\rvert\,ds=\sum_j F
 $-(\sum_j F_j+\Pi)=-n\,\overline F_\Pi$. See `docs/methods/rl.md`.
 
 **Rolling horizon:** at each decision epoch, solve $\mathcal P_\Delta$ restricted to
-the parts present (plus forecast arrivals, if any) over a window of $H$ steps, apply
-the first decision and re-solve at the next epoch.
+the observable parts (§4.1, plus forecast arrivals, if any) over a window of $H$ steps,
+apply the first decision and re-solve at the next epoch.
+
+**Tie-break (0.7.0).** Every rule that ranks candidates by travel time compares the
+times rounded to $10^{-9}$ s and breaks exact ties by earliest arrival, then by part
+number. Exact ties are frequent (equal $\Delta y/v_y$ moves, several parts stopped at
+$b$), so the tie rule is part of the definition of a policy.
+
+### 4.1 Information model (0.7.3)
+
+A policy may only use what the cell can observe. Let $O(t)\subseteq J$ be the parts
+**observable** at $t$. The information available at a decision epoch is
+
+$$
+\mathcal I_t=\Big(t,\ \text{laser state},\ \text{belt states } (u_k,\ \text{stop reasons}),\
+\big\lbrace (k(j),\,x_j(t),\,r_j,\,p_j,\,\text{status}_j):\ j\in O(t)\big\rbrace,\ \theta\Big),
+$$
+
+where $\theta$ are the cell parameters of §4.2. These are known statistically and are
+not an observation. A policy is a map $\mu:\mathcal I_t\mapsto j\in$ candidates; a
+look-ahead may simulate only the parts of $O(t)$, plus synthetic arrivals drawn from
+$\theta$, never the real future.
+
+| level (`simulation.observation`) | $O(t)$ | use |
+|---|---|---|
+| `belts` | parts on a belt: entry zone and laser zone, with positions (status MOVING, READY, PROCESSING) | **real cell**: an overhead camera sees every belt and its working area (owner, 2026-11-20) |
+| `zone` | parts in the laser zone only (READY, PROCESSING) | what-if: no camera. Incompatible with pre-positioning |
+| `full` | also parts waiting upstream of the belt entry (WAITING) | what-if upper bound; the implicit behaviour of every version before 0.7.3 |
+
+* **Where the leak was.** Up to 0.7.2 the look-ahead policies (`rollout`, the hybrids)
+  and the RL observations also used the parts waiting upstream, which the real cell
+  does not see.
+* **What 0.7.3 does.** It removes them from the look-ahead clones and from every
+  feature vector. `tests/test_observation.py` checks that changing unobservable parts
+  never changes a decision, and that the same change would be visible with `full`.
+* **Unaffected rules.** The rules `nearest_job`, `nearest_head`, `fifo` and
+  `weighted_score` select among candidates only, and the candidates are always
+  observable.
+* **`p_j` is known when the part is observed.** It is constant in the real cell. In
+  the general problem this is an assumption.
+* **Pre-positioning is not the same question as observation.** `laser.prepositioning`
+  says whether the laser may be *sent* to an entry-zone part. The real cell runs
+  `none` (`docs/assumptions.md` C4).
+
+### 4.2 The general stochastic problem (0.7.3)
+
+The target of the learned policies is a **family** of cells, not one cell. A cell is a
+parameter vector
+
+$$
+\theta=\big(N,\ (y_k,v_k,\lambda_k)_{k=1}^N,\ G,\ v_x,v_y,\ \text{motion model},\ a,b,L,\delta,\ \sigma,\ \lambda_N,\lambda_T,\ \text{pre-positioning},\ \text{observation level}\big).
+$$
+
+Given $\theta$:
+
+* the arrivals of conveyor $k$ form a renewal process: Poisson with rate $\lambda_k$
+  (exponential inter-arrival times), or deterministic with period $1/\lambda_k$;
+* the processes of different conveyors are independent;
+* the processing times are i.i.d. with distribution $G$ (constant, uniform or
+  truncated normal).
+
+Instances $\omega$ are realizations up to the arrival horizon $T_A$ (300 s), after
+which the system drains.
+
+* **Single-cell objective.** For a policy $\mu$ and a cell $\theta$:
+  $$
+  J(\mu;\theta)=\mathbb E_\omega\big[\,\overline F_\Pi(\mu;\theta,\omega)\,\big].
+  $$
+* **General objective.** A single policy that receives $\theta$ as input (the context
+  token of `rl2`) is sought for a distribution $\Theta$ over cells:
+  $$
+  \min_\mu\ \mathbb E_{\theta\sim\Theta}\Big[\,J(\mu;\theta)\,/\,J(\mu_{\mathrm{NJ}};\theta)\,\Big].
+  $$
+  The ratio to `nearest_job` on the same instance (common random numbers) makes cells
+  of very different scale comparable. The training and validation distribution
+  $\Theta$ agreed with the owner is `rl2.expert_iteration.GENERAL`
+  (`docs/methods/rl2.md` §6.1).
+* **Estimation.** $J$ is estimated by the mean over seeds of the paired per-episode
+  ratio, with a normal 95 % CI.
+* **Load and stability.**
+  * The processing load is $\rho_p=\sum_k\lambda_k\,\mathbb E[p]$.
+  * The laser is also busy travelling, so the effective load is
+    $\rho=\sum_k\lambda_k(\mathbb E[p]+\bar\tau)$, with $\bar\tau$ the mean travel time
+    per part. It depends on the policy.
+  * For $\rho\ge 1$ queues grow without bound. Finite episodes with drain remain
+    well-defined, but a long-run average does not.
+  * The real cell has $\rho_p=0.64$ and $\rho\approx 0.9$ (stable). The heavy example
+    has $\rho_p=0.93$ and is overloaded.
+  * The general distribution draws $\rho_p\in[0.3,0.95]$, so it **deliberately
+    includes overloaded cells**, where only the finite-episode objective is meaningful.
+* **What $\theta$ does not cover** (not generalized yet):
+  * a processing-time distribution per conveyor or per part type;
+  * laser acceleration;
+  * the `pass` rule in the exact simulator.
 
 ---
 
@@ -596,6 +694,8 @@ by the schedule itself.
 | $\tau$, $\ell$ | `motion.travel_time`; travelled distance accumulated in `Laser.move_towards` |
 | $B_j$, $\beta_j$, $N_B$, $T_B$, $\Pi$ | `Part.block_time`, `Part.caused_block`, `blocking_events`, `total_blocked_time`, `blocking_penalty` (summary); $T_B=\sum_j(S_j-B_j)^+$ is checked by `tests/test_blocking_prepositioning.py` |
 | objectives | `metrics.summarize`, `optimization/objective_functions.py` |
+| information model $O(t)$ (§4.1) | `simulation.observation` (`simulation/observation.py`); `Simulation.observable`, `FastSim.observable`; enforced in `policies/rollout.py`, `rl/features.py`, `rl2/features.py`, `rl2/search.py` |
+| exact continuous-time realisation of $\mathcal P^{\mathrm{sim}}$ / $\mathcal P$ (block mode) | `src/fastsim/` (event-driven, 0.7.0): the formal checker passes with tolerance $10^{-6}$; the fixed-step engine converges to it as `dt` → 0 (`docs/methods/fastsim.md`) |
 
 `src/optimization/schedule_check.py` takes a simulated run and verifies the identities
 and constraints of §1 — entry coordinates (§1.1), $X_j=D_k(S_j)-E_j$, (C1), (C2) for
