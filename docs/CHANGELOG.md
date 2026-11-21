@@ -6,6 +6,54 @@ summarized from the git history.
 
 ---
 
+## 0.7.4 — 2026-11-20 — Results of the general pilot training (`rl2_gen_s`)
+
+**What.** The pilot of phase 3 finished on the laptop with the real information model
+(`belts`, 0.7.3):
+
+* model S, 6 iterations;
+* 3500 episodes and about 168 000 labelled decisions;
+* 1 h 38 min on 8 CPU workers.
+
+The run stopped early after two iterations without validation improvement. The accepted
+model is iteration 3.
+
+**Validation, paired Δ vs `nearest_job`** (seeds 2000+ / 2500+, used for gating):
+
+| policy | real cell | heavy load | general cells |
+|---|---|---|---|
+| network alone (`models/rl2_gen_s.pt`) | **−3.4 ±1.7 %** | **−3.3 ±1.7 %** | **−1.8 ±1.4 %** |
+| search over the network (k = 6) | −5.5 ±1.8 % | −2.6 ±1.7 % | −2.6 ±1.6 % |
+| search over `nearest_job` (rule teacher) | −4.9 ±1.8 % | +0.5 ±2.2 % | −2.2 ±1.3 % |
+| `nearest_head` | −1.6 % | +0.4 % | +1.1 % |
+
+* The network alone, at about 4 ms per decision, beats `nearest_job` significantly in
+  all three groups.
+* At heavy load it also beats the rule teacher.
+* Validation plateaued after iteration 3. The large run on the remote machine (S and L,
+  more data) tests whether model size or data volume is the limit.
+* These numbers are selected on the validation seeds. The unbiased comparison is the
+  phase-4 final evaluation on the reserved seeds 7000–7029.
+
+**Why it matters.** It is the first policy trained on the general problem that agreed
+with the owner (N belts, per-belt speeds and arrival rates, processing time, laser
+vx/vy, ...) that improves on `nearest_job` across that family. It uses only the
+information the real cell observes.
+
+**Where.**
+
+* Full table per iteration: `docs/methods/rl2.md` §8.3.
+* Status: `docs/plans/strong_rl_plan.md` §0.
+* Versioned files: `models/rl2_gen_s.pt` (3.5 MB, identical to the iteration-3
+  checkpoint) and `models/rl2_gen_s_training.json`.
+* `.gitignore` now excludes the per-iteration checkpoints `models/*_it[0-9]*.pt`. They
+  are about 3.5 MB each and stay local; only the accepted model is versioned. The
+  training log still names them for traceability.
+
+No code or model change.
+
+---
+
 ## 0.7.3 — 2026-11-20 — Information model of the controller; general stochastic problem in the formulation
 
 The user asked whether the mathematical formulation was correct. The review found that

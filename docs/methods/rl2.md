@@ -301,7 +301,63 @@ against the engine on 40 general cells × 2 modes × 2 rules
 
 ### 8.3 General training with the real information model (`rl2_gen_s`, 0.7.3)
 
-RESULTS_PLACEHOLDER
+**Run.** Pilot on the laptop (Ryzen 7 5700U, 8 workers, CPU), 2026-11-20, 1 h 38 min:
+
+* model S;
+* 6 iterations: 1000 episodes and 8 epochs in iteration 0, then 500 episodes and
+  4 epochs each, replay 2;
+* teacher k = 6, `w_pen` 0;
+* gating on 30 validation seeds per group (real 2000+, heavy 2000+, general 2500+,
+  60 general episodes).
+
+Log: `models/rl2_gen_s_training.json`. The accepted model is `models/rl2_gen_s.pt`
+(iteration 3).
+
+**Validation.** The table gives the paired Δ of penalized flow time vs `nearest_job`
+(95 % CI, wins). "Network" is the network alone, a single forward pass per decision.
+"Search" is the search teacher over the network.
+
+| iteration | network real | network heavy | network general | search real | search heavy | search general | gate |
+|---|---|---|---|---|---|---|---|
+| 0 | −3.7 ±1.6 % | −2.0 ±1.6 % | −1.2 ±1.2 % | −5.5 % | −1.8 % | −2.6 % | accepted |
+| 1 | −4.0 ±1.6 % | −1.6 ±1.8 % | −1.4 ±1.2 % | −5.6 % | −1.6 % | −2.4 % | accepted |
+| 2 | −4.0 ±1.6 % | −3.2 ±1.5 % | −1.1 ±1.3 % | −5.4 % | −2.4 % | −2.7 % | accepted |
+| **3** | **−3.4 ±1.7 %**, 25/30 | **−3.3 ±1.7 %**, 25/30 | **−1.8 ±1.4 %**, 24/60 | −5.5 ±1.8 % | −2.6 ±1.7 % | −2.6 ±1.6 % | **accepted (best)** |
+| 4 | −3.9 ±1.6 % | −2.7 ±1.8 % | −1.4 ±1.4 % | −5.4 % | −2.6 % | −2.7 % | rejected |
+| 5 | −3.9 ±1.8 % | −2.6 ±1.7 % | −1.3 ±1.3 % | −5.4 % | −2.3 % | −2.6 % | rejected |
+
+Reference policies on the same validation seeds:
+
+| policy | real | heavy | general |
+|---|---|---|---|
+| `nearest_head` | −1.6 ±1.7 % | +0.4 ±1.4 % | +1.1 ±1.5 % |
+| search over `nearest_job` (rule teacher) | −4.9 ±1.8 % | +0.5 ±2.2 % | −2.2 ±1.3 % |
+
+The run stopped after two rejected iterations (patience 2).
+
+**Reading.**
+
+* **The network alone beats `nearest_job` in all three groups**, significantly in each
+  (the 95 % CI excludes 0). It is a single forward pass of about 4 ms. It also beats
+  `nearest_head` in all three groups.
+* **The network alone beats the rule teacher at heavy load** (−3.3 % vs +0.5 %). It is
+  close to the rule teacher in the real cell (−3.4 % vs −4.9 %) and in general cells
+  (−1.8 % vs −2.2 %).
+* **Search over the network is the best policy** in every group: −5.5 % (real),
+  −2.6 % (heavy), −2.6 % (general). Its cost is k = 6 look-aheads per decision.
+* **Plateau.** After iteration 2, the training agreement with the teacher keeps
+  rising (0.88 → 0.90), but validation no longer improves. The gap between network and
+  search (about 2 points in the real cell, 1 point in general cells) is not closed by
+  more iterations at this size and data volume. The large run on the other machine
+  (sizes S and L, more episodes; `docs/methods/remote_training.md`) tests whether
+  capacity or data is the limit.
+* **Caveats.**
+  * The validation seeds were used for gating, so the best iteration is selected on
+    them and its numbers are slightly optimistic.
+  * The unbiased comparison is the final evaluation on the reserved seeds 7000–7029
+    (phase 4).
+  * The general group has only 60 episodes over very different cells. Per-cell
+    breakdowns are left for phase 4.
 
 ## 9. Reproduce (phase 3)
 
