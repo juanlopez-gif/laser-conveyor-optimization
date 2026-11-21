@@ -6,6 +6,93 @@ summarized from the git history.
 
 ---
 
+## 0.7.4 — 2026-11-21 — Large-scale training on a GPU workstation (sizes S, M, L)
+
+The user asked to train the expert-iteration dispatcher of 0.7.2–0.7.3 on a larger
+machine, following `docs/methods/remote_training.md`: first a short timing round, then
+the size-S run with the defaults of `run_train.sh`, then M, and (asked during the run)
+L, chained overnight. Results and tables: `docs/methods/rl2.md` §8.4. This entry adds
+no code; it adds the trained models and documents the runs and what was learned.
+
+### Machine and setup
+
+* **Machine:** `isecapstone`, AMD Threadripper 3960X (24 cores / 48 threads), 62 GB,
+  NVIDIA RTX 3080 10 GB, driver 580.178 (CUDA 13.0), no Slurm, Python 3.12.3. A shared
+  workstation (a database and other services run on it), so the runs used 47 workers
+  and left the rest to those services.
+* **Environment:** `setup_env.sh` with `TORCH_INDEX=…/cu128` (PyTorch 2.11.0+cu128).
+  The first run failed before the tests: the login shell exports `PYTHONPATH` with ROS
+  Jazzy, and pytest tried to load the ROS `launch_testing` plugin. With
+  `env -u PYTHONPATH` the script ended with `setup OK`: 49 tests passed, none skipped,
+  so the CUDA-vs-CPU check of `tests/test_rl2_training.py` ran on this machine. Noted
+  in `remote_training.md` §3; no script changed.
+* **Timing round** (`rl2_timing_s`, S, 400 + 200 episodes, 10 validation seeds):
+  1 minute in total. It gave the per-step costs used to size the runs (§8.4, times).
+
+### Runs (branch `remote-training`)
+
+| run | size | episodes it. 0 / later | iterations | best | wall time |
+|---|---|---|---|---|---|
+| `rl2_gen_s_big` | S | 4 000 / 2 000 (defaults) | 0–5, stopped by patience | it. 3 | 25 min |
+| `rl2_gen_m` | M | 8 000 / 4 000 | 0–5, stopped by patience | it. 3 | 5 h 53 min |
+| `rl2_gen_l` | L | 16 000 / 8 000 | 0 (iteration 1 in progress at the time of writing) | it. 0 | 1 h 46 min (it. 0); it. 1 running |
+
+* **Data for L** was set at 4× S and 2× M by the rule of the plan (§3: a larger model
+  needs proportionally more search data). The user did not fix this number; it is the
+  one decision taken here.
+* Launched with `nohup bash experiments/remote/run_train.sh` through two small chain
+  scripts kept outside the repository (`results/experiments/chain_*.sh`); the
+  experiment arguments were never changed, and no run needed a resume.
+* **Committed:** `models/<tag>.pt` and `models/<tag>_training.json` of each run. Not
+  committed: `state.pkl`, `results/`, the per-iteration models.
+
+### Results (50 validation seeds per group, 100 general cells, Δ vs `nearest_job`)
+
+| policy | real cell | heavy example | general cells |
+|---|---|---|---|
+| `nearest_head` | −1.8 ±1.3 % | +0.2 ±1.0 % | +0.9 ±1.0 % |
+| search over `nearest_job` (rule teacher) | −4.4 ±1.4 % | +0.1 ±1.6 % | −1.6 ±1.1 % |
+| **S alone** (it. 3) | −4.4 ±1.4 % | −2.3 ±1.6 % | −1.6 ±1.1 % |
+| search over S | −4.7 ±1.5 % | −2.2 ±1.4 % | −2.4 ±1.1 % |
+| **M alone** (it. 3) | −4.5 ±1.6 % | −2.2 ±1.4 % | −1.9 ±1.1 % |
+| search over M | −5.0 ±1.5 % | −2.4 ±1.3 % | −2.2 ±1.2 % |
+| **L alone** (it. 0) | −3.9 ±1.4 % | −1.1 ±1.8 % | −1.5 ±1.0 % |
+| search over L (it. 0) | −5.0 ±1.5 % | −1.7 ±1.3 % | −2.0 ±1.1 % |
+
+* **Against the laptop references** (30 seeds, `rl2.md` §8.4): `nearest_head` matches
+  them exactly. The rule teacher matches at the real load and on general cells but
+  not at heavy load (+0.5 % here, −2.2 % there): the laptop reference predates the
+  information model of 0.7.3, whose look-ahead could still see the parts waiting
+  upstream. On those 30 seeds S alone gives −4.6 / −2.5 / −1.6 % and M alone
+  −5.3 / −2.0 / −2.0 %; the narrow pilot's −3.8 / −3.9 % (full information, 3-belt
+  cell only) is beaten at the real load by a model that also covers the general
+  problem.
+* **What the runs show:**
+  * the network alone reaches its rule teacher at the real load and generalizes
+    (about −2 % on cells where `nearest_head` loses), at no search cost;
+  * the search over the network saturates at about −5 / −2.5 / −2.4 % from iteration
+    1 on, for every size, and the network closes to within 0.3–0.7 points of it by
+    iteration 2–3; the remaining iterations are rejected. The teacher, not the model,
+    is the ceiling;
+  * M's best score (−2.88 %) is not distinguishable from S's (−2.79 %) and M costs
+    8.5× more per generated episode and 4× per decision; L at iteration 0 (4× the data) scores
+    −2.15 %, between S and M at the same stage, with a higher training loss and a
+    teacher 6× slower than M's. The scaling ladder stops at M.
+* **Recommendation:** keep **S** as the deployed model (`rl2_gen_s_big.pt`) for the
+  5 ms budget and the phase-4 evaluation; spend the next effort on a stronger teacher
+  (plan §4: value-head truncation with sampled futures, larger K, Gumbel search)
+  rather than on a larger network.
+
+### Files
+
+* `models/rl2_gen_s_big.pt`, `models/rl2_gen_m.pt` and the `_training.json` logs of
+  the three runs (seeds, arguments, machine, times, losses, validation).
+  `models/rl2_gen_l.pt` (157 MB) exceeds GitHub's 100 MB file limit and is kept outside
+  the commit until the user decides (Git LFS or an external store).
+* `docs/methods/rl2.md` §8.4, `docs/methods/remote_training.md` §3 and §4.
+
+---
+
 ## 0.7.3 — 2026-11-20 — Information model of the controller; general stochastic problem in the formulation
 
 The user asked whether the mathematical formulation was correct. The review found that

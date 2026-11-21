@@ -1,4 +1,4 @@
-# Strong RL: representation, model and expert iteration (0.7.1–0.7.2, strong-RL plan phases 2–3)
+# Strong RL: representation, model and expert iteration (0.7.1–0.7.4, strong-RL plan phases 2–3)
 
 Code: `src/rl2/features.py` (tokens), `src/rl2/model.py` (network, batching, policy,
 save/load). Tests: `tests/test_rl2_model.py`. Latency: `experiments/rl2_latency.py`.
@@ -302,6 +302,125 @@ against the engine on 40 general cells × 2 modes × 2 rules
 ### 8.3 General training with the real information model (`rl2_gen_s`, 0.7.3)
 
 RESULTS_PLACEHOLDER
+
+### 8.4 Large-scale runs on a GPU workstation (`rl2_gen_s_big`, `rl2_gen_m`, `rl2_gen_l`, 0.7.4)
+
+The three sizes of the scaling ladder (plan §3) were trained on a 48-thread
+workstation with an RTX 3080 (`docs/methods/remote_training.md`; CHANGELOG 0.7.4),
+with the real information model of 0.7.3. Same code, same seeds (training 100000+,
+validation 2000+ and 2500+), same gating; only the size and the amount of data differ.
+Validation here uses 50 seeds per group (100 general cells), so the intervals are
+narrower than in §8.1.
+
+| run | size | parameters | episodes it. 0 / later | data per iteration | iterations run | best |
+|---|---|---|---|---|---|---|
+| `rl2_gen_s_big` | S | 0.88 M | 4 000 / 2 000 | 194 k / 98 k decisions | 0–5 | it. 3 |
+| `rl2_gen_m` | M | 6.7 M | 8 000 / 4 000 | 394 k / 197 k | 0–5 | it. 3 |
+| `rl2_gen_l` | L | 39 M | 16 000 / 8 000 | 793 k / 400 k | 0 (iteration 1 in progress at the time of writing) | it. 0 |
+
+Both S and M stopped by the rule of §6.3 (two rejections after their iteration 3).
+Reference on the same 50/100 seeds: `nearest_head` −1.81 ±1.32 / +0.21 ±0.96 /
++0.89 ±1.02 %; search over `nearest_job` −4.39 ±1.35 / +0.09 ±1.62 / −1.60 ±1.05 %
+(real / heavy / general, paired Δ vs `nearest_job`).
+
+**Per iteration, size S** (`net` = network alone, `search` = rollout over that network):
+
+| it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | −3.65 ±1.41 | −0.61 ±1.67 | −1.38 ±0.97 | −1.88 | −4.97 ±1.52 | −1.99 ±1.29 | −2.49 ±1.06 | yes | 18 / 115 / 18 |
+| 1 | −4.15 ±1.48 | −0.68 ±1.71 | −1.78 ±1.05 | −2.20 | −4.68 ±1.51 | −2.40 ±1.19 | −2.33 ±1.06 | yes | 161 / 85 / 20 |
+| 2 | −4.33 ±1.40 | −1.89 ±1.66 | −1.87 ±1.07 | −2.70 | −5.00 ±1.59 | −2.21 ±1.43 | −2.43 ±1.08 | yes | 189 / 57 / 20 |
+| **3** | **−4.42 ±1.44** | **−2.32 ±1.63** | **−1.64 ±1.06** | **−2.79** | −4.71 ±1.50 | −2.23 ±1.39 | −2.37 ±1.05 | yes | 190 / 59 / 21 |
+| 4 | −4.69 ±1.45 | −1.60 ±1.61 | −1.45 ±1.10 | −2.58 | −4.84 ±1.49 | −2.19 ±1.37 | −2.39 ±1.04 | no | 177 / 57 / 21 |
+| 5 | −4.44 ±1.47 | −1.77 ±1.59 | −1.47 ±1.04 | −2.56 | −4.72 ±1.52 | −2.26 ±1.30 | −2.25 ±1.04 | no | 174 / 55 / 20 |
+
+**Per iteration, size M:**
+
+| it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | −4.30 ±1.28 | −0.81 ±1.29 | −1.75 ±0.99 | −2.29 | −4.94 ±1.53 | −1.70 ±1.33 | −2.05 ±1.21 | yes | 38 / 729 / 165 |
+| 1 | −4.59 ±1.32 | −1.20 ±1.75 | −1.58 ±1.02 | −2.46 | −4.85 ±1.51 | −2.30 ±1.23 | −2.26 ±1.12 | yes | 3 253 / 548 / 187 |
+| 2 | −4.27 ±1.49 | −2.28 ±1.48 | −1.25 ±1.12 | −2.60 | −4.92 ±1.49 | −2.45 ±1.24 | −2.29 ±1.07 | yes | 3 577 / 351 / 186 |
+| **3** | **−4.49 ±1.55** | **−2.22 ±1.38** | **−1.91 ±1.08** | **−2.88** | −4.96 ±1.50 | −2.35 ±1.25 | −2.24 ±1.21 | yes | 3 437 / 331 / 185 |
+| 4 | −4.14 ±1.49 | −2.08 ±1.34 | −1.61 ±1.10 | −2.61 | −5.03 ±1.51 | −2.67 ±1.28 | −2.42 ±1.04 | no | 3 528 / 346 / 185 |
+| 5 | −4.41 ±1.48 | −2.05 ±1.29 | −1.53 ±1.04 | −2.67 | −5.09 ±1.49 | −2.46 ±1.22 | −1.87 ±1.17 | no | 3 494 / 342 / 182 |
+
+**Per iteration, size L:**
+
+| it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | −3.88 ±1.38 | −1.07 ±1.76 | −1.49 ±1.03 | −2.15 | −5.02 ±1.48 | −1.73 ±1.33 | −2.02 ±1.09 | yes | 77 / 5 184 / 1 108 |
+
+Iteration 1 of L (8 000 episodes labelled by the search over the L network, about
+5 s per episode on the CPU workers) was still running when this section was written;
+its result will be appended if it is accepted.
+
+**Best models on the 30-seed validation set of §8.1 and of the laptop references**
+(seeds 2000–2029 and 2500–2559, `results/experiments/compare_val30_*.json`):
+
+| policy | real cell | heavy example | general cells |
+|---|---|---|---|
+| `nearest_head` | −1.60 ±1.68 | +0.37 ±1.38 | +1.15 ±1.54 |
+| search over `nearest_job` (rule teacher) | −4.86 ±1.81 | +0.48 ±2.22 | −2.18 ±1.32 |
+| **S alone** (`rl2_gen_s_big.pt`) | −4.55 ±1.88 | −2.52 ±2.26 | −1.59 ±1.42 |
+| search over S | −5.23 ±1.91 | −2.69 ±1.72 | −2.49 ±1.52 |
+| **M alone** (`rl2_gen_m.pt`) | −5.25 ±2.03 | −1.96 ±1.75 | −2.02 ±1.42 |
+| search over M | −5.59 ±1.85 | −2.45 ±1.47 | −2.43 ±1.76 |
+| **L alone** (`rl2_gen_l.pt`, it. 0) | −4.01 ±1.58 | −0.69 ±2.37 | −1.47 ±1.42 |
+| search over L (it. 0) | −5.63 ±1.89 | −1.95 ±1.71 | −2.20 ±1.61 |
+
+* The `nearest_head` row reproduces the laptop reference (−1.6 / +0.4 / +1.2 %)
+  exactly, so the seeds and groups are the same.
+* The rule teacher differs from the laptop reference at heavy load (+0.5 % here,
+  −2.2 % there). The laptop reference predates 0.7.3: its look-ahead still saw the
+  parts waiting upstream, which is worth about 2.7 points at heavy load. The real and
+  general values agree. For the same reason the narrow pilot of §8.1 (−3.9 % heavy,
+  full information) is not comparable at heavy load.
+
+**Findings.**
+
+* **Every network alone beats its rule teacher at the real load and generalizes.**
+  S alone gives −4.4 % (real) with 50 seeds, M −4.5 %, against −4.4 % for the search
+  over `nearest_job`, at no search cost; both give about −2 % on the general cells
+  where `nearest_head` loses.
+* **The search over the network saturates at −4.7 … −5.1 / −2.2 … −2.7 /
+  −2.2 … −2.4 %** from iteration 1 on, for both sizes. From iteration 2 the network
+  alone is within 0.3–0.7 points of its own teacher, so the teacher has little left to
+  teach: the limit is the depth of the look-ahead (known parts, `nearest_job`-style
+  horizon), not the capacity of the model. Later iterations trade one group against
+  another within the confidence intervals and are rejected. A stronger teacher (value-
+  head truncation with sampled futures, larger K, or the Gumbel-MCTS option of plan
+  §4) is the next lever, not a larger network.
+* **M versus S.** With twice the data, M's best score is −2.88 % against −2.79 %:
+  inside the confidence intervals. On the 30-seed set M is better at the real load
+  (−5.3 vs −4.6 %) and on general cells (−2.0 vs −1.6 %) and worse at heavy load
+  (−2.0 vs −2.5 %), all within ±2 points. M costs 8.5× more per generated episode
+  (the teacher runs the network on the CPU workers) and 4× per decision at inference
+  (15–19 ms vs 4 ms, §4): the gain does not pay for the cost under the 5 ms budget.
+  **L** at iteration 0, with 4× the data of S, scores −2.15 %: between S (−1.88 %)
+  and M (−2.29 %) at the same stage, with a higher final training loss (0.469 vs
+  0.454 for M) after the same 8 epochs. The 39 M model is not under-fitted by lack
+  of data; it learns the same teacher more slowly, and its teacher runs about 6×
+  slower than M's (validation 1 108 s vs 185 s). On this evidence the ladder stops at
+  M: more parameters do not raise the ceiling set by the teacher.
+* **Training losses** keep falling across iterations (policy cross-entropy 0.465 →
+  0.404 for S, 0.454 → 0.391 for M; agreement with the teacher's argmax 0.88 → 0.92)
+  while validation stalls: the networks fit their teacher ever better, which confirms
+  that the teacher is the ceiling.
+
+**Times on the workstation** (47 simulation workers, trainer on the GPU):
+
+| step | S | M | L |
+|---|---|---|---|
+| generation, rule teacher (it. 0) | 4 000 episodes in 18 s | 8 000 in 38 s | 16 000 in 77 s |
+| generation, network teacher (it. ≥ 1) | 2 000 episodes in 160–190 s (0.09 s each) | 4 000 in 3 250–3 580 s (0.85 s each) | ≈ 5 s each (projected from validation: 11 h for 8 000) |
+| training, per epoch | 14 s for 194 k decisions (≈ 13 500 decisions/s) | 90 s for 394 k (≈ 4 400/s) | 650 s for 793 k (≈ 1 200/s) |
+| validation (50/50/100 cells × net, search, `nearest_job`) | 20 s | 185 s | 1 108 s |
+| whole run | 25 min (6 iterations) | 5 h 53 min (6 iterations) | 1 h 46 min for iteration 0; iteration 1 running |
+
+The laptop needed 4–5 min per epoch of 50 000 decisions on the CPU; the GPU does the
+same in about 4 s. On this machine the bottleneck moved to data generation with a
+network teacher, which runs single-state network calls on the CPU workers.
 
 ## 9. Reproduce (phase 3)
 
