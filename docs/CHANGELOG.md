@@ -6,7 +6,7 @@ summarized from the git history.
 
 ---
 
-## 0.7.6 — 2026-11-22 — Review of the model and of the information: pre-positioning as the design mode, two leaks closed
+## 0.7.7 — 2026-11-22 — Review of the model and of the information: pre-positioning as the design mode, two leaks closed
 
 The owner stated that **the cell does not exist yet**: the project develops the
 simulation and the dispatcher first, to be taken to a physical cell later. The owner
@@ -34,7 +34,7 @@ the controller has, and to change whatever the review required.
     C_j-\sum_j r_j$ with the $r_j$ constants.
   * Both are small (they matter only for parts that waited upstream and near the end
     of an episode), and the number of features is unchanged, so earlier models still
-    load. Measured on the 0.7.5 network (30 seeds, `none`): −8.39 % at the design load
+    load. Measured on the 0.7.6 network (30 seeds, `none`): −8.39 % at the design load
     with the corrected features against −8.41 % with the old ones, and −4.52 % against
     −4.80 % at heavy load, both within the confidence intervals. The next training
     round uses the corrected features. `tests/test_observation.py` gains two tests: shifting the arrival time
@@ -57,19 +57,19 @@ the controller has, and to change whatever the review required.
 * **Why.** The default `none` came from the 2026-11-20 assumption that the cell could
   not detect parts before the laser zone. C4b (same day) gave the cell an overhead
   camera that sees the entry zone, which removes that reason, but the default was not
-  revisited. Measured with the 0.7.5 network on the validation seeds (30 seeds, Δ vs
+  revisited. Measured with the 0.7.6 network on the validation seeds (30 seeds, Δ vs
   `nearest_job`/`none`): the network alone goes from −8.4 % with `none` to **−13.8 %
   with `when_idle`** at the design load, and `nearest_job` itself gains 7.4 points;
   at heavy load nothing changes (the laser is never idle). The owner approved.
 * **What changed.**
   * `config/default_config.yaml`: `laser.prepositioning: when_idle`; `none` stays as
-    the variant without entry detection. Every result before 0.7.6 was obtained with
+    the variant without entry detection. Every result before 0.7.7 was obtained with
     `none` and is labelled so.
   * Training mix (`rl2.expert_iteration.GENERAL`, `sample_config`): `when_idle` with
     probability 0.5 (was 0.3), for the general cells and for the real and heavy ones.
   * Validation: new `--val-mode` (`design`, the default: real and heavy cells with
     `when_idle`, general cells with the mode drawn; `none`: the validation of
-    0.7.2–0.7.5). Runs saved before 0.7.6 resume with `none`. Scores of the two modes
+    0.7.2–0.7.6). Runs saved before 0.7.7 resume with `none`. Scores of the two modes
     are not comparable; `experiments/rl2_teacher_variants.py` takes the same option.
   * Docs: `formal_formulation.md` §1.5, §4, §4.1 (and the `.tex`; the PDF is **not**
     rebuilt, this machine has no LaTeX), `rl2.md` §2, §6.1, §6.3, README.
@@ -79,15 +79,15 @@ the controller has, and to change whatever the review required.
 
 ### Training
 
-The 0.7.5 run `rl2_gen_s_sf` (validation in `none`, old features) continues; its
+The 0.7.6 run `rl2_gen_s_sf` (validation in `none`, old features) continues; its
 result goes to `rl2.md` §8.5. The first round with the design mode and the corrected
 features will be `rl2_gen_s_d` (§8.6).
 
 ---
 
-## 0.7.5 — 2026-11-21 — Stronger search teacher: sampled-future rollout over the network
+## 0.7.6 — 2026-11-21 — Stronger search teacher: sampled-future rollout over the network
 
-The large runs of 0.7.4 showed that the search teacher, not the model size, limits
+The large runs of 0.7.5 showed that the search teacher, not the model size, limits
 expert iteration: every network reaches its known-parts look-ahead within 0.3–0.7
 points and the next iterations are rejected. The user asked to stop the L run and to
 develop the stronger teacher (plan §4). Details and tables: `docs/methods/rl2.md`
@@ -114,7 +114,7 @@ develop the stronger teacher (plan §4). Details and tables: `docs/methods/rl2.m
   a worker can denormalize the value head.
 * `experiments/rl2_train.py`: `--la-horizon`, `--scenarios`, `--la-cut`,
   `--la-window`; the teacher of each job is built by `_teacher`. Runs saved before
-  0.7.5 resume with the known-parts teacher.
+  0.7.6 resume with the known-parts teacher.
 * `experiments/rl2_teacher_variants.py`: compares teacher variants over a trained
   network on the validation cells (Δ vs `nearest_job`, Δ vs the network alone, time
   per episode).
@@ -151,7 +151,7 @@ SF_CHANGELOG_PLACEHOLDER
 
 ---
 
-## 0.7.4 — 2026-11-21 — Large-scale training on a GPU workstation (sizes S, M, L)
+## 0.7.5 — 2026-11-21 — Large-scale training on a GPU workstation (sizes S, M, L)
 
 The user asked to train the expert-iteration dispatcher of 0.7.2–0.7.3 on a larger
 machine, following `docs/methods/remote_training.md`: first a short timing round, then
@@ -180,7 +180,7 @@ no code; it adds the trained models and documents the runs and what was learned.
 |---|---|---|---|---|---|
 | `rl2_gen_s_big` | S | 4 000 / 2 000 (defaults) | 0–5, stopped by patience | it. 3 | 25 min |
 | `rl2_gen_m` | M | 8 000 / 4 000 | 0–5, stopped by patience | it. 3 | 5 h 53 min |
-| `rl2_gen_l` | L | 16 000 / 8 000 | 0–1; stopped by the user during iteration 2 (0.7.5) | it. 1 | 14 h for its. 0–1 |
+| `rl2_gen_l` | L | 16 000 / 8 000 | 0–1; stopped by the user during iteration 2 (0.7.6) | it. 1 | 14 h for its. 0–1 |
 
 * **Data for L** was set at 4× S and 2× M by the rule of the plan (§3: a larger model
   needs proportionally more search data). The user did not fix this number; it is the
@@ -235,6 +235,51 @@ no code; it adds the trained models and documents the runs and what was learned.
   `models/rl2_gen_l.pt` (157 MB) exceeds GitHub's 100 MB file limit and is kept outside
   the commit until the user decides (Git LFS or an external store).
 * `docs/methods/rl2.md` §8.4, `docs/methods/remote_training.md` §3 and §4.
+## 0.7.4 — 2026-11-20 — Results of the general pilot training (`rl2_gen_s`)
+
+**What.** The pilot of phase 3 finished on the laptop with the real information model
+(`belts`, 0.7.3):
+
+* model S, 6 iterations;
+* 3500 episodes and about 168 000 labelled decisions;
+* 1 h 38 min on 8 CPU workers.
+
+The run stopped early after two iterations without validation improvement. The accepted
+model is iteration 3.
+
+**Validation, paired Δ vs `nearest_job`** (seeds 2000+ / 2500+, used for gating):
+
+| policy | real cell | heavy load | general cells |
+|---|---|---|---|
+| network alone (`models/rl2_gen_s.pt`) | **−3.4 ±1.7 %** | **−3.3 ±1.7 %** | **−1.8 ±1.4 %** |
+| search over the network (k = 6) | −5.5 ±1.8 % | −2.6 ±1.7 % | −2.6 ±1.6 % |
+| search over `nearest_job` (rule teacher) | −4.9 ±1.8 % | +0.5 ±2.2 % | −2.2 ±1.3 % |
+| `nearest_head` | −1.6 % | +0.4 % | +1.1 % |
+
+* The network alone, at about 4 ms per decision, beats `nearest_job` significantly in
+  all three groups.
+* At heavy load it also beats the rule teacher.
+* Validation plateaued after iteration 3. The large run on the remote machine (S and L,
+  more data) tests whether model size or data volume is the limit.
+* These numbers are selected on the validation seeds. The unbiased comparison is the
+  phase-4 final evaluation on the reserved seeds 7000–7029.
+
+**Why it matters.** It is the first policy trained on the general problem that agreed
+with the owner (N belts, per-belt speeds and arrival rates, processing time, laser
+vx/vy, ...) that improves on `nearest_job` across that family. It uses only the
+information the real cell observes.
+
+**Where.**
+
+* Full table per iteration: `docs/methods/rl2.md` §8.3.
+* Status: `docs/plans/strong_rl_plan.md` §0.
+* Versioned files: `models/rl2_gen_s.pt` (3.5 MB, identical to the iteration-3
+  checkpoint) and `models/rl2_gen_s_training.json`.
+* `.gitignore` now excludes the per-iteration checkpoints `models/*_it[0-9]*.pt`. They
+  are about 3.5 MB each and stay local; only the accepted model is versioned. The
+  training log still names them for traceability.
+
+No code or model change.
 
 ---
 

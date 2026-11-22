@@ -29,11 +29,11 @@ real belt), and times go through ``slog(t) = sign(t) log(1 + |t| / T_REF)`` with
 ``T_REF`` = 10 s, so long waits at heavy load stay bounded but distinguishable.
 Features of the real cell lie roughly in [-3, 3].
 
-**Information model (0.7.3, tightened in 0.7.6).** Only parts the controller can
+**Information model (0.7.3, tightened in 0.7.7).** Only parts the controller can
 observe (``simulation.observation``) become tokens, and the belt counts include only
 them. In the planned cell (``belts``) parts waiting upstream of the belt entry are not
 seen. The context token carries the observation level one-hot. Two features that
-leaked the unobservable past or future were fixed in 0.7.6: the waiting time of a part
+leaked the unobservable past or future were fixed in 0.7.7: the waiting time of a part
 is counted from the instant it became observable (entry on the belt for ``belts``,
 entry in the laser zone for ``zone``, arrival for ``full``), not from its arrival to
 the upstream queue, and "arrivals still coming" is ``t < T_A`` (the known arrival

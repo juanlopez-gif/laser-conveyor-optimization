@@ -18,7 +18,7 @@ The end-of-zone rule is **blocking** (confirmed for the real cell): an unprocess
 that reaches the end of the laser zone stops its conveyor until the laser processes it.
 Since version 0.4.0 every such event is **penalized** in the objective (§1.4), and the
 laser may **pre-position** itself for parts that have not reached the laser zone yet
-(§1.5; the design mode of the cell since 0.7.6). The cell is not built yet (owner,
+(§1.5; the design mode of the cell since 0.7.7). The cell is not built yet (owner,
 2026-11-22): "the real cell" names the design point of `docs/assumptions.md` §F.
 Changes are logged in [CHANGELOG.md](CHANGELOG.md).
 
@@ -263,7 +263,7 @@ Multi-objective studies use the Pareto front of these criteria.
 (C2) allows the laser to move towards a part **before** it reaches the laser zone (it
 may pre-position at $(a, y_k)$ and wait). Up to version 0.3 the simulator and every
 implemented policy only dispatched the laser to parts that are already READY, and
-`laser.prepositioning: none` stayed the default until 0.7.5; since 0.7.6 the design
+`laser.prepositioning: none` stayed the default until 0.7.6; since 0.7.7 the design
 cell runs `when_idle` (`docs/assumptions.md` C4). Let
 $R_j=\min\lbrace t: x_j(t)\ge a\rbrace$ be the time part $j$ enters the laser zone. The
 simulator satisfies, in addition,
@@ -287,9 +287,9 @@ CP-SAT methods `cpsat` ($\mathcal P_\Delta$) and `cpsat_ready`
 
 | mode | candidates when the laser is free | model realised |
 |---|---|---|
-| `none` (default until 0.7.5; the variant without entry detection) | READY parts ($x_j\ge a$) | $\mathcal P^{\mathrm{sim}}=\mathcal P+$(C7) |
+| `none` (default until 0.7.6; the variant without entry detection) | READY parts ($x_j\ge a$) | $\mathcal P^{\mathrm{sim}}=\mathcal P+$(C7) |
 | `always` | READY parts and parts in the entry zone of a running belt | $\mathcal P$ (no (C7)) |
-| `when_idle` (**design mode, default since 0.7.6**) | entry-zone parts only if no part is READY; the assignment is revoked as soon as a part becomes READY | between both: feasible for $\mathcal P$, not necessarily for (C7) |
+| `when_idle` (**design mode, default since 0.7.7**) | entry-zone parts only if no part is READY; the assignment is revoked as soon as a part becomes READY | between both: feasible for $\mathcal P$, not necessarily for (C7) |
 
 For a part in the entry zone the meeting point is searched only for $x\ge a$: the
 laser goes to $(\max(a,\hat x),y_k)$ and waits there, i.e. it starts processing at
@@ -298,7 +298,7 @@ $S_j=\max\big(R_j,\ t+\tau\big)$ or later along the belt
 simulator is the decoder of $\mathcal P$ (§3): for the single part of the example above
 it gives 5.84 s (5.83 s in $\mathcal P$, up to `dt`). Physically, pre-positioning needs
 to know that a part is in the entry zone; the planned cell's overhead camera sees it
-(§4.1), so the design decision of 0.7.6 is `when_idle`. Revocable pre-positioning
+(§4.1), so the design decision of 0.7.7 is `when_idle`. Revocable pre-positioning
 (`when_idle`) never commits the laser to a future part while another part is already
 waiting, which is what makes it useful for myopic policies (§4,
 `docs/methods/nearest_head_prepositioning.md`).
@@ -492,7 +492,7 @@ $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances. With
 `laser.prepositioning: none` the implemented policies satisfy (C7) — the laser only
 selects parts that are already in the laser zone — and never wait deliberately. Hence
 they produce feasible solutions of $\mathcal P^{\mathrm{sim}}\subseteq\mathcal P$; with
-pre-positioning (`when_idle`, the design mode since 0.7.6, or `always`) they produce
+pre-positioning (`when_idle`, the design mode since 0.7.7, or `always`) they produce
 feasible solutions of $\mathcal P$. In every case the optimum of $\mathcal P$ (or the
 valid bounds of `optimization/lower_bounds.py`) is a lower bound for all of them.
 
@@ -547,7 +547,7 @@ arrivals, nor whether any part will still arrive before $T_A$. A policy is a map
 $\mu:\mathcal I_t\mapsto j\in$ candidates; a look-ahead may simulate only the parts
 of $O(t)$, plus synthetic arrivals drawn from $\theta$, never the real future.
 Note that $r_j$ itself is not in $\mathcal I_t$ under `belts`: a part that waited in
-the hidden upstream queue shows no trace of it (0.7.6 removed two features of the
+the hidden upstream queue shows no trace of it (0.7.7 removed two features of the
 `rl2` tokens that violated this, `docs/CHANGELOG.md`). For the objectives this costs
 nothing: $\sum_j F_j=\sum_j C_j-\sum_j r_j$ and the $r_j$ are constants, so the
 decision-relevant part of the cost does not depend on them.
@@ -571,7 +571,7 @@ decision-relevant part of the cost does not depend on them.
   the general problem this is an assumption.
 * **Pre-positioning is not the same question as observation.** `laser.prepositioning`
   says whether the laser may be *sent* to an entry-zone part. Since the camera sees
-  the entry zone, the design cell runs `when_idle` (0.7.6, `docs/assumptions.md` C4);
+  the entry zone, the design cell runs `when_idle` (0.7.7, `docs/assumptions.md` C4);
   `none` is the variant without entry detection.
 
 ### 4.2 The general stochastic problem (0.7.3)

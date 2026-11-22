@@ -13,7 +13,7 @@ At a decision the teacher scores each kept candidate c by a look-ahead:
    mean flow time, as in ``rollout@avg_flow_time``) + ``w_pen`` · (λ_N ΔN_B + λ_T ΔT_B),
    averaged over the scenarios.
 
-**Cost-to-go look-aheads (0.7.5, plan §4).** With ``horizon_s > 0`` and a network
+**Cost-to-go look-aheads (0.7.6, plan §4).** With ``horizon_s > 0`` and a network
 base the look-ahead scores the realized cost-to-go of all parts instead of the
 completion times of the known ones:
 

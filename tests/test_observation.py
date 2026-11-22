@@ -213,7 +213,7 @@ def test_rl2_tokens_only_observable_parts(level):
         assert set(hidden) <= set(encode(sim, cands).part_ids)
 
 
-# ------------------------------------------------ 0.7.6: past and future leaks
+# ------------------------------------------------ 0.7.7: past and future leaks
 def _obs_equal(a, b) -> bool:
     import numpy as np
     return (a.part_ids == b.part_ids and np.array_equal(a.cand, b.cand)

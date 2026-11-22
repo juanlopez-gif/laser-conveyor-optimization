@@ -66,23 +66,23 @@ re-plans if the conveyor changes state during the trip. Because the laser (10 cm
 faster than the conveyors (3 cm/s) it can catch parts ahead of it; with the heavy-load
 example (both 5 cm/s) it can only catch a part ahead when the part stops at the zone end.
 
-**C4. Pre-positioning (0.4.0; design decision 0.7.6).** With `laser.prepositioning:
+**C4. Pre-positioning (0.4.0; design decision 0.7.7).** With `laser.prepositioning:
 none` the laser can only select READY parts (inside the reachable zone). Since 0.4.0
 it can be sent to a part still in the entry zone: it moves to the meeting point at
 x ≥ a and waits (`always`), or does so only when no part is READY and gives the
 pre-positioning up as soon as one becomes READY (`when_idle`). Pre-positioning needs
-to know that a part is on the entry zone. Up to 0.7.5 the default was `none`, from the
+to know that a part is on the entry zone. Up to 0.7.6 the default was `none`, from the
 assumption (2026-11-20) that the cell could not detect parts before the laser zone;
 C4b then gave the cell a camera that sees the entry zone, which removes that reason.
 **Design decision (owner, 2026-11-22): the cell runs `when_idle`**, which is the
-default since 0.7.6. Measured on the validation seeds with the 0.7.5 network, it is
+default since 0.7.7. Measured on the validation seeds with the 0.7.6 network, it is
 worth 5.4 points more on top of the network at the design load (−13.8 % vs −8.4 %
 against `nearest_job`/`none`), and 7.4 points on `nearest_job` itself; at heavy load it
 changes nothing (the laser is never idle). `none` stays available as the variant
-without entry detection and as the mode of every result before 0.7.6. `always` keeps
+without entry detection and as the mode of every result before 0.7.7. `always` keeps
 the commitment (as for READY parts). Requirement for the cell: the camera must cover
 the entry zone reliably and the laser must be able to move to a point and wait there.
-Rationale and results: docs/CHANGELOG.md (0.4.0, 0.7.6),
+Rationale and results: docs/CHANGELOG.md (0.4.0, 0.7.7),
 docs/methods/nearest_head_prepositioning.md, docs/methods/rl2.md §8.6.
 
 **C4b. Information model (0.7.3).** An overhead camera sees every belt and its whole
@@ -92,7 +92,7 @@ the default). Parts waiting upstream of the belt entry are not seen; look-ahead
 policies and learned policies may not use them (they did up to 0.7.2). Seeing the entry
 zone is what makes pre-positioning possible (C4). What the controller knows about a
 part starts when it is first seen: its time on the belt, not its time in the hidden
-queue (0.7.6). It also knows the arrival horizon of the shift, but not whether more
+queue (0.7.7). It also knows the arrival horizon of the shift, but not whether more
 parts will come before it. Details: `docs/formal_formulation.md` §4.1,
 `src/simulation/observation.py`, `src/rl2/features.py`.
 

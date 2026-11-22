@@ -134,7 +134,7 @@ def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
       keeps its quality there.
     * With probability ``p_heavy``: the heavy-load example (overloaded 3-belt cell).
     * Otherwise: a general cell, :func:`general_config`.
-    * Mode: ``none`` with probability ``p_none``, else ``when_idle`` (0.7.6: 50/50;
+    * Mode: ``none`` with probability ``p_none``, else ``when_idle`` (0.7.7: 50/50;
       ``when_idle`` is the design mode of the cell, ``none`` the variant without entry
       detection).
     """
@@ -154,9 +154,9 @@ def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
 
 VAL_GENERAL_SEED_BASE = 2500
 VAL_GROUPS = ("real", "heavy", "general")
-#: validation modes (0.7.6): ``design`` = the real cell and the heavy example with
+#: validation modes (0.7.7): ``design`` = the real cell and the heavy example with
 #: ``when_idle`` (the design mode, docs/assumptions.md C4) and general cells with the
-#: mode drawn 50/50; ``none`` = every cell with ``none`` (the validation of 0.7.2–0.7.5)
+#: mode drawn 50/50; ``none`` = every cell with ``none`` (the validation of 0.7.2–0.7.6)
 VAL_MODES = ("design", "none")
 
 
@@ -211,7 +211,7 @@ def _scale(path):
 
 def _teacher(job: dict, net, key: str):
     """The search teacher of a job: known-parts look-ahead, or (``la`` =
-    (horizon_s, scenarios), 0.7.5) the value-truncated look-ahead over the network."""
+    (horizon_s, scenarios), 0.7.6) the value-truncated look-ahead over the network."""
     from rl2.search import SearchTeacher
     la = tuple(job.get("la", ()))
     horizon, scen, cut, window = la + (0.0, 0, "time", 30.0)[len(la):]
@@ -363,8 +363,8 @@ def validate(ex, net_path, n: int, who: list[str], k: int, w_pen: float,
              val_mode: str = "design") -> dict:
     """Paired delta vs ``nearest_job`` per group (real, heavy, general: 2n cells);
     score = mean of the three group means. ``la`` = (horizon_s, scenarios, cut,
-    window_s) of the cost-to-go teacher (0.7.5; (0, 0) = known-parts look-ahead);
-    ``val_mode`` is one of :data:`VAL_MODES` (0.7.6)."""
+    window_s) of the cost-to-go teacher (0.7.6; (0, 0) = known-parts look-ahead);
+    ``val_mode`` is one of :data:`VAL_MODES` (0.7.7)."""
     seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
     jobs = [{"load": g, "seed": seeds[g] + i, "who": w, "net": net_path, "k": k,
              "w_pen": w_pen, "horizon": horizon, "la": la, "mode": val_mode}
@@ -461,7 +461,7 @@ def main(argv=None) -> int:
     ap.add_argument("--val", type=int, default=20, help="validation seeds per load")
     ap.add_argument("--val-mode", default="design", choices=list(VAL_MODES),
                     help="design: real and heavy cells with when_idle, general cells "
-                         "with the mode drawn; none: every cell with none (0.7.2-0.7.5)")
+                         "with the mode drawn; none: every cell with none (0.7.2-0.7.6)")
     ap.add_argument("--patience", type=int, default=2)
     ap.add_argument("--workers", type=int, default=os.cpu_count() or 1,
                     help="simulation worker processes (default: all logical CPUs)")
@@ -491,7 +491,7 @@ def main(argv=None) -> int:
             if k not in RESUMABLE_ARGS:
                 setattr(args, k, v)
         for k, v in (("la_horizon", 0.0), ("scenarios", 0), ("la_cut", "time"),
-                     ("la_window", 30.0), ("val_mode", "none")):  # runs before 0.7.5/0.7.6
+                     ("la_window", 30.0), ("val_mode", "none")):  # runs before 0.7.6/0.7.7
             if k not in saved:
                 setattr(args, k, v)
         log = st["log"]

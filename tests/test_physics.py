@@ -148,7 +148,7 @@ def test_no_processing_before_reaching_laser_zone(config):
 
 
 def test_part_in_entry_zone_is_not_a_candidate(explicit_config):
-    """Restricted model (C7), ``none``: the cell's default is ``when_idle`` since 0.7.6."""
+    """Restricted model (C7), ``none``: the cell's default is ``when_idle`` since 0.7.7."""
     cfg = explicit_config([{"time": 0.0, "conveyor": 1}], laser__prepositioning="none")
     sim = Simulation(cfg, record_trace=False)
     for _ in range(150):                                # 1.5 s: part still before x = 10

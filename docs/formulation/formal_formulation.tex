@@ -510,7 +510,7 @@ next part. The offline problem $\Pb$ with full knowledge of the future gives the
 performance over the arrival distribution and by the empirical ratio
 $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances.
 
-With \texttt{laser.prepositioning: none} (the default until 0.7.5; the design cell runs \texttt{when\_idle} since 0.7.6) the implemented policies satisfy
+With \texttt{laser.prepositioning: none} (the default until 0.7.6; the design cell runs \texttt{when\_idle} since 0.7.7) the implemented policies satisfy
 \eqref{eq:C7} (the laser only selects parts already inside the laser zone) and never
 wait deliberately; they produce feasible solutions of $\Pb^{\mathrm{sim}}\subseteq\Pb$.
 With pre-positioning they produce feasible solutions of $\Pb$. In every case the optimum
@@ -558,7 +558,7 @@ $\lambda_k$ but not the instants of the future arrivals, nor whether any part wi
 arrive before $T_A$. A policy maps $\mathcal I_t$ to a candidate; a look-ahead may
 simulate only the parts of $O(t)$ plus synthetic arrivals drawn from $\theta$, never the
 real future. Under \texttt{belts} the arrival time $r_j$ itself is not observed: a part
-that waited in the hidden upstream queue shows no trace of it (0.7.6). For the
+that waited in the hidden upstream queue shows no trace of it (0.7.7). For the
 objectives this costs nothing, since $\sum_j F_j=\sum_j C_j-\sum_j r_j$ and the $r_j$
 are constants.
 

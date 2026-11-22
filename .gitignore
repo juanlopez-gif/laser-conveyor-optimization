@@ -12,3 +12,6 @@ docs/formulation/*.aux
 docs/formulation/*.log
 docs/formulation/*.out
 docs/formulation/*.toc
+
+# rl2: per-iteration checkpoints stay local; only the accepted model is versioned
+models/*_it[0-9]*.pt

@@ -9,7 +9,7 @@ the Δ vs the network alone, and the time per episode.
     python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_big.pt --val 30 \\
         --variants known:k6 known:k0 trunc:h20:m2:p1 ...
 
-Variant syntax (0.7.5, ``rl2.search``): ``known`` (look-ahead until the known parts
+Variant syntax (0.7.6, ``rl2.search``): ``known`` (look-ahead until the known parts
 are done), ``roll`` (sampled-future rollout to the end of the window, no value head),
 ``cut`` (value head at exactly t + H) or ``dcut`` (value head at the first decision
 after t + H); then ``:kK`` candidates (0 = all), ``:hH`` horizon [s], ``:wW`` window
@@ -64,7 +64,7 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=os.cpu_count() or 1)
     ap.add_argument("--tag", default="rl2_teacher_variants")
     ap.add_argument("--val-mode", default="design", choices=["design", "none"],
-                    help="validation mode (rl2.expert_iteration.VAL_MODES, 0.7.6)")
+                    help="validation mode (rl2.expert_iteration.VAL_MODES, 0.7.7)")
     args = ap.parse_args(argv)
     seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
     cells = [(g, seeds[g] + i) for g in VAL_GROUPS

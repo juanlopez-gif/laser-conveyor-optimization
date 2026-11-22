@@ -1,4 +1,4 @@
-# Strong RL: representation, model and expert iteration (0.7.1–0.7.5, strong-RL plan phases 2–3)
+# Strong RL: representation, model and expert iteration (0.7.1–0.7.6, strong-RL plan phases 2–3)
 
 Code: `src/rl2/features.py` (tokens), `src/rl2/model.py` (network, batching, policy,
 save/load). Tests: `tests/test_rl2_model.py`. Latency: `experiments/rl2_latency.py`.
@@ -35,10 +35,10 @@ through the y offset from the laser and a copy of its belt's state.
 
 | token | count | features |
 |---|---|---|
-| part | one per arrived unfinished part (buffer, belt, being processed) | 23 features: status one-hot (waiting, moving, ready, processing); x/L; distance to b; time to b at belt speed; interception time from the laser and a reachable flag; waiting time since the part became observable (0.7.6; was since arrival); p_j / mean p; remaining processing time; blocking flag; rank on the belt among unstarted parts and a head flag; **candidate flag**; committed flag; x and y offset from the laser; nominal and current belt speed; belt running; belt blocked |
+| part | one per arrived unfinished part (buffer, belt, being processed) | 23 features: status one-hot (waiting, moving, ready, processing); x/L; distance to b; time to b at belt speed; interception time from the laser and a reachable flag; waiting time since the part became observable (0.7.7; was since arrival); p_j / mean p; remaining processing time; blocking flag; rank on the belt among unstarted parts and a head flag; **candidate flag**; committed flag; x and y offset from the laser; nominal and current belt speed; belt running; belt blocked |
 | conveyor | N | 11 features: y offset from the laser; nominal and current speed; running; stopped for processing; blocked; buffer length; parts on the belt; arrival rate; offered load; has a candidate |
 | laser | 1 | 9 features: x, y; state one-hot (idle, heading, busy); remaining processing time; committed flag and target offset |
-| context | 1 | 18 features: laser speeds; motion model; mean processing time; total offered load; a, b, spacing, workspace height (relative to L); pre-positioning mode one-hot; λ_N, λ_T; arrivals still coming (0.7.6: t < T_A, the known horizon; was read from the real arrival list); time left to the episode's arrival horizon (added in phase 3, for the value head); number of parts and of candidates |
+| context | 1 | 18 features: laser speeds; motion model; mean processing time; total offered load; a, b, spacing, workspace height (relative to L); pre-positioning mode one-hot; λ_N, λ_T; arrivals still coming (0.7.7: t < T_A, the known horizon; was read from the real arrival list); time left to the episode's arrival horizon (added in phase 3, for the value head); number of parts and of candidates |
 
 * The context token carries the cell parameters. With it, one model can be trained
   with domain randomization (phase 3) and used on other cells.
@@ -165,7 +165,7 @@ Every training episode (seeds 100000+) draws one cell:
 | geometry | entry, laser-zone and exit lengths, belt spacing and minimum part spacing, each × U[0.5, 1.5] of the real value |
 | blocking penalty | λ_N ~ U[0, 20] s per event, λ_T ~ U[0, 2] s per blocked belt-second |
 | conveyor stop rule | only the processing belt (70 %) or all belts (30 %) |
-| pre-positioning | `none` or `when_idle`, 50 % each since 0.7.6 (`when_idle` is the design mode of the cell, `none` the variant without entry detection; 70 / 30 up to 0.7.5) |
+| pre-positioning | `none` or `when_idle`, 50 % each since 0.7.7 (`when_idle` is the design mode of the cell, `none` the variant without entry detection; 70 / 30 up to 0.7.6) |
 
 All values reach the network through the conveyor and context tokens.
 
@@ -229,7 +229,7 @@ All values reach the network through the conveyor and context tokens.
    * Optimizer: AdamW with a one-cycle learning rate, batch 256, gradient clipping at 1.
 4. **Validation and gating.**
    * Three groups: the real cell and the heavy example (seeds 2000–2029) and 60
-     general cells (seeds 2500–2559). Up to 0.7.5 all with `none`; since 0.7.6
+     general cells (seeds 2500–2559). Up to 0.7.6 all with `none`; since 0.7.7
      (`--val-mode design`, the default) the real and heavy cells use `when_idle`, the
      design mode, and the general cells draw their mode; `--val-mode none` reproduces
      the old validation.
@@ -241,7 +241,7 @@ All values reach the network through the conveyor and context tokens.
 5. **Logging.** Seeds, arguments, versions, times, losses and validation are written
    to `models/<tag>_training.json`.
 
-### 6.4 A stronger teacher over the trained network (0.7.5)
+### 6.4 A stronger teacher over the trained network (0.7.6)
 
 The large runs of §8.4 showed that the known-parts look-ahead is the ceiling: every
 network reaches it within 0.3–0.7 points and later iterations are rejected. The plan
@@ -266,7 +266,7 @@ completion times of the known parts, with common random numbers across candidate
 | 4 sampled futures, 45 s | −6.85 ±2.14 | −3.65 ±1.35 | −2.20 ±1.37 | −4.23 | 18.3 / 68.0 / 33.3 |
 | 4 sampled futures, 60 s | −4.66 ±1.93 | −0.23 ±1.64 | −0.49 ±1.79 | −1.79 | 20.2 / 77.9 / 39.0 |
 | 6 sampled futures, 30 s | −6.51 ±1.94 | −4.01 ±1.46 | −2.96 ±1.52 | −4.49 | 19.0 / 78.1 / 39.7 |
-| **8 sampled futures, 30 s (used from 0.7.5)** | **−7.50 ±1.92** | **−3.83 ±1.33** | **−3.19 ±1.53** | **−4.84** | 21.9 / 112.2 / 58.3 |
+| **8 sampled futures, 30 s (used from 0.7.6)** | **−7.50 ±1.92** | **−3.83 ±1.33** | **−3.19 ±1.53** | **−4.84** | 21.9 / 112.2 / 58.3 |
 | 8 sampled futures, 20 s | −7.39 ±1.83 | −3.53 ±1.57 | −3.15 ±1.51 | −4.69 | 17.7 / 85.9 / 42.4 |
 
 Other rows checked: all candidates instead of K = 6 changes nothing with 4 futures
@@ -359,12 +359,68 @@ against the engine on 40 general cells × 2 modes × 2 rules
 
 ### 8.3 General training with the real information model (`rl2_gen_s`, 0.7.3)
 
-RESULTS_PLACEHOLDER
+**Run.** Pilot on the laptop (Ryzen 7 5700U, 8 workers, CPU), 2026-11-20, 1 h 38 min:
 
-### 8.4 Large-scale runs on a GPU workstation (`rl2_gen_s_big`, `rl2_gen_m`, `rl2_gen_l`, 0.7.4)
+* model S;
+* 6 iterations: 1000 episodes and 8 epochs in iteration 0, then 500 episodes and
+  4 epochs each, replay 2;
+* teacher k = 6, `w_pen` 0;
+* gating on 30 validation seeds per group (real 2000+, heavy 2000+, general 2500+,
+  60 general episodes).
+
+Log: `models/rl2_gen_s_training.json`. The accepted model is `models/rl2_gen_s.pt`
+(iteration 3).
+
+**Validation.** The table gives the paired Δ of penalized flow time vs `nearest_job`
+(95 % CI, wins). "Network" is the network alone, a single forward pass per decision.
+"Search" is the search teacher over the network.
+
+| iteration | network real | network heavy | network general | search real | search heavy | search general | gate |
+|---|---|---|---|---|---|---|---|
+| 0 | −3.7 ±1.6 % | −2.0 ±1.6 % | −1.2 ±1.2 % | −5.5 % | −1.8 % | −2.6 % | accepted |
+| 1 | −4.0 ±1.6 % | −1.6 ±1.8 % | −1.4 ±1.2 % | −5.6 % | −1.6 % | −2.4 % | accepted |
+| 2 | −4.0 ±1.6 % | −3.2 ±1.5 % | −1.1 ±1.3 % | −5.4 % | −2.4 % | −2.7 % | accepted |
+| **3** | **−3.4 ±1.7 %**, 25/30 | **−3.3 ±1.7 %**, 25/30 | **−1.8 ±1.4 %**, 24/60 | −5.5 ±1.8 % | −2.6 ±1.7 % | −2.6 ±1.6 % | **accepted (best)** |
+| 4 | −3.9 ±1.6 % | −2.7 ±1.8 % | −1.4 ±1.4 % | −5.4 % | −2.6 % | −2.7 % | rejected |
+| 5 | −3.9 ±1.8 % | −2.6 ±1.7 % | −1.3 ±1.3 % | −5.4 % | −2.3 % | −2.6 % | rejected |
+
+Reference policies on the same validation seeds:
+
+| policy | real | heavy | general |
+|---|---|---|---|
+| `nearest_head` | −1.6 ±1.7 % | +0.4 ±1.4 % | +1.1 ±1.5 % |
+| search over `nearest_job` (rule teacher) | −4.9 ±1.8 % | +0.5 ±2.2 % | −2.2 ±1.3 % |
+
+The run stopped after two rejected iterations (patience 2).
+
+**Reading.**
+
+* **The network alone beats `nearest_job` in all three groups**, significantly in each
+  (the 95 % CI excludes 0). It is a single forward pass of about 4 ms. It also beats
+  `nearest_head` in all three groups.
+* **The network alone beats the rule teacher at heavy load** (−3.3 % vs +0.5 %). It is
+  close to the rule teacher in the real cell (−3.4 % vs −4.9 %) and in general cells
+  (−1.8 % vs −2.2 %).
+* **Search over the network is the best policy** in every group: −5.5 % (real),
+  −2.6 % (heavy), −2.6 % (general). Its cost is k = 6 look-aheads per decision.
+* **Plateau.** After iteration 2, the training agreement with the teacher keeps
+  rising (0.88 → 0.90), but validation no longer improves. The gap between network and
+  search (about 2 points in the real cell, 1 point in general cells) is not closed by
+  more iterations at this size and data volume. The large run on the other machine
+  (sizes S and L, more episodes; `docs/methods/remote_training.md`) tests whether
+  capacity or data is the limit.
+* **Caveats.**
+  * The validation seeds were used for gating, so the best iteration is selected on
+    them and its numbers are slightly optimistic.
+  * The unbiased comparison is the final evaluation on the reserved seeds 7000–7029
+    (phase 4).
+  * The general group has only 60 episodes over very different cells. Per-cell
+    breakdowns are left for phase 4.
+
+### 8.4 Large-scale runs on a GPU workstation (`rl2_gen_s_big`, `rl2_gen_m`, `rl2_gen_l`, 0.7.5)
 
 The three sizes of the scaling ladder (plan §3) were trained on a 48-thread
-workstation with an RTX 3080 (`docs/methods/remote_training.md`; CHANGELOG 0.7.4),
+workstation with an RTX 3080 (`docs/methods/remote_training.md`; CHANGELOG 0.7.5),
 with the real information model of 0.7.3. Same code, same seeds (training 100000+,
 validation 2000+ and 2500+), same gating; only the size and the amount of data differ.
 Validation here uses 50 seeds per group (100 general cells), so the intervals are
@@ -482,7 +538,7 @@ The laptop needed 4–5 min per epoch of 50 000 decisions on the CPU; the GPU do
 same in about 4 s. On this machine the bottleneck moved to data generation with a
 network teacher, which runs single-state network calls on the CPU workers.
 
-### 8.5 Expert iteration with the sampled-future teacher (`rl2_gen_s_sf`, 0.7.5)
+### 8.5 Expert iteration with the sampled-future teacher (`rl2_gen_s_sf`, 0.7.6)
 
 Continuation of the best S model (`rl2_gen_s_big.pt`, §8.4) with the teacher of
 §6.4 (8 sampled futures, 30 s window, no penalty in the look-ahead): `--init`, so the
@@ -500,7 +556,7 @@ python experiments/fastsim_validation.py --loads general --seeds 40 --seed-base 
     --dt 0.01 --workers 8 --modes none when_idle --tag fastsim_val_general_dt01
 python experiments/rl2_train.py --tag rl2_gen_s --iters 6 --episodes0 1000 --episodes 500 \
     --epochs0 8 --epochs 4 --replay 2 --val 30 --workers 8
-# 0.7.5: teacher variants over a trained network, then training with the chosen one
+# 0.7.6: teacher variants over a trained network, then training with the chosen one
 python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_big.pt --val 30 \
     --variants known:k6 roll:m4:w30:p0 roll:m8:w30:p0 cut:h20:m4 dcut:h20:m4
 python experiments/rl2_train.py --tag rl2_gen_s_sf --init models/rl2_gen_s_big.pt \

@@ -82,7 +82,7 @@ def instance_config(inst: Instance, policy: str = "nearest_job", policy_params: 
     """Simulator config that reproduces ``inst`` exactly (explicit arrivals, drain).
 
     The sequence-only view and the exact models are defined on the restricted model
-    P^sim (``laser.prepositioning: none``, (C7)); since 0.7.6 the cell's default is
+    P^sim (``laser.prepositioning: none``, (C7)); since 0.7.7 the cell's default is
     ``when_idle``, so the mode is pinned here unless the instance overrides or
     ``extra_sets`` set it (``always`` makes the decoder realise P).
     """

@@ -132,7 +132,7 @@ What changes the reading of earlier results:
 
 ## 5. Recommendation for the real cell (2026-11-20)
 
-> **Superseded in part (0.7.6, 2026-11-22).** The cell is not built yet; its design
+> **Superseded in part (0.7.7, 2026-11-22).** The cell is not built yet; its design
 > mode is now `when_idle` (`docs/assumptions.md` C4), and the strong-RL dispatcher of
 > `rl2.md` §8.5–§8.6 replaces `rl_rollout` as the recommendation. The numbers below
 > stay valid for the `none` variant and as the reference the new models are

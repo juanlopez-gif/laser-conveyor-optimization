@@ -169,7 +169,7 @@ def test_episode_labels_and_one_training_step(tmp_path):
     assert h[-1]["policy"] < h[0]["policy"]
 
 
-# ------------------------------------------------- value-truncated teacher (0.7.5)
+# ------------------------------------------------- value-truncated teacher (0.7.6)
 def _small_net():
     torch.manual_seed(0)
     return DispatchNet(ModelConfig(1, 32, 2)).eval()

@@ -73,7 +73,7 @@ cores as training needs the GPU.
    ```
    If the login shell exports `PYTHONPATH` (ROS does), run every project command with
    `env -u PYTHONPATH …`: otherwise pytest loads plugins from there and fails before
-   the project tests start (seen on the first workstation, 0.7.4).
+   the project tests start (seen on the first workstation, 0.7.5).
    With a GPU, choose the PyTorch CUDA build that matches the driver, for example:
    ```bash
    TORCH_INDEX=https://download.pytorch.org/whl/cu121 bash experiments/remote/setup_env.sh
@@ -106,7 +106,7 @@ cores as training needs the GPU.
 These are starting points, to be adjusted with the times measured in the first
 iteration.
 
-Measured on a 48-thread workstation with an RTX 3080 (0.7.4, `rl2.md` §8.4): S takes
+Measured on a 48-thread workstation with an RTX 3080 (0.7.5, `rl2.md` §8.4): S takes
 25 min for 6 iterations and M about 6 h, because the network teacher of iterations
 ≥ 1 runs on the CPU workers and is 8.5× slower per episode for M than for S.
 
