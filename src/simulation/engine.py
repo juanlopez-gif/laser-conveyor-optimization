@@ -78,6 +78,7 @@ class Simulation:
         self.block = config.simulation.unprocessed_at_zone_end == "block"
         self.prepositioning = config.laser.prepositioning      # none | when_idle | always
         self.observation = config.simulation.observation        # zone | belts | full (0.7.3)
+        self.visible_length = config.simulation.visible_length  # cm of entry zone seen (0.7.10)
 
         self.conveyors = [Conveyor(spec, config.geometry) for spec in config.conveyors]
         self.laser = Laser.from_spec(config.laser)
@@ -251,7 +252,8 @@ class Simulation:
         upcoming = mode == "always" or (mode == "when_idle" and not self._ready_candidates_exist())
         return [p for c in self.conveyors for p in c.parts
                 if not p.assigned and (p.status == PartStatus.READY or (
-                    upcoming and p.status == PartStatus.MOVING)) and icp(p) is not None]
+                    upcoming and p.status == PartStatus.MOVING and self.observable(p)))
+                and icp(p) is not None]
 
     def _dispatch(self, t: float, forced: Part | None = None) -> None:
         icp = self._intercept_memo()
@@ -410,9 +412,13 @@ class Simulation:
     def observable(self, part) -> bool:
         """True if a policy may observe ``part`` (information model, 0.7.3;
         simulation/observation.py). The physics never depends on it."""
-        from .observation import visible_status
-        return visible_status(part.status.value if hasattr(part.status, "value")
-                              else str(part.status), self.observation)
+        from .observation import visible_moving, visible_status
+        status = part.status.value if hasattr(part.status, "value") else str(part.status)
+        if not visible_status(status, self.observation):
+            return False
+        if status == "MOVING" and self.observation == "belts":
+            return visible_moving(part.x, self.geometry.active_start, self.visible_length)
+        return True
 
     # ---------------------------------------------------------------- output
     def result(self) -> SimulationResult:

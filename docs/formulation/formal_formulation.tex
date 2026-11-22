@@ -546,8 +546,12 @@ is part of the definition of a policy.
 \subsection{Information model}\label{sec:info}
 A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts
 observable at $t$ and $o_j$ the instant from which part $j$ is observable (its arrival
-$r_j$ with \texttt{full}, its entry on the belt $e_j$ with \texttt{belts}, its entry in
-the laser zone $R_j$ with \texttt{zone}). The information at a decision epoch is
+$r_j$ with \texttt{full}, its entry in the visible stretch of the belt with
+\texttt{belts}, its entry in the laser zone $R_j$ with \texttt{zone}). With
+\texttt{belts} the camera sees the laser zone and the last $\ell_v$ cm of the entry
+zone, $[a-\ell_v,a)$ (\texttt{simulation.visible\_length}, version 0.7.10); the design
+camera has $\ell_v=$ \texttt{entry\_length} and sees the whole belt, so $o_j=e_j$;
+$\ell_v=0$ coincides with \texttt{zone}. The information at a decision epoch is
 \[
 \mathcal I_t=\Bigl(t,\ \text{laser state},\ \text{belt states},\
 \bigl\{(k(j),x_j(t),o_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta,\ T_A\Bigr),
@@ -567,7 +571,7 @@ are constants.
 \toprule
 level & $O(t)$ & use\\
 \midrule
-\texttt{belts} & parts on a belt (entry zone and laser zone) with their positions & \textbf{design cell}: an overhead camera sees every belt and its working area\\
+\texttt{belts} & parts on a belt in the laser zone or in the visible stretch $[a-\ell_v,a)$ of the entry zone, with their positions & \textbf{design cell} with $\ell_v=$ \texttt{entry\_length}: an overhead camera sees every belt and its working area; shorter $\ell_v$ for the value-of-information study\\
 \texttt{zone} & parts in the laser zone only & what-if without camera; incompatible with pre-positioning\\
 \texttt{full} & also parts waiting upstream of the belt entry & what-if upper bound; implicit in every version before 0.7.3\\
 \bottomrule
@@ -581,7 +585,9 @@ decision. The rules \texttt{nearest\_job}, \texttt{nearest\_head}, \texttt{fifo}
 \texttt{weighted\_score} choose among candidates only, which are always observable. The
 processing time $p_j$ is assumed known once the part is observed (it is constant in the
 real cell). Whether the laser may be \emph{sent} to an entry-zone part is a separate
-question (\texttt{laser.prepositioning}); the real cell uses \texttt{none}.
+question (\texttt{laser.prepositioning}); since the camera sees the entry zone, the
+design cell runs \texttt{when\_idle} (version 0.7.7) and \texttt{none} is the variant
+without entry detection.
 
 \subsection{The general stochastic problem}\label{sec:general}
 The learned policies target a family of cells. A cell is the parameter vector
@@ -590,7 +596,11 @@ The learned policies target a family of cells. A cell is the parameter vector
 a,b,L,\delta,\ \sigma,\ \lambda_N,\lambda_T,\ \text{pre-positioning},\ \text{observation level}\bigr).
 \end{multline*}
 Given $\theta$, the arrivals of conveyor $k$ form a Poisson process of rate $\lambda_k$
-(or a deterministic one of period $1/\lambda_k$), independent between conveyors. The
+(or a deterministic one of period $1/\lambda_k$, or, from version 0.7.10, an on/off
+Poisson source with the same mean rate: on a fraction $f_k$ of the time in periods of
+mean $\tau_k$, emitting at rate $\lambda_k/f_k$ while on, hyper-exponential
+inter-arrival times), independent between conveyors. The controller knows $\lambda_k$;
+$(f_k,\tau_k)$ enter $\theta$ only in the bursty regimes of the bench. The
 processing times are i.i.d.\ with distribution $G$ (constant, uniform or truncated
 normal). An instance $\omega$ is a realization up to the arrival horizon $T_A$, after
 which the system drains. For a policy $\mu$,

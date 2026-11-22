@@ -155,6 +155,8 @@ arrivals:
   mode: deterministic            # deterministic | stochastic | explicit
   deterministic: {intervals: [10, 12, 14], first_arrival: [0, 1, 2]}
   stochastic:   {distribution: exponential, mean_interarrival: [10, 12, 14]}   # Poisson
+  # distribution: burst -> on/off Poisson source with the same mean rate (0.7.10):
+  #   stochastic: {distribution: burst, mean_interarrival: 10, burst: {on_fraction: 0.3, on_mean: 20}}
   explicit: [{time: 0.0, conveyor: 1, processing_time: 2.5}, ...]           # fixed instance
 processing:
   distribution: constant         # constant | uniform | normal

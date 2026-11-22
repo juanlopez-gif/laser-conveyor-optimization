@@ -532,8 +532,12 @@ $b$), so the tie rule is part of the definition of a policy.
 
 A policy may only use what the cell can observe. Let $O(t)\subseteq J$ be the parts
 **observable** at $t$, and $o_j$ the instant from which part $j$ is observable (its
-arrival $r_j$ with `full`, its entry on the belt $e_j$ with `belts`, its entry in the
-laser zone $R_j$ with `zone`). The information available at a decision epoch is
+arrival $r_j$ with `full`, its entry in the visible stretch of the belt with `belts`,
+its entry in the laser zone $R_j$ with `zone`). With `belts` the camera sees the laser
+zone and the last $\ell_v$ cm of the entry zone, $[a-\ell_v,\,a)$
+(`simulation.visible_length`, 0.7.10); $\ell_v=$ `entry_length` is the design camera,
+which sees the whole belt, so that $o_j=e_j$; $\ell_v=0$ coincides with `zone`. The
+information available at a decision epoch is
 
 $$
 \mathcal I_t=\Big(t,\ \text{laser state},\ \text{belt states } (u_k,\ \text{stop reasons}),\
@@ -554,7 +558,7 @@ decision-relevant part of the cost does not depend on them.
 
 | level (`simulation.observation`) | $O(t)$ | use |
 |---|---|---|
-| `belts` | parts on a belt: entry zone and laser zone, with positions (status MOVING, READY, PROCESSING) | **design cell**: an overhead camera sees every belt and its working area (owner, 2026-11-20) |
+| `belts` | parts on a belt in the laser zone or in the visible stretch $[a-\ell_v, a)$ of the entry zone, with positions (status MOVING, READY, PROCESSING) | **design cell** with $\ell_v=$ `entry_length`: an overhead camera sees every belt and its working area (owner, 2026-11-20); shorter $\ell_v$ for the value-of-information study |
 | `zone` | parts in the laser zone only (READY, PROCESSING) | what-if: no camera. Incompatible with pre-positioning |
 | `full` | also parts waiting upstream of the belt entry (WAITING) | what-if upper bound; the implicit behaviour of every version before 0.7.3 |
 
@@ -586,7 +590,13 @@ $$
 Given $\theta$:
 
 * the arrivals of conveyor $k$ form a renewal process: Poisson with rate $\lambda_k$
-  (exponential inter-arrival times), or deterministic with period $1/\lambda_k$;
+  (exponential inter-arrival times), or deterministic with period $1/\lambda_k$, or
+  (0.7.10) an on/off Poisson source with the same mean rate $\lambda_k$: the source
+  is on a fraction $f_k$ of the time in periods of mean $\tau_k$ seconds and emits at
+  rate $\lambda_k/f_k$ while on (hyper-exponential inter-arrival times; $f_k=1$ is
+  the Poisson case). The controller knows $\lambda_k$; $(f_k,\tau_k)$ are part of
+  $\theta$ only in the bursty regimes of the bench and are not yet an input of the
+  learned policies;
 * the processes of different conveyors are independent;
 * the processing times are i.i.d. with distribution $G$ (constant, uniform or
   truncated normal).

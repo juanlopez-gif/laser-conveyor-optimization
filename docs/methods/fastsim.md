@@ -22,7 +22,8 @@ The model is identical to the engine (`docs/formal_formulation.md`, `docs/assump
 * **Events:**
   * arrival;
   * end of processing;
-  * a part entering the laser zone (x = a);
+  * a part entering the laser zone (x = a), or the visible stretch of the entry zone
+    (x = a − `visible_length`, 0.7.10) when the camera does not see the whole zone;
   * an unprocessed part reaching the zone end (x = b, the belt blocks);
   * a part leaving the belt (x = L);
   * the last part on a belt reaching the minimum spacing (the next waiting part enters);

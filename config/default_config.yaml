@@ -32,6 +32,13 @@ simulation:
   #            behaviour of every version before 0.7.3)
   #   auto  -> belts
   observation: auto
+  # Visible length (0.7.10): how many cm of the ENTRY zone, upstream of the laser
+  # zone, the camera sees at level belts (the stretch [a - visible_length, a)).
+  #   null -> the whole entry zone (geometry.entry_length; the design camera)
+  #   0    -> parts are seen only from the laser zone on (belts behaves like zone)
+  # A part upstream of the visible stretch is neither observed nor a pre-positioning
+  # candidate. Ignored by zone and full. Treatment-B parameter of docs/plans/papers.md.
+  visible_length: null
 
 geometry:
   entry_length: 10.0           # entry zone   (laser cannot reach)
@@ -77,8 +84,14 @@ arrivals:
     intervals: [10.0, 12.0, 14.0]  # one per conveyor (or a scalar)
     first_arrival: [0.0, 1.0, 2.0] # offset of the first part per conveyor
   stochastic:
-    distribution: exponential      # Poisson arrivals -> exponential inter-arrival times
+    # exponential -> Poisson arrivals (exponential inter-arrival times)
+    # burst       -> on/off Poisson source with the SAME mean rate (0.7.10): parts
+    #                arrive only while the source is on; see simulation/arrivals.py
+    distribution: exponential
     mean_interarrival: [10.0, 12.0, 14.0]
+    burst:                           # used by distribution: burst only
+      on_fraction: 1.0               # fraction of time the source is on (1 = Poisson)
+      on_mean: 20.0                  # mean length of an on-period [s]
   explicit: []                     # list of {time, conveyor, processing_time} (tests / static instances)
 
 processing:

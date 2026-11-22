@@ -6,6 +6,86 @@ summarized from the git history.
 
 ---
 
+## 0.7.10 — 2026-11-22 — Bursty arrivals and the visible length of the entry zone; information bench
+
+* **Why.** The first A/B/C/D measurement (0.7.9) showed that, on the nominal cell,
+  seeing the entry zone without acting on it is worth nothing: the value is in the
+  action (pre-positioning). The main hypothesis of Paper 2 (`docs/plans/papers.md`,
+  upstream visibility is worth more under bursty arrivals and long head travel) could
+  not be tested because the generators produced only deterministic or Poisson
+  arrivals, and treatment B ("a preceding stretch of defined length") had no length
+  parameter: `belts` always saw the whole entry zone. Both were listed as missing in
+  the plan's review notes (points 3 and 5). The agreed order was: build these two
+  pieces first, run a cheap pilot with the existing network, and only then decide on
+  retraining and on the phase-4 confirmatory evaluation, which should run once.
+* **Bursty arrivals** (`arrivals.stochastic.distribution: burst`,
+  `src/simulation/arrivals.py`): an on/off Poisson source (interrupted Poisson
+  process) with **the same mean rate** as the Poisson process. Two parameters per
+  conveyor: `burst.on_fraction` (fraction of time the source emits; 1 = Poisson) and
+  `burst.on_mean` (mean length of an emitting period, s). While on, parts arrive as a
+  Poisson process of rate `1 / (mean_interarrival · on_fraction)`; the off-periods
+  have mean `on_mean · (1 − on_fraction) / on_fraction`, so the long-run rate is
+  exactly `1 / mean_interarrival`. The inter-arrival times are hyper-exponential, which
+  is the model the review notes asked for. The switching uses its own random stream
+  (`<seed>/bursts/<k>`), so every `exponential` instance is unchanged (a test checks
+  that `on_fraction: 1` reproduces the Poisson stream exactly). Checked numerically:
+  with `on_fraction 0.3`, `on_mean 20 s` the rate is preserved within 2 % over
+  20 000 s and the index of dispersion of 10-s counts rises from 1.0 to 2.3–2.9.
+  The controller's statistical knowledge stays the mean rates: the sampled-future
+  teacher and `rollout` still draw Poisson futures (`rl2.search.sample_scenarios`),
+  and the context token does not carry the burst parameters. This is deliberate for
+  the pilot (the network is unchanged and must stay loadable); whether the burst
+  parameters become part of θ in the training mix is a decision for the owner, since
+  it changes `GENERAL` and needs a retraining.
+* **Visible length** (`simulation.visible_length`, cm; `null` = the whole entry zone,
+  the behaviour of 0.7.3–0.7.9): at level `belts` the camera sees the laser zone and
+  only the stretch `[a − visible_length, a)` of the entry zone. A MOVING part upstream
+  of it is **not observable**: it is not a token of the network, not a candidate for
+  pre-positioning (engine and fast simulator), it is dropped from the look-ahead
+  clones, and its time on the belt is counted from the instant it becomes visible
+  (`rl2.features.observed_since` now uses that instant, `FastSim.pvis`). `0` makes
+  `belts` see exactly what `zone` sees, which is a check. The fast simulator gained
+  the crossing of `x = a − visible_length` as an event, so a part becoming visible is
+  a decision opportunity, as entering the belt was. Ignored by `zone` and `full`.
+  `simulation/observation.py`: `resolve_visible_length`, `visible_moving`.
+* **No change to results.** With the defaults (whole entry zone visible, Poisson
+  arrivals) the fast simulator gives bit-identical costs and blocking counts to the
+  0.7.9 code on 48 real/heavy cases at every observation level and mode; the engine
+  and the fast simulator agree under a visible length (same processing order, start
+  times within 0.05 s, two new agreement cases).
+* **Information bench** (`experiments/rl2_information_bench.py`): treatments A/B/C/D
+  and the visible-length curve (0, 2.5, 5, 10 cm, with `none` and with `when_idle`)
+  for `nearest_job`, `nearest_head` and one network, across load (real, heavy),
+  arrivals (regular, burst 0.3/20 s) and head travel (nominal, laser speeds × 0.5), 30
+  validation seeds per regime, paired. Output: `results/experiments/<tag>/bench.json`
+  and `tables.md`. Not changed: `GENERAL`, the seeds, the cell model.
+* **Tests:** `tests/test_visible_length_burst.py` (12): config resolution and
+  validation; mean rate, over-dispersion, ordering and reproducibility of the bursty
+  stream; visibility follows the visible stretch in the fast simulator (both modes)
+  and in the engine (candidates); `visible_length: 0` equals the `zone` view; tokens
+  and the search teacher ignore a part upstream of the stretch while the whole-zone
+  camera sees the same change; engine/fast-simulator agreement. Full suite passes.
+* **Docs:** `config/default_config.yaml` (keys and comments), `docs/assumptions.md`
+  C4b and D1, `docs/formal_formulation.md` §4.1–4.2 (and the `.tex`, where the
+  design mode is also corrected to `when_idle`), `docs/system_description.md`,
+  `docs/methods/fastsim.md`, `docs/plans/papers.md` (status table, load grid),
+  README §8, `docs/methods/rl2.md` §8.7 (pilot results).
+* **Pilot results** (`docs/methods/rl2.md` §8.7, 8 regimes × 30 seeds, network of
+  0.7.9 unchanged): seeing the entry zone without acting on it is worth nothing in
+  every regime (B vs A within ±0.9 points), also with bursts and a slow head, so the
+  main hypothesis of Paper 2 as written is not supported at this burst setting; the
+  value is in the action (C vs B −5.7 points on the nominal real cell, −3.0 with a
+  slow head, −3.1 with bursts, −4.0 with both, 0 at the heavy load), and the curve
+  against the visible length saturates at about half the entry zone (5 cm, 1.7 s of
+  belt travel: −12.8 of −13.3 points). Seeing the hidden upstream queue is worth 4.4
+  points only at the heavy load with a slow head, a regime outside the network's
+  training range (laser 2.5 cm/s). Trained on Poisson arrivals only, the network keeps
+  3–5 points over `nearest_job` under bursts. Decisions left to the owner: whether
+  the burst parameters and slower heads enter the training mix (`GENERAL`), and the
+  wording of the Paper 2 hypothesis.
+
+---
+
 ## 0.7.9 — 2026-11-22 — Observation levels in the training mix; first round in the design mode
 
 * **Why.** The research plan (0.7.8, `docs/plans/papers.md`) compares three

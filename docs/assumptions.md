@@ -95,6 +95,12 @@ part starts when it is first seen: its time on the belt, not its time in the hid
 queue (0.7.7). It also knows the arrival horizon of the shift, but not whether more
 parts will come before it. Details: `docs/formal_formulation.md` §4.1,
 `src/simulation/observation.py`, `src/rl2/features.py`.
+*Visible length (0.7.10).* `simulation.visible_length` limits what the camera sees of
+the entry zone to its last `visible_length` cm (`null` = the whole zone, the design
+camera). A part upstream of that stretch is treated exactly like a part in the hidden
+queue: not a token, not a pre-positioning candidate, no trace of its time there. It is
+the length parameter of treatment B in `docs/plans/papers.md`, for the value-of-
+information study; the design cell keeps the whole entry zone.
 
 **C5.** Laser workspace = laser zone in X (10–45 cm) × [min y, max y] of the conveyors.
 The laser never leaves it (tested).
@@ -106,7 +112,11 @@ Initial position: centre of the workspace.
 
 **D1.** Deterministic mode: first arrival at `first_arrival` (0, 1, 2 s), then every
 `intervals` (10, 12, 14 s). Stochastic mode: Poisson (exponential inter-arrival times
-with means 10, 12, 14 s).
+with means 10, 12, 14 s), or (0.7.10, `distribution: burst`) an on/off Poisson source
+with the same mean rate, for the bursty regimes of the research plan: the source emits
+a fraction `burst.on_fraction` of the time in periods of mean `burst.on_mean` seconds
+(`src/simulation/arrivals.py`). The controller knows the mean rates; it is not told the
+burst parameters (decision pending for the training mix).
 
 **D2.** Arrivals are generated up to `arrival_horizon = 300 s`; afterwards
 (`drain: true`) the simulation continues until the system is empty. Makespan is the time

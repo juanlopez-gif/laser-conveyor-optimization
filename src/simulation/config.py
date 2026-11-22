@@ -92,9 +92,13 @@ class ArrivalSpec:
     mode: str
     intervals: tuple[float, ...]          # deterministic
     first_arrival: tuple[float, ...]      # deterministic
-    distribution: str                     # stochastic
+    distribution: str                     # stochastic: exponential | burst
     mean_interarrival: tuple[float, ...]  # stochastic
     explicit: tuple[dict, ...]            # explicit list of arrivals
+    #: bursty arrivals (0.7.10, ``distribution: burst``): an on/off Poisson source with
+    #: the same mean rate; fraction of time the source is on and mean on-period [s]
+    burst_on_fraction: tuple[float, ...] = ()
+    burst_on_mean: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -123,6 +127,9 @@ class SimulationSpec:
     #: information model (0.7.3): zone | belts | full, resolved from 'auto'
     #: (simulation/observation.py)
     observation: str = "belts"
+    #: length of the entry-zone stretch, upstream of the laser zone, that the camera
+    #: sees at level ``belts`` [cm] (0.7.10); null in the YAML = the whole entry zone
+    visible_length: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -275,11 +282,14 @@ def build_config(raw: dict) -> Config:
     if laser.motion_model not in ("simultaneous", "sequential"):
         raise ValueError("laser.motion_model must be 'simultaneous' or 'sequential'")
     from dataclasses import replace as _replace
-    from .observation import resolve_observation
+    from .observation import resolve_observation, resolve_visible_length
     sim = _replace(sim, observation=resolve_observation(s.get("observation", "auto"),
-                                                        laser.prepositioning))
+                                                        laser.prepositioning),
+                   visible_length=resolve_visible_length(s.get("visible_length"),
+                                                         geom.entry_length))
 
     det, sto = a.get("deterministic", {}), a.get("stochastic", {})
+    burst = sto.get("burst") or {}
     mode = str(a["mode"])
     # Only the lists of the ACTIVE arrival mode must match conveyors.count.
     is_det, is_sto = mode == "deterministic", mode == "stochastic"
@@ -292,9 +302,20 @@ def build_config(raw: dict) -> Config:
         distribution=str(sto.get("distribution", "exponential")),
         mean_interarrival=_per_conveyor(sto.get("mean_interarrival", 1.0), n,
                                         "arrivals.stochastic.mean_interarrival") if is_sto else (),
-        explicit=tuple(a.get("explicit") or ()))
+        explicit=tuple(a.get("explicit") or ()),
+        burst_on_fraction=_per_conveyor(burst.get("on_fraction", 1.0), n,
+                                        "arrivals.stochastic.burst.on_fraction") if is_sto else (),
+        burst_on_mean=_per_conveyor(burst.get("on_mean", 20.0), n,
+                                    "arrivals.stochastic.burst.on_mean") if is_sto else ())
     if arrivals.mode not in ("deterministic", "stochastic", "explicit"):
         raise ValueError("arrivals.mode must be deterministic | stochastic | explicit")
+    if is_sto:
+        if arrivals.distribution not in ("exponential", "burst"):
+            raise ValueError("arrivals.stochastic.distribution must be exponential | burst")
+        if any(not 0.0 < f <= 1.0 for f in arrivals.burst_on_fraction):
+            raise ValueError("arrivals.stochastic.burst.on_fraction must be in (0, 1]")
+        if any(m <= 0.0 for m in arrivals.burst_on_mean):
+            raise ValueError("arrivals.stochastic.burst.on_mean must be > 0")
 
     proc = ProcessingSpec(
         distribution=str(p["distribution"]), time=float(p["time"]),

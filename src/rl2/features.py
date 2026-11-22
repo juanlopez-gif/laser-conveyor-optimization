@@ -81,10 +81,12 @@ def mean_processing_time(cfg) -> float:
 
 def observed_since(sim: FastSim, j: int) -> float:
     """Instant from which part ``j`` is observable at the simulator's observation
-    level: arrival (``full``), entry on the belt (``belts``) or entry in the laser
-    zone (``zone``). Falls back to the arrival time if the instant is not set."""
+    level: arrival (``full``), entry in the visible stretch of the belt (``belts``;
+    the whole entry zone unless ``simulation.visible_length`` is set, 0.7.10) or entry
+    in the laser zone (``zone``). Falls back to the arrival time if the instant is not
+    set."""
     if sim.observation == "belts":
-        t0 = sim.pentry[j]
+        t0 = sim.pvis[j]
     elif sim.observation == "zone":
         t0 = sim.pready[j]
     else:

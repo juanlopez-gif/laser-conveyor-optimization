@@ -76,6 +76,9 @@ class FastSim:
         self.observation = s.observation          # information model (0.7.3)
         self._seen = {"zone": (READY, PROCESSING), "belts": (MOVING, READY, PROCESSING),
                       "full": (WAITING, MOVING, READY, PROCESSING)}[s.observation]
+        # a MOVING part is visible from x = avis on (0.7.10, simulation.visible_length;
+        # avis = a - visible_length; at level full every part is visible)
+        self.avis = -INF if s.observation == "full" else self.a - s.visible_length
         self.n = len(cfg.conveyors)
         self.v = [c.speed for c in cfg.conveyors]
         self.yk = [c.y for c in cfg.conveyors]
@@ -98,6 +101,7 @@ class FastSim:
         self.pE: list[float | None] = []   # entry coordinate E_j (odometer at entry)
         self.pD0: list[float] = []       # odometer at arrival D_k(r_j)
         self.pentry: list[float | None] = []
+        self.pvis: list[float | None] = []   # instant the part became visible (0.7.10)
         self.pready: list[float | None] = []
         self.pS: list[float | None] = []
         self.pC: list[float | None] = []
@@ -137,8 +141,8 @@ class FastSim:
         """Independent copy of the current state (instance data shared, read-only)."""
         c = FastSim.__new__(FastSim)
         c.__dict__.update(self.__dict__)
-        for name in ("pk", "pr", "pp", "pst", "pE", "pD0", "pentry", "pready", "pS", "pC",
-                     "pB", "pX", "pDS", "pexit", "D", "s_proc", "s_blk", "moved", "order"):
+        for name in ("pk", "pr", "pp", "pst", "pE", "pD0", "pentry", "pvis", "pready", "pS",
+                     "pC", "pB", "pX", "pDS", "pexit", "D", "s_proc", "s_blk", "moved", "order"):
             setattr(c, name, list(getattr(self, name)))
         c.belt = [list(q) for q in self.belt]
         c.buf = [list(q) for q in self.buf]
@@ -147,8 +151,12 @@ class FastSim:
         return c
 
     def observable(self, j: int) -> bool:
-        """True if a policy may observe unfinished part j (0.7.3)."""
-        return self.pst[j] in self._seen
+        """True if a policy may observe unfinished part j (0.7.3). A MOVING part is
+        observable once it has entered the visible stretch of the entry zone (0.7.10)."""
+        st = self.pst[j]
+        if st not in self._seen:
+            return False
+        return st != MOVING or self.pvis[j] is not None
 
     def lookahead_clone(self, scenario=(), window_s: float = 0.0) -> "FastSim":
         """Clone for look-ahead search with **online information only**.
@@ -283,6 +291,7 @@ class FastSim:
             j = len(self.pk)
             self.pk.append(k); self.pr.append(r); self.pp.append(p); self.pst.append(WAITING)
             self.pE.append(None); self.pD0.append(self.D[k]); self.pentry.append(None)
+            self.pvis.append(None)
             self.pready.append(None); self.pS.append(None); self.pC.append(None)
             self.pB.append(None); self.pX.append(None); self.pDS.append(None)
             self.pexit.append(None)
@@ -291,7 +300,8 @@ class FastSim:
         # and 3 blocking. Both can only change on a belt that moved since the last
         # event (a block is released at S_j, in _start_processing).
         a, L, bthr = self.a - EPS, self.L - EPS, self.b - 1e-9
-        pst, pE, pS, pB = self.pst, self.pE, self.pS, self.pB
+        avis = self.avis - EPS
+        pst, pE, pS, pB, pvis = self.pst, self.pE, self.pS, self.pB, self.pvis
         moved = self.moved
         for k in range(self.n):
             if not moved[k]:
@@ -301,9 +311,12 @@ class FastSim:
             blocking = -1
             for j in list(q):
                 xj = Dk - pE[j]
-                if pst[j] == MOVING and xj >= a:
-                    pst[j] = READY
-                    self.pready[j] = t
+                if pst[j] == MOVING:
+                    if pvis[j] is None and xj >= avis:
+                        pvis[j] = t                   # enters the visible stretch
+                    if xj >= a:
+                        pst[j] = READY
+                        self.pready[j] = t
                 if xj >= L:
                     q.remove(j)
                     pst[j] = EXITED
@@ -325,6 +338,8 @@ class FastSim:
                 j = self.buf[k].pop(0)
                 self.pE[j] = self.D[k]
                 self.pentry[j] = t
+                if self.avis <= EPS:
+                    self.pvis[j] = t                  # the whole entry zone is seen
                 self.pst[j] = MOVING
                 q.append(j)
                 if self.spacing > 0:
@@ -347,7 +362,8 @@ class FastSim:
         for q in self.belt:
             for j in q:
                 st = self.pst[j]
-                if j != self.assigned and (st == READY or (upcoming and st == MOVING)) \
+                if j != self.assigned and (st == READY or (
+                        upcoming and st == MOVING and self.pvis[j] is not None)) \
                         and self.intercept(j) is not None:
                     out.append(j)
         return out          # engine order: conveyor by conveyor, downstream first
@@ -432,7 +448,8 @@ class FastSim:
             dt = min(dt, self.proc_end - t)
         a, b, L, sp = self.a, self.b, self.L, self.spacing
         aE, bE, LE = a - EPS, b - 1e-9, L - EPS
-        pE, pst, pS = self.pE, self.pst, self.pS
+        avis, avisE = self.avis, self.avis - EPS
+        pE, pst, pS, pvis = self.pE, self.pst, self.pS, self.pvis
         for k in range(self.n):
             if self.s_proc[k] or self.s_blk[k]:
                 continue
@@ -442,7 +459,8 @@ class FastSim:
             for j in q:
                 xj = Dk - pE[j]
                 if xj < aE and pst[j] == MOVING:
-                    d = a - xj
+                    # next crossing: the visible stretch (if not seen yet) or the zone
+                    d = avis - xj if (pvis[j] is None and xj < avisE) else a - xj
                 elif xj < bE and pS[j] is None:
                     d = b - xj
                 elif xj < LE:

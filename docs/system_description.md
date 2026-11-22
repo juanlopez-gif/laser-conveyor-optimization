@@ -15,7 +15,9 @@ Convention: **X** = conveyor travel (+X), **Y** = across conveyors, **Z** fixed.
 
 ```
 arrival ──► WAITING (entry queue, if the conveyor is stopped or the entry is occupied)
-        ──► MOVING  (x ∈ [0, 10): the laser cannot reach it)
+        ──► MOVING  (x ∈ [0, 10): the laser cannot reach it; observed by the camera
+                     only inside the visible stretch [10 − visible_length, 10), the
+                     whole entry zone in the design cell)
         ──► READY   (x ∈ [10, 45]: candidate for the laser)
         ──► PROCESSING (the laser is on it; its conveyor is stopped)
         ──► COMPLETED  (the conveyor restarts and carries it to the exit)

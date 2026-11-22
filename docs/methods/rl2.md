@@ -637,6 +637,83 @@ Paired contrasts of the network between treatments (same seeds): **B vs A −0.2
   network trained more on A could narrow or widen the B–A gap. This is the first
   measurement of the main contrast of Paper 2, on the nominal cell only.
 
+### 8.7 Information bench across regimes with `rl2_gen_s_d` (0.7.10)
+
+Pilot of 2026-11-22 (`experiments/rl2_information_bench.py --tag info_pilot_s_d`,
+~5 min on 47 workers; `results/experiments/info_pilot_s_d/`): the network of §8.6
+unchanged, the rules `nearest_job` and `nearest_head`, 30 validation seeds (2000–2029)
+per regime, paired. Regimes: load (real, heavy) × arrivals (regular = Poisson; burst =
+on/off source, `on_fraction 0.3`, `on_mean 20 s`, same mean rate) × head travel
+(nominal; slow = laser speeds × 0.5, i.e. 5 cm/s on the real cell and 2.5 cm/s on the
+heavy one). Treatments as in §8.6; the visible-length curve uses `belts` with
+`simulation.visible_length` ∈ {0, 2.5, 5, 10} cm (10 = the whole entry zone = B/C).
+
+**Network contrasts between treatments** (paired Δ of the penalized flow time, %):
+
+| load | arrivals | travel | `nearest_job` in B [s/part] | net in B vs `nearest_job` | B vs A (see without acting) | C vs B (act) | D vs B (hidden queue) |
+|---|---|---|---|---|---|---|---|
+| real | regular | nominal | 20.0 | −8.02 ±1.75 | −0.22 ±1.33 | **−5.67 ±1.71** | +0.76 ±0.92 |
+| real | regular | slow | 40.9 | −7.33 ±2.03 | +0.26 ±1.45 | **−2.98 ±2.25** | −0.32 ±1.11 |
+| real | burst | nominal | 29.3 | −2.87 ±1.18 | +0.26 ±0.41 | **−3.13 ±1.09** | −0.56 ±0.53 |
+| real | burst | slow | 41.5 | −4.54 ±1.74 | +0.05 ±0.83 | **−3.96 ±1.56** | +0.13 ±0.64 |
+| heavy | regular | nominal | 70.6 | −4.01 ±1.81 | −0.22 ±1.35 | +0.91 ±1.64 | −1.16 ±1.24 |
+| heavy | regular | slow | 101.4 | +0.13 ±2.98 | −0.88 ±1.82 | +0.46 ±2.61 | **−4.35 ±1.86** |
+| heavy | burst | nominal | 73.3 | −4.93 ±1.32 | −0.34 ±0.78 | −0.57 ±1.56 | −0.36 ±0.92 |
+| heavy | burst | slow | 97.0 | −4.58 ±1.66 | −0.43 ±0.36 | −0.33 ±1.22 | −0.03 ±1.11 |
+
+**Visible-length curve with pre-positioning** (`when_idle`; Δ vs `nearest_job` in B,
+%; the rules with `none` and the network with `none` are flat in ℓ_v in every regime,
+within ±0.5 points, as B vs A says):
+
+| regime | policy | ℓ_v = 0 | 2.5 cm | 5 cm | 10 cm (= C) |
+|---|---|---|---|---|---|
+| real / regular / nominal | net | −7.31 ±1.98 | −10.64 ±1.72 | −12.77 ±1.70 | −13.33 ±1.81 |
+| | `nearest_job` | 0 | −4.21 ±1.35 | −5.98 ±2.37 | −7.43 ±2.48 |
+| real / regular / slow | net | −7.28 ±2.44 | −8.71 ±2.10 | −9.33 ±2.38 | −10.11 ±2.83 |
+| | `nearest_job` | 0 | −0.48 ±1.96 | +0.51 ±2.26 | −2.26 ±2.36 |
+| real / burst / nominal | net | −2.94 ±1.16 | −5.06 ±1.35 | −5.63 ±1.26 | −5.91 ±1.47 |
+| | `nearest_job` | 0 | −2.48 ±1.01 | −2.91 ±1.41 | −2.88 ±1.51 |
+| real / burst / slow | net | −4.46 ±1.58 | −6.50 ±1.76 | −7.54 ±1.88 | −8.41 ±1.72 |
+| | `nearest_job` | 0 | −2.52 ±1.28 | −2.53 ±1.59 | −3.88 ±1.67 |
+| heavy (all four regimes) | both | flat: every point within ±1.6 of B | | | |
+
+Findings:
+
+* **Seeing the entry zone without acting on it is worth nothing in every regime**
+  tested: B vs A is within ±0.9 points in all eight, for the network as for the rules
+  (identical candidates by construction). Bursts and slow heads do not create a value
+  of information alone. The main hypothesis of Paper 2 as written (upstream visibility
+  is worth more under bursty arrivals and long travel) is **not supported** by this
+  pilot at this burst setting; what the visibility buys is the **action** it enables.
+* **The value of acting is largest on the nominal regime** (−5.7 points at the real
+  load) and smaller, not larger, with bursts (−3.1) or a slow head (−3.0): bursts
+  leave the head idle during the gaps with nothing to pre-position to, and a slow head
+  is idle less often. It is zero at the heavy load in every regime (the head is never
+  idle). `nearest_job` with `when_idle` gains the same order (−7.4 / −2.3 / −2.9 /
+  −3.9 points), so this is a property of the cell, not of the learned policy.
+* **The curve saturates at about half the entry zone**: with 5 cm visible (1.7 s of
+  belt travel at 3 cm/s) the network reaches −12.8 of the −13.3 points it gets with
+  the whole zone on the nominal regime, and the shape is the same in the other real-
+  load regimes. For a cell design this says how far upstream the camera must see for
+  pre-positioning to pay: a few seconds of belt travel, roughly the head's travel time
+  across the workspace, which is the quantity the curve should be plotted against in
+  the paper.
+* **The hidden upstream queue (D) is worth 4.4 points only at the heavy load with a
+  slow head**, where every belt queues and knowing the queue lengths changes which
+  belt to serve; elsewhere it is within ±1.2 points. Note that this regime (laser at
+  2.5 cm/s) lies **outside the training range** of the network (`GENERAL` laser
+  speeds 5–20 cm/s) and there the network alone no longer beats `nearest_job`
+  (+0.13 ±2.98 in B); its D result there should be taken as indicative.
+* **Generalization to bursts without retraining**: trained on Poisson arrivals only,
+  the network keeps −2.9 to −4.9 points over `nearest_job` on the bursty regimes (less
+  than its −8.0 on the regular real cell). Whether training on bursty cells recovers
+  the gap is the retraining question left open in 0.7.10.
+* Consistency checks in the tables: `belts` with ℓ_v = 0 reproduces A for the rules
+  exactly and for the network within the intervals (its context token differs); the
+  `none` columns are identical across A, B, D and every ℓ_v for the rules.
+* Limits of the pilot: one burst setting (0.3 / 20 s), one slow factor, two cells, the
+  validation seeds; the confirmatory bench of the plan (36 configurations, fresh seeds
+  7000–7029) is still to run, once the regimes and the training mix are frozen.
 
 ## 9. Reproduce (phase 3)
 
@@ -652,4 +729,6 @@ python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_big.pt --val 3
 python experiments/rl2_train.py --tag rl2_gen_s_sf --init models/rl2_gen_s_big.pt \
     --la-horizon inf --scenarios 8 --la-window 30 --w-pen 0 --iters 8 --episodes 2000 \
     --epochs 4 --replay 2 --val 50
+# 0.7.10: information treatments and visible-length curve across regimes (§8.7)
+python experiments/rl2_information_bench.py --net models/rl2_gen_s_d.pt --tag info_pilot_s_d --seeds 30
 ```

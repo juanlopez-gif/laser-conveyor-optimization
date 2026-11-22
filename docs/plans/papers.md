@@ -266,12 +266,26 @@ all levels, on the nominal cells (30 seeds): B vs A −0.2 ±1.3 % (nothing), C 
 bursty/high-travel regimes to find any value of seeing earlier *without* acting
 earlier; on the nominal cell the value is in the action, not the information.
 
+**Pilot across regimes (0.7.10, `rl2.md` §8.7).** With the bursty generator and the
+visible-length parameter in place, the same network on 8 regimes (real/heavy ×
+Poisson/burst × nominal/slow head, 30 seeds): B vs A stays within ±0.9 points
+everywhere, so bursts and travel do not create a value of information alone; the
+value of the visibility is the pre-positioning it enables (C vs B −5.7 nominal, −3.0
+slow, −3.1 burst, −4.0 both, 0 at the heavy load), and it saturates at about half the
+entry zone (5 cm ≈ 1.7 s of belt travel). The hidden queue (D) is worth 4.4 points
+only at the heavy load with a slow head. Suggested reframing of Paper 2: the value of
+upstream visibility is the value of the action it enables, measured as a curve against
+the visible length (in seconds of belt travel, against the head's travel time), with
+the information-only contrast as a reported null result; the bursty/high-travel
+hypothesis should be stated as "the value of acting early falls with bursts and slow
+heads" unless the confirmatory bench with other burst settings says otherwise.
+
 **Where the plan's steps already stand.**
 
 | step | status |
 |---|---|
-| 1 Freeze the base problem | model, KPI, information levels and checks exist; what remains is to freeze the *paper's* instance formats and the 36-configuration bench |
+| 1 Freeze the base problem | model, KPI, information levels and checks exist; the bursty generator and the visible-length parameter exist since 0.7.10; what remains is to freeze the *paper's* instance formats and the 36-configuration bench (the load grid should add 0.90, review note 4) |
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
 | 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable |
-| 4 Prepare Paper 2 | masks, modes and causality tests exist; the visible-length parameter and the bursty generator do not |
-| 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4 |
+| 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
+| 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4; the pilot across regimes with the 0.7.9 network is in `docs/methods/rl2.md` §8.7 |

@@ -14,6 +14,17 @@ Levels (``simulation.observation``):
   bound, for what-if studies only (the behaviour of every version before 0.7.3).
 * ``auto``  — ``belts``.
 
+Visible length (0.7.10, ``simulation.visible_length``): at level ``belts`` the camera
+sees the laser zone and only the last ``visible_length`` cm of the entry zone (the
+stretch ``[a - visible_length, a)``). ``null`` (the default) is the whole entry zone,
+i.e. the level ``belts`` of 0.7.3–0.7.9; ``0`` makes ``belts`` see what ``zone`` sees
+(parts become observable on entering the laser zone) while still allowing
+pre-positioning to parts already visible. The parameter is the "preceding stretch of
+defined length" of treatment B in ``docs/plans/papers.md``; it is ignored by ``zone``
+and ``full``. A MOVING part upstream of the visible stretch is not observable: it is
+neither a token nor a pre-positioning candidate, and its time on the belt is counted
+from the instant it becomes visible (``rl2.features.observed_since``).
+
 Every policy must decide from observable parts only. The rule policies already do:
 their candidates are READY parts (``none``). Look-ahead (``rollout`` and hybrids),
 the RL agents and the strong-RL network are restricted explicitly; the tests check it
@@ -49,5 +60,25 @@ def resolve_observation(value, prepositioning: str) -> str:
 
 
 def visible_status(status_name: str, level: str) -> bool:
-    """True if a part with this status (name, e.g. 'READY') is observable."""
+    """True if a part with this status (name, e.g. 'READY') may be observable
+    (a MOVING part at level ``belts`` also needs :func:`visible_moving`)."""
     return status_name in _VISIBLE[level]
+
+
+def resolve_visible_length(value, entry_length: float) -> float:
+    """``simulation.visible_length``: null -> the whole entry zone; else a length in
+    ``[0, entry_length]`` cm."""
+    if value is None:
+        return float(entry_length)
+    length = float(value)
+    if not 0.0 <= length <= entry_length + 1e-9:
+        raise ValueError("simulation.visible_length must be between 0 and "
+                         f"geometry.entry_length = {entry_length} cm, not {length}")
+    return min(length, float(entry_length))
+
+
+def visible_moving(x: float, active_start: float, visible_length: float,
+                   eps: float = 1e-7) -> bool:
+    """True if a MOVING part at position ``x`` is inside the visible stretch of the
+    entry zone, ``[active_start - visible_length, active_start)``, at level ``belts``."""
+    return x >= active_start - visible_length - eps
