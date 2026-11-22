@@ -677,6 +677,29 @@ within ±0.5 points, as B vs A says):
 | | `nearest_job` | 0 | −2.52 ±1.28 | −2.53 ±1.59 | −3.88 ±1.67 |
 | heavy (all four regimes) | both | flat: every point within ±1.6 of B | | | |
 
+**Gain of pre-positioning at each visible length** (paired Δ of `when_idle` versus
+`none` **at the same ℓ_v**, %; this isolates what advancing the head adds at a given
+coverage, which is the curve Paper 2 should report; anticipation in seconds at the belt
+speed, 3 cm/s on the real cell):
+
+| regime | policy | ℓ_v = 0 (0 s) | 2.5 cm (0.8 s) | 5 cm (1.7 s) | 10 cm (3.3 s) |
+|---|---|---|---|---|---|
+| real / regular / nominal | net | −0.03 ±0.64 | −2.96 ±1.59 | **−5.52 ±1.56** | −5.67 ±1.71 |
+| | `nearest_job` | 0 | −4.21 ±1.35 | −5.98 ±2.37 | −7.43 ±2.48 |
+| real / regular / slow | net | −0.08 ±0.92 | −1.22 ±2.01 | −1.57 ±2.15 | −2.98 ±2.25 |
+| | `nearest_job` | 0 | −0.48 ±1.96 | +0.51 ±2.26 | −2.26 ±2.36 |
+| real / burst / nominal | net | −0.12 ±0.13 | −1.88 ±0.87 | −2.76 ±1.14 | −3.13 ±1.09 |
+| | `nearest_job` | 0 | −2.48 ±1.01 | −2.91 ±1.41 | −2.88 ±1.51 |
+| real / burst / slow | net | +0.35 ±0.39 | −2.08 ±0.83 | −3.15 ±1.28 | −3.96 ±1.56 |
+| | `nearest_job` | 0 | −2.52 ±1.28 | −2.53 ±1.59 | −3.88 ±1.67 |
+| heavy (all four regimes) | both | within ±1 point at every ℓ_v (no idle head) | | | |
+
+With the nominal head, 5 cm of coverage (1.7 s) gives 97 % of the pre-positioning gain
+of the whole zone (−5.52 of −5.67); with a head half as fast only 53 % (−1.57 of
+−2.98); with bursts 88 % (nominal head) and 80 % (slow head). The coverage the
+pre-positioning needs therefore grows with the head's travel time across the workspace
+(3.5 s nominal, 7 s slow), which is the axis against which the paper should plot it.
+
 Findings:
 
 * **Seeing the entry zone without acting on it is worth nothing in every regime**
@@ -714,6 +737,8 @@ Findings:
 * Limits of the pilot: one burst setting (0.3 / 20 s), one slow factor, two cells, the
   validation seeds; the confirmatory bench of the plan (36 configurations, fresh seeds
   7000–7029) is still to run, once the regimes and the training mix are frozen.
+* Decisions taken by the owner on this pilot (hypothesis reformulated, retraining
+  conditional on the scope, phase 4 after freezing): `docs/plans/papers.md`.
 
 ## 9. Reproduce (phase 3)
 

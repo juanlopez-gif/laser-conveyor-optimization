@@ -80,9 +80,18 @@ summarized from the git history.
   belt travel: −12.8 of −13.3 points). Seeing the hidden upstream queue is worth 4.4
   points only at the heavy load with a slow head, a regime outside the network's
   training range (laser 2.5 cm/s). Trained on Poisson arrivals only, the network keeps
-  3–5 points over `nearest_job` under bursts. Decisions left to the owner: whether
-  the burst parameters and slower heads enter the training mix (`GENERAL`), and the
-  wording of the Paper 2 hypothesis.
+  3–5 points over `nearest_job` under bursts.
+* **Gain of pre-positioning per visible length** (owner's request, same data): the
+  paired contrast `when_idle` vs `none` at the same ℓ_v shows 97 % of the gain at 5 cm
+  (1.7 s of anticipation) with the nominal head and 53 % with a head half as fast,
+  i.e. the coverage needed grows with the head's travel time (`rl2.md` §8.7).
+* **Decisions (owner, 2026-11-22, `docs/plans/papers.md`):** the Paper 2 hypothesis
+  is reformulated around the coverage curve (how much of the entry stretch the camera
+  must see for advancing the head to pay off), with B vs A kept as the pure-information
+  contrast expected to be a null result; the S network is retrained once only if
+  bursts and slow heads are in the defended scope, keeping `rl2_gen_s_d` as the
+  reference; phase 4 runs once, after network, regimes and contrasts are frozen.
+  Whether the burst parameters and slower heads enter `GENERAL` is still open.
 
 ---
 

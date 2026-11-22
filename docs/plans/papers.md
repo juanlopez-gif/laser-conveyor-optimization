@@ -111,9 +111,36 @@ Research question: how much is it worth to see the parts upstream, in which
 configurations does the performance change, and how does that visibility interact
 with the physical ability to pre-position the head?
 
-**Main hypothesis.** Upstream visibility is worth more when parts arrive in bursts and
-the travel between lanes matters. Under low contention, the working-zone information
-may be enough. These are hypotheses the experiment must test.
+**Main hypothesis (as first written).** Upstream visibility is worth more when parts
+arrive in bursts and the travel between lanes matters. Under low contention, the
+working-zone information may be enough. These are hypotheses the experiment must test.
+
+**Reformulation after the pilot (owner, 2026-11-22; 0.7.10, `rl2.md` §8.7).** The
+pilot across eight regimes found no gain from widening the view with the same actions
+(B vs A within ±0.9 points everywhere), while enabling pre-positioning with that same
+view reduced the penalized flow time by 3.0–5.7 % in the four nominal-load regimes. The
+paper therefore asks a more concrete engineering question: **how much of the entry
+stretch must the camera see for advancing the head to pay off, and which capacity to
+act makes that coverage useful?** Its deliverables are:
+
+* B vs A, kept as the main contrast of pure information, now expected to be a null
+  result that the confirmatory bench must show to be small enough for the design
+  decision (the pilot bounds it at ±0.9 points);
+* C vs B, the value of acting on the same view;
+* the **coverage curve**: the gain of pre-positioning at each visible length, measured
+  as *with* versus *without* pre-positioning **at the same length** (not against the
+  whole-zone reference), with the coverage expressed also in seconds of anticipation
+  at the belt speed (5 cm are 1.7 s at the nominal 3 cm/s) and plotted against the
+  head's travel time across the workspace. The pilot gives 97 % of the pre-positioning
+  gain at 5 cm with the nominal head and 53 % with a head half as fast: the required
+  coverage grows with the head's travel time.
+
+The bursty/high-travel statement becomes a secondary hypothesis in the opposite
+direction: the value of acting early falls with bursts and slow heads (the head is idle
+less often, or idle with nothing to advance to), unless other burst settings say
+otherwise. The hidden-queue contrast (D) stays as an indication (4.4 points at the
+heavy load with a slow head, a regime outside the network's training range) until it
+is checked with a model trained in that regime.
 
 ### Treatments and controls
 
@@ -279,6 +306,25 @@ the visible length (in seconds of belt travel, against the head's travel time), 
 the information-only contrast as a reported null result; the bursty/high-travel
 hypothesis should be stated as "the value of acting early falls with bursts and slow
 heads" unless the confirmatory bench with other burst settings says otherwise.
+
+**Decisions taken after the pilot (owner, 2026-11-22).**
+
+1. *Retraining.* Retrain the S network once, only if bursty arrivals and slow heads
+   are part of the scope to be defended; keep the current network (`rl2_gen_s_d`) as
+   the reference and choose between the two on development seeds, never on the
+   confirmatory seeds. Extending the training mix changes `GENERAL` (burst parameters,
+   laser speeds below 5 cm/s) and is a separate owner decision.
+2. *Hypothesis.* Reformulated now (above), with the record that it came from the
+   pilot. The confirmatory bench must test the coverage curve and show that, with the
+   same actions, the benefit of seeing earlier is small enough for the design decision.
+3. *Phase 4.* Launched only after the network, the regimes and the contrasts are
+   frozen, once. Paper 1 prioritizes the direct comparison known-parts search →
+   sampled-future teacher → network alone; Paper 2 prioritizes B vs A, C vs B and the
+   coverage curve.
+
+Reading of the two papers: Paper 1 explains how to decide fast; Paper 2 answers a
+different engineering decision, how far it is worth looking and which capacity to act
+makes that coverage useful.
 
 **Where the plan's steps already stand.**
 
