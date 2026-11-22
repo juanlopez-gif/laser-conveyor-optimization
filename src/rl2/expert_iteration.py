@@ -66,11 +66,29 @@ GENERAL = {
     "lambda_n": (0.0, 20.0),             # s per blocking event
     "lambda_t": (0.0, 2.0),              # s per blocked conveyor-second
     "p_all_conveyors_stop": 0.3,
+    # observation level of a training cell (0.7.9): the design camera (belts), the
+    # laser zone only (zone; forces pre-positioning none) or the hidden upstream queue
+    # (full), so one network serves the treatments A/B/C of docs/plans/papers.md
+    "p_observation": {"belts": 0.7, "zone": 0.15, "full": 0.15},
 }
 
 
+def draw_observation(seed: int, p_obs: dict | None) -> str | None:
+    """Observation level of training cell ``seed`` from its own random stream (so the
+    other draws of the cell are unchanged), or None when ``p_obs`` is None."""
+    if not p_obs:
+        return None
+    rng = random.Random(f"rl2obs/{seed}")
+    u, acc = rng.random(), 0.0
+    for level, prob in p_obs.items():
+        acc += prob
+        if u < acc:
+            return level
+    return next(iter(p_obs))
+
+
 def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
-                   extra: tuple = ()):
+                   extra: tuple = (), p_obs: dict | None = None):
     """A random cell of the general problem (ranges in :data:`GENERAL`).
 
     * N conveyors at evenly spaced y; speed v_k per belt.
@@ -80,6 +98,9 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
     * Processing time: constant, uniform (+-30 %) or normal (sigma = 15 %, min 50 %).
     * Laser speeds vx, vy; motion model; geometry; blocking-penalty weights; conveyor
       stop rule; pre-positioning ``none`` (probability ``p_none``) or ``when_idle``.
+    * Observation level (0.7.9): drawn from ``p_obs`` (``GENERAL["p_observation"]`` for
+      training cells) in a separate random stream; ``zone`` forces ``none``. None (the
+      validation cells) keeps the default ``belts``.
 
     ``extra`` are further ``key=value`` overrides. Returns ``(config, description)``.
     """
@@ -103,7 +124,10 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
             else "processing_conveyor_only")
     if mode is None:
         mode = "none" if rng.random() < p_none else "when_idle"
-    items = [
+    obs = draw_observation(seed, p_obs)
+    if obs == "zone":
+        mode = "none"                     # the zone level cannot pre-position
+    items = ([f"simulation.observation={obs}"] if obs else []) + [
         "arrivals.mode=stochastic", f"simulation.seed={seed}", f"laser.prepositioning={mode}",
         f"conveyors.count={n}", "conveyors.y_positions=null",
         f"conveyors.spacing={12.0 * gf[3]:.4f}",
@@ -122,7 +146,8 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
         f"simulation.conveyor_stop_policy={stop}",
     ] + list(extra)
     desc = {"n": n, "v": v, "rho": rho, "p_mean": pm, "dist": dist, "vx": vx, "vy": vy,
-            "motion": motion, "mode": mode, "stop": stop, "lambda_n": ln, "lambda_t": lt}
+            "motion": motion, "mode": mode, "stop": stop, "lambda_n": ln, "lambda_t": lt,
+            "obs": obs or "belts"}
     return load_config(None, set_items=items), desc
 
 
@@ -137,19 +162,26 @@ def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
     * Mode: ``none`` with probability ``p_none``, else ``when_idle`` (0.7.7: 50/50;
       ``when_idle`` is the design mode of the cell, ``none`` the variant without entry
       detection).
+    * Observation level (0.7.9): ``GENERAL["p_observation"]`` (belts 70 %, zone 15 %,
+      full 15 %; ``zone`` forces ``none``), from a separate random stream. The kind
+      string is ``group/mode/observation``.
     """
     from simulation.config import load_config
     rng = random.Random(f"rl2cfg/{seed}")
     u = rng.random()
+    p_obs = GENERAL["p_observation"]
     if u >= p_real + p_heavy:
-        cfg, d = general_config(seed, p_none, extra=extra)
-        return cfg, f"general/{d['mode']}"
+        cfg, d = general_config(seed, p_none, extra=extra, p_obs=p_obs)
+        return cfg, f"general/{d['mode']}/{d['obs']}"
     mode = "none" if rng.random() < p_none else "when_idle"
-    items = ["arrivals.mode=stochastic", f"simulation.seed={seed}",
-             f"laser.prepositioning={mode}"] + list(extra)
+    obs = draw_observation(seed, p_obs)
+    if obs == "zone":
+        mode = "none"
+    items = [f"simulation.observation={obs}", "arrivals.mode=stochastic",
+             f"simulation.seed={seed}", f"laser.prepositioning={mode}"] + list(extra)
     if u < p_real:
-        return load_config(None, set_items=items), f"real/{mode}"
-    return load_config(HEAVY, set_items=items), f"heavy/{mode}"
+        return load_config(None, set_items=items), f"real/{mode}/{obs}"
+    return load_config(HEAVY, set_items=items), f"heavy/{mode}/{obs}"
 
 
 VAL_GENERAL_SEED_BASE = 2500

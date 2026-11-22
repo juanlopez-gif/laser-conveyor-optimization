@@ -307,3 +307,25 @@ def test_rollout_to_the_end_uses_no_value_head():
     expect = (cl.wip_area - sim.wip_area) + lam_n * (cl.n_block_events - sim.n_block_events) \
         + lam_t * (cl.blocked_area - sim.blocked_area)
     assert costs[c] == pytest.approx(expect, abs=1e-6)
+
+
+def test_training_cells_draw_observation_levels_and_validation_cells_do_not():
+    """0.7.9: training cells carry belts / zone / full (zone with none); the general
+    validation cells (no p_obs) stay belts and are unchanged by the extra draw."""
+    kinds, zone_modes = [], set()
+    for i in range(120):
+        cfg, kind = sample_config(100000 + i)
+        group, mode, obs = kind.split("/")
+        kinds.append(obs)
+        assert cfg.simulation.observation == obs and cfg.laser.prepositioning == mode
+        if obs == "zone":
+            zone_modes.add(mode)
+    assert {"belts", "zone", "full"} <= set(kinds)
+    assert 0.5 < kinds.count("belts") / len(kinds) < 0.9                  # nominal 70 %
+    assert zone_modes == {"none"}
+    for seed in (2500, 2501, 2507):
+        cfg, d = general_config(seed, mode="none")
+        assert cfg.simulation.observation == "belts" and d["obs"] == "belts"
+        cfg2, d2 = general_config(seed, mode="none", p_obs={"belts": 1.0})
+        assert d2 == {**d, "obs": "belts"}
+        assert cfg2.conveyors[0].speed == cfg.conveyors[0].speed

@@ -6,6 +6,28 @@ summarized from the git history.
 
 ---
 
+## 0.7.9 — 2026-11-22 — Observation levels in the training mix; first round in the design mode
+
+* **Why.** The research plan (0.7.8, `docs/plans/papers.md`) compares three
+  information treatments: the laser zone only (A), the whole belt (B) and the whole
+  belt with pre-positioning (C). One network that receives the observation level in
+  its context token can serve the three if it has seen them in training; up to 0.7.8
+  every training cell used `belts`.
+* **What.** `rl2.expert_iteration.GENERAL["p_observation"]` draws the observation
+  level of every training cell (`belts` 70 %, `zone` 15 %, `full` 15 %; `zone`
+  forces pre-positioning `none`, since it cannot see the entry zone). The draw uses
+  its own random stream (`draw_observation`), so every other parameter of a cell is
+  unchanged for a given seed, and the validation cells (no draw) stay `belts`: a test
+  checks both. The kind string of an episode becomes `group/mode/observation`.
+* **Run `rl2_gen_s_d`:** continuation of `rl2_gen_s_sf.pt` with the sampled-future
+  teacher, the corrected tokens of 0.7.7, the 50/50 mode mix and validation in the
+  design mode (`--val-mode design`: real and heavy cells with `when_idle`, general
+  cells with the mode drawn). Its scores are therefore not comparable with the
+  `none` scores of §8.4–§8.5; the reference rows of its log give the new baselines.
+  Results: `docs/methods/rl2.md` §8.6.
+
+---
+
 ## 0.7.8 — 2026-11-22 — Research plan for two papers
 
 The owner shared a research plan (two papers: the general problem and its algorithm;

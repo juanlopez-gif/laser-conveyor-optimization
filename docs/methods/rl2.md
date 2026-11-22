@@ -581,6 +581,18 @@ Reference on the same seeds: `nearest_head` −1.81 / +0.21 / +0.89 %; search ov
   real load (`docs/assumptions.md` C4).
 
 
+### 8.6 Design mode, corrected tokens and observation levels (`rl2_gen_s_d`, 0.7.9)
+
+Continuation of `rl2_gen_s_sf.pt` (§8.5) with the same teacher (8 sampled futures,
+30 s), the tokens of 0.7.7, pre-positioning `when_idle` in half of the training cells
+and the observation levels of 0.7.9 (`belts` 70 %, `zone` 15 %, `full` 15 %).
+Validation in the design mode: the real cell and the heavy example with `when_idle`,
+general cells with the mode drawn. The `nearest_job` reference of every paired Δ is
+run in the same mode as the policy, so these Δ measure the policy alone; the value of
+pre-positioning itself is in `docs/assumptions.md` C4.
+
+D_RESULTS_PLACEHOLDER
+
 ## 9. Reproduce (phase 3)
 
 ```bash
