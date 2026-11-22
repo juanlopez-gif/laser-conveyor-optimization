@@ -25,8 +25,10 @@ arrival ──► WAITING (entry queue, if the conveyor is stopped or the entry 
 ## Laser cycle
 
 ```
-IDLE ──(the policy chooses a READY part)──► MOVING to the meeting point
-     ──► WAITING_FOR_PART (if it arrives before the part)
+IDLE ──(the policy chooses a READY part, or with pre-positioning `when_idle` — the
+        design mode since 0.7.6 — an entry-zone part when none is READY)──► MOVING to the meeting point
+     ──► WAITING_FOR_PART (if it arrives before the part; a pre-positioning is revoked
+        if another part becomes READY meanwhile)
      ──► PROCESSING (the part's conveyor is STOPPED for processing_time)
      ──► IDLE (conveyor STARTED; new decision at the same instant)
 ```

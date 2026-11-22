@@ -6,6 +6,85 @@ summarized from the git history.
 
 ---
 
+## 0.7.6 — 2026-11-22 — Review of the model and of the information: pre-positioning as the design mode, two leaks closed
+
+The owner stated that **the cell does not exist yet**: the project develops the
+simulation and the dispatcher first, to be taken to a physical cell later. The owner
+then asked for an exhaustive review of the mathematical model and of the information
+the controller has, and to change whatever the review required.
+
+### Review
+
+* **Mathematical model** (`docs/formal_formulation.md` §0–§3, §5): no error found. The
+  odometer formulation, (C1)–(C7), the blocking penalty and its MILP witness, the
+  decoder view and the NP-hardness proof are consistent with each other and with the
+  simulator (the formal checker and `tests/test_formulation.py` still pass).
+* **Information model** (§4.1): two features of the `rl2` tokens used information the
+  camera does not give:
+  1. the **waiting time** of a part was counted from its arrival to the upstream
+     queue ($r_j$), which is hidden under `belts`: a part that waited upstream
+     revealed the hidden queue. It is now counted from the instant the part became
+     observable (entry on the belt; entry in the laser zone for `zone`; arrival for
+     `full`), `rl2.features.observed_since`;
+  2. **"arrivals still coming"** was read from the real arrival list, so the
+     controller knew that no more parts would come before it could know it. It is
+     now $t < T_A$, the known horizon.
+  * The information set of §4.1 (Markdown and LaTeX) now lists $o_j$ and $T_A$
+    instead of $r_j$, and says why the objectives lose nothing: $\sum_j F_j=\sum_j
+    C_j-\sum_j r_j$ with the $r_j$ constants.
+  * Both are small (they matter only for parts that waited upstream and near the end
+    of an episode), and the number of features is unchanged, so earlier models still
+    load. Measured on the 0.7.5 network (30 seeds, `none`): −8.39 % at the design load
+    with the corrected features against −8.41 % with the old ones, and −4.52 % against
+    −4.80 % at heavy load, both within the confidence intervals. The next training
+    round uses the corrected features. `tests/test_observation.py` gains two tests: shifting the arrival time
+    of a part that waited upstream, and deleting every future arrival, leave the
+    tokens unchanged (and the first change is visible with `full`).
+  * The old `rl` agent (`src/rl/features.py`, 0.5–0.6) keeps its features: it is a
+    historical reference, no longer trained.
+* **Restricted model pinned where it is assumed.** `optimization.instances.instance_config`
+  now sets `laser.prepositioning: none` unless the instance overrides it: the
+  sequence-only view, the exact models and the counterexamples are defined on
+  P^sim (§1.5, §3). Four tests that check (C7) behaviour or analytic values of the
+  restricted model state the mode explicitly.
+* **Design point, not measurements.** `docs/assumptions.md` now states at the top that
+  "the real cell" names the design point of the planned cell, that every parameter is
+  a design choice, and that the sensing and kinematic assumptions are requirements for
+  whoever builds it (§F reworded accordingly).
+
+### Design decision: pre-positioning `when_idle` (`docs/assumptions.md` C4)
+
+* **Why.** The default `none` came from the 2026-11-20 assumption that the cell could
+  not detect parts before the laser zone. C4b (same day) gave the cell an overhead
+  camera that sees the entry zone, which removes that reason, but the default was not
+  revisited. Measured with the 0.7.5 network on the validation seeds (30 seeds, Δ vs
+  `nearest_job`/`none`): the network alone goes from −8.4 % with `none` to **−13.8 %
+  with `when_idle`** at the design load, and `nearest_job` itself gains 7.4 points;
+  at heavy load nothing changes (the laser is never idle). The owner approved.
+* **What changed.**
+  * `config/default_config.yaml`: `laser.prepositioning: when_idle`; `none` stays as
+    the variant without entry detection. Every result before 0.7.6 was obtained with
+    `none` and is labelled so.
+  * Training mix (`rl2.expert_iteration.GENERAL`, `sample_config`): `when_idle` with
+    probability 0.5 (was 0.3), for the general cells and for the real and heavy ones.
+  * Validation: new `--val-mode` (`design`, the default: real and heavy cells with
+    `when_idle`, general cells with the mode drawn; `none`: the validation of
+    0.7.2–0.7.5). Runs saved before 0.7.6 resume with `none`. Scores of the two modes
+    are not comparable; `experiments/rl2_teacher_variants.py` takes the same option.
+  * Docs: `formal_formulation.md` §1.5, §4, §4.1 (and the `.tex`; the PDF is **not**
+    rebuilt, this machine has no LaTeX), `rl2.md` §2, §6.1, §6.3, README.
+* **Requirements this puts on the cell:** the camera must cover the entry zone with a
+  reliable detection, and the laser controller must accept "go to this point and wait"
+  (and a revocation while heading there).
+
+### Training
+
+The 0.7.5 run `rl2_gen_s_sf` (validation in `none`, old features) continues; its
+result goes to `rl2.md` §8.5. The first round with the design mode and the corrected
+features will be `rl2_gen_s_d` (§8.6).
+
+---
+
 ## 0.7.5 — 2026-11-21 — Stronger search teacher: sampled-future rollout over the network
 
 The large runs of 0.7.4 showed that the search teacher, not the model size, limits

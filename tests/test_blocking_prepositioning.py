@@ -161,7 +161,7 @@ def test_prepositioning_config_aliases(value, mode):
 
 def test_prepositioning_value_single_part():
     """Counterexample D1 (docs/methods/theory.md): 7.19 s in P^sim, 5.83 s in P."""
-    none = run(ONE_PART).parts[0]
+    none = run(ONE_PART + ["laser.prepositioning=none"]).parts[0]
     pre = run(ONE_PART + ["laser.prepositioning=always"]).parts[0]
     assert none.completion_time == pytest.approx(7.19, abs=0.02)
     assert pre.completion_time == pytest.approx(5.83, abs=0.02)

@@ -63,19 +63,22 @@ def main(argv=None) -> int:
     ap.add_argument("--variants", nargs="+", default=["known:k6", "trunc:h30:m2:p1"])
     ap.add_argument("--workers", type=int, default=os.cpu_count() or 1)
     ap.add_argument("--tag", default="rl2_teacher_variants")
+    ap.add_argument("--val-mode", default="design", choices=["design", "none"],
+                    help="validation mode (rl2.expert_iteration.VAL_MODES, 0.7.6)")
     args = ap.parse_args(argv)
     seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
     cells = [(g, seeds[g] + i) for g in VAL_GROUPS
              for i in range(args.val * (2 if g == "general" else 1))]
     variants = [parse_variant(s) for s in args.variants]
     net = str(ROOT / args.net)
+    m = args.val_mode
     jobs = [{"load": g, "seed": sd, "who": "nearest_job", "net": None, "k": 6, "w_pen": 0.0,
-             "horizon": None} for g, sd in cells]
+             "horizon": None, "mode": m} for g, sd in cells]
     jobs += [{"load": g, "seed": sd, "who": "net", "net": net, "k": 6, "w_pen": 0.0,
-              "horizon": None} for g, sd in cells]
+              "horizon": None, "mode": m} for g, sd in cells]
     for vi, v in enumerate(variants):
         jobs += [{"load": g, "seed": sd, "who": "teacher", "net": net, "k": v["k"],
-                  "w_pen": v["p"], "horizon": None, "la": v["la"], "variant": vi}
+                  "w_pen": v["p"], "horizon": None, "la": v["la"], "variant": vi, "mode": m}
                  for g, sd in cells]
     t0 = time.perf_counter()
     with ProcessPoolExecutor(args.workers, initializer=_init_worker) as ex:
@@ -87,7 +90,7 @@ def main(argv=None) -> int:
         rs = [r["cost"] / base[(r["load"], r["seed"])] - 1 for r in rows]
         return (float(np.mean(rs)), 1.96 * float(np.std(rs, ddof=1)) / math.sqrt(len(rs)))
 
-    out = {"net": args.net, "val": args.val, "rows": []}
+    out = {"net": args.net, "val": args.val, "val_mode": m, "rows": []}
     header = ("| variant | real | heavy | general | score | vs net alone (score) | "
               "s / episode (real / heavy / general) |")
     print(header); print("|---|---|---|---|---|---|---|")

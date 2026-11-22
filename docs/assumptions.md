@@ -1,7 +1,14 @@
 # Modelling assumptions and decisions (V1)
 
-Every assumption is configurable unless stated otherwise. If one does not match the real
+Every assumption is configurable unless stated otherwise. If one does not match the
 cell, change it in `config/default_config.yaml` or in the module mentioned.
+
+**Status of the cell (owner, 2026-11-22).** The cell does not exist yet: the project
+develops the simulation and the dispatching algorithm first, to be taken to a physical
+cell later. "The real cell" in these documents therefore names the **design point**
+(the planned cell's parameters, §F), not a measured plant. Every parameter below is a
+design choice that the simulator can be used to revise, and the assumptions on
+sensing and kinematics (C1, C3, C4, C4b) are requirements for whoever builds the cell.
 
 ## A. Simulation engine
 
@@ -59,27 +66,35 @@ re-plans if the conveyor changes state during the trip. Because the laser (10 cm
 faster than the conveyors (3 cm/s) it can catch parts ahead of it; with the heavy-load
 example (both 5 cm/s) it can only catch a part ahead when the part stops at the zone end.
 
-**C4. Pre-positioning (changed in 0.4.0).** By default (`laser.prepositioning: none`)
-the laser can only select READY parts (inside the reachable zone). Since 0.4.0 it can
-optionally be sent to a part still in the entry zone: it moves to the meeting point at
+**C4. Pre-positioning (0.4.0; design decision 0.7.6).** With `laser.prepositioning:
+none` the laser can only select READY parts (inside the reachable zone). Since 0.4.0
+it can be sent to a part still in the entry zone: it moves to the meeting point at
 x ≥ a and waits (`always`), or does so only when no part is READY and gives the
-pre-positioning up as soon as one becomes READY (`when_idle`). The default stays `none`
-because pre-positioning needs to know that a part is on the entry zone (an entry
-sensor). **Status (2026-11-20): the real cell cannot detect parts before the laser
-zone for now** (owner's answer), so `none` is the mode of the real cell and the other
-modes are what-if studies. On fresh seeds, pre-positioning `when_idle` would be worth
-−7 to −9 % at the real load (docs/methods/confirmatory.md), so an entry sensor is a
-hardware change worth considering. The assignment is
-committed (as for READY parts) in `always` mode. Rationale and results:
-docs/CHANGELOG.md (0.4.0), docs/methods/nearest_head_prepositioning.md.
+pre-positioning up as soon as one becomes READY (`when_idle`). Pre-positioning needs
+to know that a part is on the entry zone. Up to 0.7.5 the default was `none`, from the
+assumption (2026-11-20) that the cell could not detect parts before the laser zone;
+C4b then gave the cell a camera that sees the entry zone, which removes that reason.
+**Design decision (owner, 2026-11-22): the cell runs `when_idle`**, which is the
+default since 0.7.6. Measured on the validation seeds with the 0.7.5 network, it is
+worth 5.4 points more on top of the network at the design load (−13.8 % vs −8.4 %
+against `nearest_job`/`none`), and 7.4 points on `nearest_job` itself; at heavy load it
+changes nothing (the laser is never idle). `none` stays available as the variant
+without entry detection and as the mode of every result before 0.7.6. `always` keeps
+the commitment (as for READY parts). Requirement for the cell: the camera must cover
+the entry zone reliably and the laser must be able to move to a point and wait there.
+Rationale and results: docs/CHANGELOG.md (0.4.0, 0.7.6),
+docs/methods/nearest_head_prepositioning.md, docs/methods/rl2.md §8.6.
 
 **C4b. Information model (0.7.3).** An overhead camera sees every belt and its whole
 working area (owner, 2026-11-20): the controller knows every part on a belt, in the
 entry zone and in the laser zone, with its position (`simulation.observation: belts`,
 the default). Parts waiting upstream of the belt entry are not seen; look-ahead
 policies and learned policies may not use them (they did up to 0.7.2). Seeing the entry
-zone does not change C4: the cell still runs pre-positioning `none`. Details:
-`docs/formal_formulation.md` §4.1, `src/simulation/observation.py`.
+zone is what makes pre-positioning possible (C4). What the controller knows about a
+part starts when it is first seen: its time on the belt, not its time in the hidden
+queue (0.7.6). It also knows the arrival horizon of the shift, but not whether more
+parts will come before it. Details: `docs/formal_formulation.md` §4.1,
+`src/simulation/observation.py`, `src/rl2/features.py`.
 
 **C5.** Laser workspace = laser zone in X (10–45 cm) × [min y, max y] of the conveyors.
 The laser never leaves it (tested).
@@ -130,13 +145,14 @@ see blocking.
 
 ## F. Load of the default case
 
-**Status (2026-11-20): these are the real values of the cell.** Asked whether the cell
-still had to be measured, the owner answered that the data we have are the real ones.
-This covers belt speed, laser speed, processing time and mean inter-arrival times. The
-default configuration is therefore a model of the real cell, not a placeholder.
-The heavy-load case stays a stress scenario, and the sensitivity sweep
-(`docs/methods/sensitivity.md`) stays a what-if study: belt speed and job time can be
-adjusted in the cell.
+**Status.** On 2026-11-20 the owner stated that these are the values of the cell (belt
+speed, laser speed, processing time, mean inter-arrival times); on 2026-11-22 the owner
+clarified that the cell is not built yet, so they are the **design point** of the
+planned cell (see the note at the top). The default configuration is therefore the
+model of the planned cell, not a placeholder, and the simulator is also the tool to
+revise it (zone length, laser speed, load, arrival regularity) before building. The
+heavy-load case stays a stress scenario, and the sensitivity sweep
+(`docs/methods/sensitivity.md`) stays a what-if study.
 
 Defaults (updated after the first review): conveyors 3 cm/s, laser 10 cm/s, processing
 2.5 s, arrivals every 10 / 12 / 14 s. The processing-only load is

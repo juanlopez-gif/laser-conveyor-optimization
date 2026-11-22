@@ -64,9 +64,12 @@ laser:
   #                part becomes READY while the laser waits, the pre-positioning is
   #                revoked and the policy decides again
   #   always    -> entry-zone parts are always candidates (model P; decoder of P)
-  # Physically this requires knowing that a part is on the entry zone (entry sensor).
-  # See docs/CHANGELOG.md (0.4.0) and docs/formal_formulation.md §1.5.
-  prepositioning: none
+  # Physically this requires knowing that a part is on the entry zone. The planned
+  # cell has an overhead camera that sees the entry zone (simulation.observation:
+  # belts), so the information exists; DESIGN DECISION 2026-11-22 (0.7.6): the cell
+  # runs when_idle. none is kept as the variant without entry detection.
+  # See docs/CHANGELOG.md (0.4.0, 0.7.6), docs/assumptions.md C4, formal_formulation.md §1.5.
+  prepositioning: when_idle
 
 arrivals:
   mode: deterministic          # deterministic | stochastic | explicit

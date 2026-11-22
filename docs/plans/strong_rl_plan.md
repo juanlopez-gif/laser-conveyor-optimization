@@ -33,9 +33,12 @@ technical specification it refers to.
 
 Facts learned after this plan was written:
 
-* **Pre-positioning.** The real cell **cannot pre-position** (no detection of parts
-  before the laser zone), so `none` is its mode (`docs/assumptions.md` C4). The default
-  cell values are the real ones (§F).
+* **Pre-positioning.** On 2026-11-20 the real cell was assumed unable to
+  pre-position (no detection before the laser zone), so `none` was its mode.
+  **Superseded (0.7.6, 2026-11-22):** the cell is not built yet, its camera sees the
+  entry zone (C4b), and the design decision is `when_idle` (`docs/assumptions.md`
+  C4), worth 5.4 points on top of the network at the design load. Results up to 0.7.5
+  are in `none`. The default cell values are the design point (§F).
 * **References for the success targets.** At the real load, on fresh seeds and with
   `none`, they are `rollout@avg_flow_time` and `rl_rollout`
   (`docs/methods/confirmatory.md`). This replaces the `rollout`/`when_idle` −10.1 %

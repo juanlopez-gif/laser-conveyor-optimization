@@ -49,7 +49,7 @@ Units: **cm, s, cm/s**. Current defaults:
 | arrivals (deterministic) | one part every 10 / 12 / 14 s on C1 / C2 / C3 |
 | arrival horizon | 300 s, then the system is drained |
 | policy | `nearest_job` |
-| laser pre-positioning | `none` (only parts already in the laser zone) |
+| laser pre-positioning | `when_idle` (design decision 0.7.6: the camera sees the entry zone; `none` = only parts already in the laser zone) |
 | objective | `penalized_flow_time` = mean flow time + blocking penalty / n |
 | blocking penalty | 10 s per blocking event + 1 s per blocked conveyor-second (placeholders) |
 
@@ -175,7 +175,7 @@ python run_simulation.py --policy rollout         # look-ahead with nearest_job 
 **Laser pre-positioning** (0.4.0): `--set laser.prepositioning=when_idle` lets an idle
 laser go and wait for a part that is still in the entry zone (revoked if another part
 becomes READY); `always` makes entry-zone parts permanent candidates (formal model P).
-Default `none`. See [docs/CHANGELOG.md](docs/CHANGELOG.md).
+Default `when_idle` since 0.7.6 (`none` until 0.7.5). See [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 or `policy.name` in the config, or the selector in the visualization. Weights of
 `weighted_score` are in `policy.params.weighted_score`.

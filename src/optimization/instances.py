@@ -79,10 +79,17 @@ def generate_instance(n_parts: int, seed: int, mode: str = "stochastic",
 
 def instance_config(inst: Instance, policy: str = "nearest_job", policy_params: dict | None = None,
                     dt: float | None = None, extra_sets: list[str] | None = None) -> Config:
-    """Simulator config that reproduces ``inst`` exactly (explicit arrivals, drain)."""
+    """Simulator config that reproduces ``inst`` exactly (explicit arrivals, drain).
+
+    The sequence-only view and the exact models are defined on the restricted model
+    P^sim (``laser.prepositioning: none``, (C7)); since 0.7.6 the cell's default is
+    ``when_idle``, so the mode is pinned here unless the instance overrides or
+    ``extra_sets`` set it (``always`` makes the decoder realise P).
+    """
     arrivals = [{"time": j.time, "conveyor": j.conveyor, "processing_time": j.processing_time}
                 for j in inst.jobs]
-    sets = ["arrivals.mode=explicit", "simulation.arrival_horizon=0", "simulation.drain=true",
+    sets = ["laser.prepositioning=none",
+            "arrivals.mode=explicit", "simulation.arrival_horizon=0", "simulation.drain=true",
             f"policy.name={policy}"]
     if dt is not None:
         sets.append(f"simulation.dt={dt}")

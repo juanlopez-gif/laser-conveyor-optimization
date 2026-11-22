@@ -211,3 +211,70 @@ def test_rl2_tokens_only_observable_parts(level):
     assert n > 0
     for sim, cands, hidden in _fast_decisions(cfg(obs="full"), level, n=3):
         assert set(hidden) <= set(encode(sim, cands).part_ids)
+
+
+# ------------------------------------------------ 0.7.6: past and future leaks
+def _obs_equal(a, b) -> bool:
+    import numpy as np
+    return (a.part_ids == b.part_ids and np.array_equal(a.cand, b.cand)
+            and all(np.allclose(getattr(a, f), getattr(b, f), atol=1e-12)
+                    for f in ("part", "conv", "laser", "ctx")))
+
+
+def _tokens_at_decisions(c, level, n=6):
+    """(FastSim state, tokens) at the first ``n`` multi-candidate decisions."""
+    from rl2.features import encode
+    sim = FastSim(c)
+    out = []
+    while sim.run_until_decision() and len(out) < n:
+        cands = sim.candidates()
+        if len(cands) > 1:
+            out.append((sim.clone(), encode(sim, cands)))
+        sim.apply(POLICIES["nearest_job"](sim, cands))
+    return out
+
+
+@pytest.mark.parametrize("level", RESTRICTED)
+def test_rl2_waiting_time_counts_from_the_instant_the_part_is_seen(level):
+    """Under ``belts``/``zone`` the arrival time of a part that waited upstream is not
+    observable: shifting it must not change the tokens; under ``full`` it must."""
+    from rl2.features import encode
+    c = cfg(level, seed=4)
+    states = _tokens_at_decisions(c, level)
+    moved = 0
+    for sim, obs in states:
+        waited = [j for j in obs.part_ids if sim.pentry[j] is not None
+                  and sim.pentry[j] > sim.pr[j] + 1e-9]
+        if not waited:
+            continue
+        alt = sim.clone()
+        for j in waited:
+            alt.pr[j] -= 3.0                       # arrived earlier in the hidden queue
+        assert _obs_equal(encode(alt, alt.candidates()), obs)
+        moved += 1
+    assert moved > 0, "no part waited upstream in this instance"
+    # the same change is visible with full information
+    cf = cfg("full", seed=4)
+    seen = False
+    for sim, obs in _tokens_at_decisions(cf, "full"):
+        waited = [j for j in obs.part_ids if sim.pentry[j] is not None
+                  and sim.pentry[j] > sim.pr[j] + 1e-9]
+        if waited:
+            alt = sim.clone()
+            alt.pr[waited[0]] -= 3.0
+            assert not _obs_equal(encode(alt, alt.candidates()), obs)
+            seen = True
+            break
+    assert seen
+
+
+@pytest.mark.parametrize("level", ["belts", "zone", "full"])
+def test_rl2_tokens_ignore_the_real_future_arrivals(level):
+    """Removing every future arrival (the controller cannot know there are none)
+    leaves the tokens unchanged at every level."""
+    from rl2.features import encode
+    c = cfg(level, seed=5)
+    for sim, obs in _tokens_at_decisions(c, level):
+        alt = sim.clone()
+        alt.arr = sim.arr[: sim.next_arr]          # no more real arrivals
+        assert _obs_equal(encode(alt, alt.candidates()), obs)

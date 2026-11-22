@@ -49,7 +49,8 @@ def test_env_reproduces_nearest_head_and_return_equals_cost(load_index):
     path = None if load_index == 0 else HEAVY
     ref = Simulation(load_config(path, set_items=[
         "arrivals.mode=stochastic", "simulation.seed=7", "simulation.dt=0.05",
-        "policy.name=nearest_head"]), record_trace=False).run().summary
+        "policy.name=nearest_head", f"laser.prepositioning={env.prepositioning}"]),
+        record_trace=False).run().summary
     assert s["avg_flow_time"] == pytest.approx(ref["avg_flow_time"], abs=1e-9)
     cost = s["avg_flow_time"] * s["parts_completed"] + s["blocking_penalty"]
     # return = -(sum F_j + Pi)/scale, up to one step dt per part (arrivals off-grid)

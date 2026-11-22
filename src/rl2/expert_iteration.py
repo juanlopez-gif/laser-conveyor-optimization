@@ -69,7 +69,7 @@ GENERAL = {
 }
 
 
-def general_config(seed: int, p_none: float = 0.7, mode: str | None = None,
+def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
                    extra: tuple = ()):
     """A random cell of the general problem (ranges in :data:`GENERAL`).
 
@@ -127,14 +127,16 @@ def general_config(seed: int, p_none: float = 0.7, mode: str | None = None,
 
 
 def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
-                  p_none: float = 0.7, extra: tuple = ()):
+                  p_none: float = 0.5, extra: tuple = ()):
     """Training cell for one episode.
 
     * With probability ``p_real``: the real cell (default config), so the general model
       keeps its quality there.
     * With probability ``p_heavy``: the heavy-load example (overloaded 3-belt cell).
     * Otherwise: a general cell, :func:`general_config`.
-    * Mode: ``none`` with probability ``p_none``, else ``when_idle``.
+    * Mode: ``none`` with probability ``p_none``, else ``when_idle`` (0.7.6: 50/50;
+      ``when_idle`` is the design mode of the cell, ``none`` the variant without entry
+      detection).
     """
     from simulation.config import load_config
     rng = random.Random(f"rl2cfg/{seed}")
@@ -152,14 +154,22 @@ def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
 
 VAL_GENERAL_SEED_BASE = 2500
 VAL_GROUPS = ("real", "heavy", "general")
+#: validation modes (0.7.6): ``design`` = the real cell and the heavy example with
+#: ``when_idle`` (the design mode, docs/assumptions.md C4) and general cells with the
+#: mode drawn 50/50; ``none`` = every cell with ``none`` (the validation of 0.7.2–0.7.5)
+VAL_MODES = ("design", "none")
 
 
-def val_config(group: str, seed: int, mode: str = "none", extra: tuple = ()):
-    """Validation cell: the real cell, the heavy example (both ``none``), or a general
-    cell (seeds 2500+, drawn by :func:`general_config` with ``none``)."""
+def val_config(group: str, seed: int, mode: str = "design", extra: tuple = ()):
+    """Validation cell: the real cell, the heavy example, or a general cell (seeds
+    2500+, drawn by :func:`general_config`). ``mode`` is one of :data:`VAL_MODES`."""
     from simulation.config import load_config
+    if mode not in VAL_MODES:
+        raise ValueError(f"validation mode must be one of {VAL_MODES}, not {mode!r}")
     if group == "general":
-        return general_config(seed, mode=mode, extra=extra)[0]
+        return general_config(seed, mode=None if mode == "design" else "none",
+                              extra=extra)[0]
+    mode = "when_idle" if mode == "design" else "none"
     return load_config(HEAVY if group == "heavy" else None,
                        set_items=["arrivals.mode=stochastic", f"simulation.seed={seed}",
                                   f"laser.prepositioning={mode}"] + list(extra))
@@ -263,7 +273,7 @@ def play_episode(job: dict) -> dict:
 def val_episode(job: dict) -> dict:
     from fastsim import POLICIES, FastSim
     from rl2.model import NetPolicy
-    cfg = val_config(job["load"], job["seed"], job.get("mode", "none"), _extra(job))
+    cfg = val_config(job["load"], job["seed"], job.get("mode", "design"), _extra(job))
     net = _net(job["net"])
     if job["who"] == "net":
         pol = NetPolicy(net)
@@ -349,13 +359,15 @@ def train(net, data: list, scale, epochs: int, lr: float, batch: int, temp: floa
 
 # ------------------------------------------------------------- validation
 def validate(ex, net_path, n: int, who: list[str], k: int, w_pen: float,
-             horizon: float | None = None, la: tuple = (0.0, 0)) -> dict:
+             horizon: float | None = None, la: tuple = (0.0, 0),
+             val_mode: str = "design") -> dict:
     """Paired delta vs ``nearest_job`` per group (real, heavy, general: 2n cells);
     score = mean of the three group means. ``la`` = (horizon_s, scenarios, cut,
-    window_s) of the cost-to-go teacher (0.7.5; (0, 0) = known-parts look-ahead)."""
+    window_s) of the cost-to-go teacher (0.7.5; (0, 0) = known-parts look-ahead);
+    ``val_mode`` is one of :data:`VAL_MODES` (0.7.6)."""
     seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
     jobs = [{"load": g, "seed": seeds[g] + i, "who": w, "net": net_path, "k": k,
-             "w_pen": w_pen, "horizon": horizon, "la": la}
+             "w_pen": w_pen, "horizon": horizon, "la": la, "mode": val_mode}
             for w in who + ["nearest_job"] for g in VAL_GROUPS
             for i in range(n * (2 if g == "general" else 1))]
     res = list(ex.map(val_episode, jobs, chunksize=1))
@@ -447,6 +459,9 @@ def main(argv=None) -> int:
     ap.add_argument("--eps", type=float, default=0.1, help="random action when the teacher acts")
     ap.add_argument("--replay", type=int, default=3)
     ap.add_argument("--val", type=int, default=20, help="validation seeds per load")
+    ap.add_argument("--val-mode", default="design", choices=list(VAL_MODES),
+                    help="design: real and heavy cells with when_idle, general cells "
+                         "with the mode drawn; none: every cell with none (0.7.2-0.7.5)")
     ap.add_argument("--patience", type=int, default=2)
     ap.add_argument("--workers", type=int, default=os.cpu_count() or 1,
                     help="simulation worker processes (default: all logical CPUs)")
@@ -476,7 +491,7 @@ def main(argv=None) -> int:
             if k not in RESUMABLE_ARGS:
                 setattr(args, k, v)
         for k, v in (("la_horizon", 0.0), ("scenarios", 0), ("la_cut", "time"),
-                     ("la_window", 30.0)):                  # runs from before 0.7.5
+                     ("la_window", 30.0), ("val_mode", "none")):  # runs before 0.7.5/0.7.6
             if k not in saved:
                 setattr(args, k, v)
         log = st["log"]
@@ -516,9 +531,9 @@ def main(argv=None) -> int:
     with ProcessPoolExecutor(args.workers, initializer=_init_worker) as ex:
         if "reference" not in log:
             ref_val = validate(ex, None, args.val, ["nearest_head"], args.k, args.w_pen,
-                               args.horizon)
+                               args.horizon, val_mode=args.val_mode)
             teacher0 = validate(ex, None, args.val, ["teacher"], args.k, args.w_pen,
-                                args.horizon)
+                                args.horizon, val_mode=args.val_mode)
             log["reference"] = {**ref_val, **teacher0}
             print("reference", _fmt(ref_val, "nearest_head"), "|", _fmt(teacher0, "teacher"),
                   flush=True)
@@ -561,7 +576,7 @@ def main(argv=None) -> int:
 
             t_v = time.perf_counter()
             v = validate(ex, path, args.val, ["net", "teacher"], args.k, args.w_pen,
-                         args.horizon, la)
+                         args.horizon, la, val_mode=args.val_mode)
             val_s = time.perf_counter() - t_v
             score = v["net/score"]
             accepted = score < best_score - 1e-6

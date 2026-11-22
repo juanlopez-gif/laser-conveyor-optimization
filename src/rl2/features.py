@@ -29,10 +29,15 @@ real belt), and times go through ``slog(t) = sign(t) log(1 + |t| / T_REF)`` with
 ``T_REF`` = 10 s, so long waits at heavy load stay bounded but distinguishable.
 Features of the real cell lie roughly in [-3, 3].
 
-**Information model (0.7.3).** Only parts the controller can observe
-(``simulation.observation``) become tokens, and the belt counts include only them.
-In the real cell (``belts``) parts waiting upstream of the belt entry are not seen. The context token
-carries the observation level one-hot.
+**Information model (0.7.3, tightened in 0.7.6).** Only parts the controller can
+observe (``simulation.observation``) become tokens, and the belt counts include only
+them. In the planned cell (``belts``) parts waiting upstream of the belt entry are not
+seen. The context token carries the observation level one-hot. Two features that
+leaked the unobservable past or future were fixed in 0.7.6: the waiting time of a part
+is counted from the instant it became observable (entry on the belt for ``belts``,
+entry in the laser zone for ``zone``, arrival for ``full``), not from its arrival to
+the upstream queue, and "arrivals still coming" is ``t < T_A`` (the known arrival
+horizon), not whether the real arrival list has more entries.
 
 The encoder reads a :class:`fastsim.FastSim` at an open decision. The fixed-step
 engine will need an adapter with the same features (phase 4).
@@ -72,6 +77,19 @@ def mean_processing_time(cfg) -> float:
     if p.distribution == "normal":
         return p.normal_mean
     return p.time
+
+
+def observed_since(sim: FastSim, j: int) -> float:
+    """Instant from which part ``j`` is observable at the simulator's observation
+    level: arrival (``full``), entry on the belt (``belts``) or entry in the laser
+    zone (``zone``). Falls back to the arrival time if the instant is not set."""
+    if sim.observation == "belts":
+        t0 = sim.pentry[j]
+    elif sim.observation == "zone":
+        t0 = sim.pready[j]
+    else:
+        t0 = sim.pr[j]
+    return sim.pr[j] if t0 is None else t0
 
 
 def arrival_rates(cfg) -> list[float]:
@@ -145,7 +163,7 @@ def encode(sim: FastSim, candidates=None) -> Observation:
                 slog(to_b / vk) if vk > 0 else UNREACHABLE,
                 itime,
                 1.0 if reach else 0.0,
-                slog(t - sim.pr[j]),
+                slog(t - observed_since(sim, j)),
                 sim.pp[j] / p_mean if p_mean > 0 else 0.0,
                 slog(rem_proc) if st == PROCESSING else 0.0,
                 blocking,
@@ -201,7 +219,7 @@ def encode(sim: FastSim, candidates=None) -> Observation:
 
     lam_n = cfg.blocking_penalty_per_event
     lam_t = cfg.blocking_penalty_per_second
-    arrivals_left = 1.0 if sim.next_arr < len(sim.arr) else 0.0
+    arrivals_left = 1.0 if t < cfg.simulation.arrival_horizon else 0.0   # known T_A
     ctx = [
         sim.vx / (10 * V_REF),
         sim.vy / (10 * V_REF),

@@ -35,10 +35,10 @@ through the y offset from the laser and a copy of its belt's state.
 
 | token | count | features |
 |---|---|---|
-| part | one per arrived unfinished part (buffer, belt, being processed) | 23 features: status one-hot (waiting, moving, ready, processing); x/L; distance to b; time to b at belt speed; interception time from the laser and a reachable flag; waiting time; p_j / mean p; remaining processing time; blocking flag; rank on the belt among unstarted parts and a head flag; **candidate flag**; committed flag; x and y offset from the laser; nominal and current belt speed; belt running; belt blocked |
+| part | one per arrived unfinished part (buffer, belt, being processed) | 23 features: status one-hot (waiting, moving, ready, processing); x/L; distance to b; time to b at belt speed; interception time from the laser and a reachable flag; waiting time since the part became observable (0.7.6; was since arrival); p_j / mean p; remaining processing time; blocking flag; rank on the belt among unstarted parts and a head flag; **candidate flag**; committed flag; x and y offset from the laser; nominal and current belt speed; belt running; belt blocked |
 | conveyor | N | 11 features: y offset from the laser; nominal and current speed; running; stopped for processing; blocked; buffer length; parts on the belt; arrival rate; offered load; has a candidate |
 | laser | 1 | 9 features: x, y; state one-hot (idle, heading, busy); remaining processing time; committed flag and target offset |
-| context | 1 | 18 features: laser speeds; motion model; mean processing time; total offered load; a, b, spacing, workspace height (relative to L); pre-positioning mode one-hot; λ_N, λ_T; arrivals still coming; time left to the episode's arrival horizon (added in phase 3, for the value head); number of parts and of candidates |
+| context | 1 | 18 features: laser speeds; motion model; mean processing time; total offered load; a, b, spacing, workspace height (relative to L); pre-positioning mode one-hot; λ_N, λ_T; arrivals still coming (0.7.6: t < T_A, the known horizon; was read from the real arrival list); time left to the episode's arrival horizon (added in phase 3, for the value head); number of parts and of candidates |
 
 * The context token carries the cell parameters. With it, one model can be trained
   with domain randomization (phase 3) and used on other cells.
@@ -165,7 +165,7 @@ Every training episode (seeds 100000+) draws one cell:
 | geometry | entry, laser-zone and exit lengths, belt spacing and minimum part spacing, each × U[0.5, 1.5] of the real value |
 | blocking penalty | λ_N ~ U[0, 20] s per event, λ_T ~ U[0, 2] s per blocked belt-second |
 | conveyor stop rule | only the processing belt (70 %) or all belts (30 %) |
-| pre-positioning | `none` (70 %) or `when_idle` (30 %) |
+| pre-positioning | `none` or `when_idle`, 50 % each since 0.7.6 (`when_idle` is the design mode of the cell, `none` the variant without entry detection; 70 / 30 up to 0.7.5) |
 
 All values reach the network through the conveyor and context tokens.
 
@@ -228,8 +228,11 @@ All values reach the network through the conveyor and context tokens.
      targets.
    * Optimizer: AdamW with a one-cycle learning rate, batch 256, gradient clipping at 1.
 4. **Validation and gating.**
-   * Three groups, all with `none`: the real cell and the heavy example (seeds
-     2000–2029), and 60 general cells (seeds 2500–2559).
+   * Three groups: the real cell and the heavy example (seeds 2000–2029) and 60
+     general cells (seeds 2500–2559). Up to 0.7.5 all with `none`; since 0.7.6
+     (`--val-mode design`, the default) the real and heavy cells use `when_idle`, the
+     design mode, and the general cells draw their mode; `--val-mode none` reproduces
+     the old validation.
    * Per group: the mean paired Δ of penalized flow time vs `nearest_job`, on the
      exact simulator.
    * The score is the mean of the three groups. A network is kept only if the score

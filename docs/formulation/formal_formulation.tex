@@ -510,7 +510,7 @@ next part. The offline problem $\Pb$ with full knowledge of the future gives the
 performance over the arrival distribution and by the empirical ratio
 $\mathbb E[f(\mu)]/\mathbb E[f^\ast]$ on generated instances.
 
-With the default \texttt{laser.prepositioning: none} the implemented policies satisfy
+With \texttt{laser.prepositioning: none} (the default until 0.7.5; the design cell runs \texttt{when\_idle} since 0.7.6) the implemented policies satisfy
 \eqref{eq:C7} (the laser only selects parts already inside the laser zone) and never
 wait deliberately; they produce feasible solutions of $\Pb^{\mathrm{sim}}\subseteq\Pb$.
 With pre-positioning they produce feasible solutions of $\Pb$. In every case the optimum
@@ -545,22 +545,29 @@ is part of the definition of a policy.
 
 \subsection{Information model}\label{sec:info}
 A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts
-observable at $t$. The information at a decision epoch is
+observable at $t$ and $o_j$ the instant from which part $j$ is observable (its arrival
+$r_j$ with \texttt{full}, its entry on the belt $e_j$ with \texttt{belts}, its entry in
+the laser zone $R_j$ with \texttt{zone}). The information at a decision epoch is
 \[
 \mathcal I_t=\Bigl(t,\ \text{laser state},\ \text{belt states},\
-\bigl\{(k(j),x_j(t),r_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta\Bigr),
+\bigl\{(k(j),x_j(t),o_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta,\ T_A\Bigr),
 \]
-where $\theta$ are the cell parameters (\S\ref{sec:general}), known statistically and not
-an observation. A policy maps $\mathcal I_t$ to a candidate; a look-ahead may simulate
-only the parts of $O(t)$ plus synthetic arrivals drawn from $\theta$, never the real
-future.
+where $\theta$ are the cell parameters (\S\ref{sec:general}) and $T_A$ the arrival
+horizon, known statistically and not an observation: the controller knows the rates
+$\lambda_k$ but not the instants of the future arrivals, nor whether any part will still
+arrive before $T_A$. A policy maps $\mathcal I_t$ to a candidate; a look-ahead may
+simulate only the parts of $O(t)$ plus synthetic arrivals drawn from $\theta$, never the
+real future. Under \texttt{belts} the arrival time $r_j$ itself is not observed: a part
+that waited in the hidden upstream queue shows no trace of it (0.7.6). For the
+objectives this costs nothing, since $\sum_j F_j=\sum_j C_j-\sum_j r_j$ and the $r_j$
+are constants.
 
 \begin{center}
 \begin{tabularx}{\linewidth}{@{}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{0.3\linewidth}@{}}
 \toprule
 level & $O(t)$ & use\\
 \midrule
-\texttt{belts} & parts on a belt (entry zone and laser zone) with their positions & \textbf{real cell}: an overhead camera sees every belt and its working area\\
+\texttt{belts} & parts on a belt (entry zone and laser zone) with their positions & \textbf{design cell}: an overhead camera sees every belt and its working area\\
 \texttt{zone} & parts in the laser zone only & what-if without camera; incompatible with pre-positioning\\
 \texttt{full} & also parts waiting upstream of the belt entry & what-if upper bound; implicit in every version before 0.7.3\\
 \bottomrule

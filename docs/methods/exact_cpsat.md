@@ -137,7 +137,8 @@ no rigorous margin is derived here. `cpsat_ready` returns `lower_bound = None` (
 ## 5. Discrepancy between the formulation and the simulator (important)
 
 > **Update 0.4.0.** This discrepancy is now an option of the simulator:
-> `laser.prepositioning: none` (default) realises $\mathcal P^{\mathrm{sim}}$ (`cpsat_ready`),
+> `laser.prepositioning: none` (the default until 0.7.5; `optimization.instances`
+> pins it for every instance since 0.7.6) realises $\mathcal P^{\mathrm{sim}}$ (`cpsat_ready`),
 > `always` realises $\mathcal P$ (`cpsat`). The CP-SAT models do not include the blocking
 > penalty yet; for the penalized objectives they are skipped (docs/CHANGELOG.md).
 

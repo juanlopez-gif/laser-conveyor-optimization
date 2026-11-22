@@ -106,4 +106,6 @@ differ in how many parts arrive; this is why the comparison is paired.)
 * Parameters of the cell (speeds, processing and arrival distributions) are not yet
   calibrated with real data.
 * `when_idle` / `always` require knowing that a part is on the entry zone (sensor);
-  not confirmed for the real cell, so the default remains `none`.
+  not confirmed for the real cell at the time, so the default remained `none` until
+  0.7.5. Since 0.7.6 the planned cell's camera covers the entry zone and `when_idle`
+  is the design mode (`docs/assumptions.md` C4).
