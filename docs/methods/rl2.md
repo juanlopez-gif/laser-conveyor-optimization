@@ -766,7 +766,82 @@ teacher's futures stay Poisson at the mean rates. `rl2_gen_s_d` is kept as the
 reference; the choice between the two is to be made on development seeds, never on
 the confirmatory seeds 7000–7029.
 
-B_RESULTS_PLACEHOLDER
+Run of 2026-11-22 on the workstation (12:33–16:38, 4 h 05 min; iterations 1–3,
+stopped by the patience rule; best **iteration 1**, score −3.82 % over the four
+groups). Reference rows on the same seeds (design mode): `nearest_head` −0.37 / +0.48 /
++1.23 / +0.06 %, search over `nearest_job` −3.73 / +0.51 / −1.74 / −1.84 % (real /
+heavy / general / real_burst); the first three are identical to those of §8.6, which
+confirms that the validation cells did not change with the 0.7.11 draws.
+
+| it | net real | net heavy | net general | net real_burst | score | search real | search heavy | search general | search real_burst | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **1** | **−6.19 ±1.48** | **−2.86 ±1.09** | **−2.73 ±1.05** | **−3.51 ±1.00** | **−3.82** | −6.44 ±1.30 | −2.35 ±1.46 | −3.51 ±1.27 | −4.07 ±0.96 | yes | 4 228 / 37 / 361 |
+| 2 | −6.20 ±1.36 | −2.60 ±1.23 | −2.73 ±1.06 | −3.66 ±0.99 | −3.80 | −6.34 ±1.31 | −2.55 ±1.21 | −3.12 ±1.22 | −3.90 ±0.97 | no | 4 576 / 79 / 363 |
+| 3 | −6.48 ±1.45 | −2.25 ±1.06 | −2.72 ±1.08 | −3.74 ±0.92 | −3.80 | −6.58 ±1.29 | −2.50 ±1.30 | −3.06 ±1.28 | −3.80 ±0.95 | no | 4 599 / 81 / 357 |
+
+`models/rl2_gen_s_b.pt` is the iteration-1 model (weights identical to
+`rl2_gen_s_b_it1.pt`), `models/rl2_gen_s_b_training.json` the log. Generation took
+30–40 % longer than in §8.6 (bursty and slow-head cells have more decisions).
+
+**Head to head with the reference** `rl2_gen_s_d` (paired cost ratio, design mode,
+validation seeds; negative = the new network is better):
+
+| group | real (50) | heavy (50) | general (100) | real_burst (50) |
+|---|---|---|---|---|
+| `rl2_gen_s_b` vs `rl2_gen_s_d` | +0.47 ±0.69 % | −0.36 ±0.83 % | +0.20 ±0.48 % | +0.09 ±0.36 % |
+
+The two networks are indistinguishable, also on the bursty cell: `rl2_gen_s_d` alone
+already scores −3.59 ±0.98 % on `real_burst` (measured for this comparison), the new
+one −3.51 ±1.00 %.
+
+**Information bench with the new network** (`info_bench_s_b`, same regimes and seeds
+as §8.7; network contrasts, with the §8.7 values of `rl2_gen_s_d` for comparison):
+
+| regime | net | B vs `nearest_job` | C vs `nearest_job` | B vs A | C vs B | D vs B | new vs ref in C |
+|---|---|---|---|---|---|---|---|
+| real / regular / nominal | ref | −8.02 ±1.75 | −13.33 ±1.81 | −0.22 ±1.33 | −5.67 ±1.71 | +0.76 ±0.92 | |
+| | new | −7.38 ±1.69 | −13.04 ±1.92 | −0.06 ±1.49 | −6.03 ±1.80 | −0.07 ±0.72 | +0.34 ±0.83 |
+| real / regular / slow | ref | −7.33 ±2.03 | −10.11 ±2.83 | +0.26 ±1.45 | −2.98 ±2.25 | −0.32 ±1.11 | |
+| | new | −8.84 ±1.94 | −10.39 ±2.48 | −1.04 ±1.33 | −1.72 ±1.62 | +0.66 ±1.14 | −0.19 ±1.03 |
+| real / burst / nominal | ref | −2.87 ±1.18 | −5.91 ±1.47 | +0.26 ±0.41 | −3.13 ±1.09 | −0.56 ±0.53 | |
+| | new | −2.85 ±1.13 | −5.65 ±1.50 | +0.02 ±0.47 | −2.87 ±1.14 | −0.07 ±0.33 | +0.28 ±0.39 |
+| real / burst / slow | ref | −4.54 ±1.74 | −8.41 ±1.72 | +0.05 ±0.83 | −3.96 ±1.56 | +0.13 ±0.64 | |
+| | new | −4.58 ±1.61 | −8.73 ±1.76 | +0.36 ±0.66 | −4.32 ±1.28 | +0.01 ±0.49 | −0.34 ±0.87 |
+| heavy / regular / nominal | ref | −4.01 ±1.81 | −3.26 ±1.62 | −0.22 ±1.35 | +0.91 ±1.64 | −1.16 ±1.24 | |
+| | new | −4.33 ±1.46 | −3.10 ±1.58 | −0.29 ±1.03 | +1.36 ±1.55 | −1.34 ±0.84 | +0.19 ±0.91 |
+| heavy / regular / slow | ref | +0.13 ±2.98 | +0.33 ±2.87 | −0.88 ±1.82 | +0.46 ±2.61 | −4.35 ±1.86 | |
+| | new | +0.91 ±2.71 | −1.07 ±2.53 | +1.64 ±2.40 | −1.63 ±2.80 | **−6.35 ±2.42** | −1.20 ±1.85 |
+| heavy / burst / nominal | ref | −4.93 ±1.32 | −5.54 ±1.53 | −0.34 ±0.78 | −0.57 ±1.56 | −0.36 ±0.92 | |
+| | new | −4.56 ±1.38 | −5.26 ±1.51 | +0.11 ±0.97 | −0.67 ±1.45 | −0.83 ±0.82 | +0.31 ±0.38 |
+| heavy / burst / slow | ref | −4.58 ±1.66 | −4.94 ±1.72 | −0.43 ±0.36 | −0.33 ±1.22 | −0.03 ±1.11 | |
+| | new | −5.54 ±1.78 | −5.86 ±1.89 | −1.13 ±0.73 | −0.28 ±1.51 | −0.78 ±0.97 | −0.98 ±0.81 |
+
+Findings:
+
+* **Training on bursty cells and slow heads changes nothing measurable.** The new
+  network equals the reference in every validation group and in every bench regime
+  (the largest difference, −1.0 ±0.8 % on the heavy cell with bursts and a slow head,
+  is at the edge of its interval). As with S/M/L (§8.4), the network is at its teacher
+  from the first iteration (−3.51 vs −4.07 on `real_burst`), and the teacher, whose
+  futures are Poisson at the mean rates, is the ceiling: a network trained on bursts
+  cannot exceed a teacher that does not model them.
+* **The 0.7.10 conclusions hold with a network trained in the regimes**: B vs A is
+  within ±1.6 points in every regime, the value is in the action (C vs B −6.0 nominal,
+  −1.7 slow, −2.9 burst, −4.3 both at the real load, ≈ 0 at the heavy load), and the
+  hidden upstream queue is worth something only at the heavy load with a slow head,
+  now −6.35 ±2.42 % (D vs B) with a model that saw 2.5 cm/s heads in training. That
+  regime remains the one where neither network beats `nearest_job` in B
+  (+0.9 ±2.7 %): with a head that slow and every belt queueing, the nearest-part rule
+  is close to the best one can do without seeing the queues.
+* **Choice of network.** Both are equivalent on development seeds. `rl2_gen_s_b` was
+  trained on the declared scope (bursts, slow heads) and loses nothing elsewhere, so
+  it is the natural candidate to freeze for phase 4; `rl2_gen_s_d` stays available as
+  the 0.7.9 reference. The decision is the owner's.
+* **If more is wanted on bursts**, the lever is the teacher, not the training mix: give
+  `rl2.search.sample_scenarios` the burst model of the cell (statistical knowledge,
+  not an observation) so its futures are bursty when the cell is, and tell the
+  network the burst parameters in the context token (a new token layout, trained from
+  scratch). Not done; a decision for the owner.
 
 ## 9. Reproduce (phase 3)
 

@@ -35,6 +35,18 @@ summarized from the git history.
   sampled-future teacher (8 futures, 30 s, w_pen 0), `--val-mode design`, 50
   validation seeds per group, up to 8 iterations, patience 2, 2 000 episodes per
   iteration. Results: `docs/methods/rl2.md` §8.8.
+* **Results.** 4 h 05 min, stopped by patience after 3 iterations, best iteration 1
+  (score −3.82 % over four groups; −6.2 / −2.9 / −2.7 / −3.5 % real / heavy / general
+  / real_burst). Head to head with `rl2_gen_s_d` on the validation seeds: +0.5 / −0.4
+  / +0.2 / +0.1 %, i.e. **indistinguishable**, also on the bursty cell (the reference
+  already scored −3.6 % there). The information bench with the new network reproduces
+  every 0.7.10 conclusion; the hidden-queue contrast at the heavy load with a slow
+  head becomes −6.4 ±2.4 % with a model trained in that regime. Reading: the network
+  is at its teacher from iteration 1 and the teacher's futures are Poisson, so the
+  training mix cannot add what the teacher does not model. Committed:
+  `models/rl2_gen_s_b.pt`, `models/rl2_gen_s_b_training.json`. Choice of the network
+  to freeze for phase 4 left to the owner (`rl2.md` §8.8 recommends `rl2_gen_s_b`,
+  trained on the declared scope, with `rl2_gen_s_d` as the 0.7.9 reference).
 * **Tests:** `tests/test_rl2_search.py` gains the regime test (mix fractions,
   ranges, separate stream, validation cells unchanged, `real_burst` group); the kind
   split updated. Full suite passes.

@@ -315,7 +315,9 @@ heads" unless the confirmatory bench with other burst settings says otherwise.
    confirmatory seeds. Extending the training mix changes `GENERAL` (burst parameters,
    laser speeds below 5 cm/s) and is a separate owner decision — taken the same day:
    bursts and slow heads are in the scope, `GENERAL` extended (0.7.11) and
-   `rl2_gen_s_b` launched (`rl2.md` §8.8).
+   `rl2_gen_s_b` run (`rl2.md` §8.8): indistinguishable from `rl2_gen_s_d` on the
+   development seeds and in every bench regime; the choice of the frozen network is
+   pending (recommendation: `rl2_gen_s_b`, trained on the declared scope).
 2. *Hypothesis.* Reformulated now (above), with the record that it came from the
    pilot. The confirmatory bench must test the coverage curve and show that, with the
    same actions, the benefit of seeing earlier is small enough for the design decision.
