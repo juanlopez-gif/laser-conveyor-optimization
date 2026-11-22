@@ -252,6 +252,13 @@ evidence of the last two days should change the plan.
    note), so the annual-cost estimate can only be scenario-based; the penalty weights
    λ_N = 10 s and λ_T = 1 s are placeholders.
 
+**Decision (owner, 2026-11-22).** The reference observation of Paper 1 is treatment
+B (`belts` with `none`: the camera sees the parts on the belts, the head is assigned
+only to parts already in the working zone), which is the level of every result of
+`rl2.md` §8.4–§8.5. Paper 2 then measures A (`zone`) against B and C (`belts` with
+`when_idle`) against B; the 0.7.9 training mix adds `zone` and `full` cells so one
+network serves all treatments.
+
 **Where the plan's steps already stand.**
 
 | step | status |
