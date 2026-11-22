@@ -6,6 +6,20 @@ summarized from the git history.
 
 ---
 
+## 0.7.8 — 2026-11-22 — Research plan for two papers
+
+The owner shared a research plan (two papers: the general problem and its algorithm;
+the value of upstream visibility) and asked for an opinion and for it to be added to
+the repository. `docs/plans/papers.md` holds the plan translated into English, with
+review notes that map its treatments and tests to what the repository already has and
+list the points where the 0.7.5–0.7.7 evidence argues for a change before the design
+is frozen: the known-parts search is the ceiling rather than the method, the
+difficulty reference has moved from the simple rollout to the sampled-future search
+and the network, bursty arrivals and the upstream visible length need a definition
+and a parameter, and the load grid should reach the saturated regime. No code change.
+
+---
+
 ## 0.7.7 — 2026-11-22 — Review of the model and of the information: pre-positioning as the design mode, two leaks closed
 
 The owner stated that **the cell does not exist yet**: the project develops the
