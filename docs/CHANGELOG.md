@@ -38,6 +38,12 @@ summarized from the git history.
 * **Tests:** `tests/test_rl2_search.py` gains the regime test (mix fractions,
   ranges, separate stream, validation cells unchanged, `real_burst` group); the kind
   split updated. Full suite passes.
+* **`docs/formulation/formal_formulation.pdf` rebuilt** (13 pages) from the `.tex`
+  with the 0.7.7–0.7.10 corrections (information set with the visible length, the
+  bursty arrival process, `when_idle` as the design mode): TeX Live was installed on
+  the workstation at the owner's request (`texlive-latex-extra`,
+  `texlive-fonts-recommended`, `texlive-pictures`, `latexmk`); the PDF had been out of
+  date since 0.7.7 because no LaTeX was available here.
 
 ---
 
