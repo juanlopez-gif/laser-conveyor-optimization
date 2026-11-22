@@ -161,7 +161,20 @@ develop the stronger teacher (plan §4). Details and tables: `docs/methods/rl2.m
 
 ### Training (`rl2_gen_s_sf`)
 
-SF_CHANGELOG_PLACEHOLDER
+Continuation of the best S model with the new teacher (2 000 episodes and 4 epochs per
+iteration, 50 validation seeds per group, `none`): 3 h 53 min on the workstation,
+iterations 1–4, stopped by the patience rule with **iteration 2** as the best model.
+
+| policy | real cell | heavy example | general cells | score |
+|---|---|---|---|---|
+| best S of 0.7.5 (known-parts teacher) | −4.4 ±1.4 % | −2.3 ±1.6 % | −1.6 ±1.1 % | −2.79 |
+| **`rl2_gen_s_sf` alone (it. 2)** | **−7.6 ±1.4 %** | **−4.4 ±1.1 %** | **−2.4 ±1.1 %** | **−4.83** |
+| search over it | −7.2 ±1.6 % | −3.5 ±1.2 % | −2.7 ±1.2 % | −4.48 |
+
+The network absorbed the new teacher in one iteration and, from iteration 2, matches or
+beats the search over itself at the real and heavy loads; later iterations are
+rejected. Tables and discussion: `docs/methods/rl2.md` §8.5. Committed:
+`models/rl2_gen_s_sf.pt` and `models/rl2_gen_s_sf_training.json`.
 
 ---
 

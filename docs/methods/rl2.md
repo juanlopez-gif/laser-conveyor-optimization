@@ -546,7 +546,40 @@ run starts at iteration 1; 2 000 episodes and 4 epochs per iteration, replay 2, 
 validation seeds per group (100 general), patience 2. Same seeds as §8.4 (training
 continues from 100000; the run's seeds are its own).
 
-SF_RESULTS_PLACEHOLDER
+Run of 2026-11-21/22 on the workstation (3 h 53 min; 47 workers; about 50 min per
+iteration to generate, 1 min to train, 5 min to validate). Validation in `none`
+(the mode of every result up to 0.7.6) with the 0.7.6 tokens, i.e. before the two
+leak fixes of 0.7.7 (which change the numbers by less than the confidence intervals,
+`CHANGELOG` 0.7.7).
+
+| it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | −7.73 ±1.49 | −3.55 ±1.26 | −2.23 ±0.98 | −4.50 | −7.64 ±1.57 | −3.93 ±1.16 | −2.70 ±1.11 | yes | 2 868 / 28 / 309 |
+| **2** | **−7.64 ±1.44** | **−4.42 ±1.13** | **−2.42 ±1.10** | **−4.83** | −7.20 ±1.60 | −3.52 ±1.22 | −2.72 ±1.16 | yes | 2 980 / 55 / 313 |
+| 3 | −6.99 ±1.38 | −3.71 ±1.25 | −2.47 ±1.05 | −4.39 | −7.83 ±1.50 | −3.30 ±1.14 | −2.73 ±1.14 | no | 3 323 / 55 / 320 |
+| 4 | −7.16 ±1.48 | −2.91 ±1.40 | −2.83 ±1.09 | −4.30 | −7.63 ±1.52 | −3.39 ±1.09 | −2.75 ±1.15 | no | 3 335 / 55 / 291 |
+
+Reference on the same seeds: `nearest_head` −1.81 / +0.21 / +0.89 %; search over
+`nearest_job` −4.39 / +0.09 / −1.60 %; best S of §8.4 (known-parts teacher)
+−4.42 / −2.32 / −1.64 %, score −2.79 %.
+
+* **The network absorbed the new teacher in one iteration.** From −2.79 % (best of
+  §8.4) to −4.50 % after iteration 1 and **−4.83 %** after iteration 2: −7.6 % at the
+  real load, −4.4 % at heavy load and −2.4 % on the general cells, at 4 ms per
+  decision. It matches or beats every rule and every earlier hybrid in all three
+  groups.
+* **The network reaches its teacher again.** From iteration 2 the network alone is at
+  or above the search over itself at the real and heavy loads (−7.6 vs −7.2 %, −4.4 vs
+  −3.5 %): the search is noisy (8 sampled futures) and the network learns its average.
+  Iterations 3 and 4 trade groups within the intervals and are rejected; the run
+  stopped by the patience rule. The next step is again a stronger teacher or more
+  futures, not more iterations.
+* **Training losses** fall from 0.377 to 0.314 (policy cross-entropy) while validation
+  stalls, as in §8.4.
+* `models/rl2_gen_s_sf.pt` is the iteration-2 model; `models/rl2_gen_s_sf_training.json`
+  the log. On the design mode (`when_idle`, 30 seeds) this model gives −13.8 % at the
+  real load (`docs/assumptions.md` C4).
+
 
 ## 9. Reproduce (phase 3)
 
