@@ -315,7 +315,7 @@ def test_training_cells_draw_observation_levels_and_validation_cells_do_not():
     kinds, zone_modes = [], set()
     for i in range(120):
         cfg, kind = sample_config(100000 + i)
-        group, mode, obs = kind.split("/")
+        group, mode, obs, _regime = kind.split("/")
         kinds.append(obs)
         assert cfg.simulation.observation == obs and cfg.laser.prepositioning == mode
         if obs == "zone":
@@ -329,3 +329,48 @@ def test_training_cells_draw_observation_levels_and_validation_cells_do_not():
         cfg2, d2 = general_config(seed, mode="none", p_obs={"belts": 1.0})
         assert d2 == {**d, "obs": "belts"}
         assert cfg2.conveyors[0].speed == cfg.conveyors[0].speed
+
+
+def test_training_cells_draw_regimes_and_validation_cells_do_not():
+    """0.7.11: half the training cells get bursty arrivals and some general cells a
+    slow head, from a separate random stream; every other parameter of a cell, and
+    the validation cells, are unchanged."""
+    from rl2.expert_iteration import BURST_VAL, VAL_GROUPS, draw_regime, val_config
+    regimes, slow_v = [], []
+    for i in range(160):
+        cfg, kind = sample_config(100000 + i)
+        group, mode, obs, regime = kind.split("/")
+        regimes.append(regime)
+        burst = cfg.arrivals.distribution == "burst"
+        assert burst == ("burst" in regime)
+        if burst:
+            assert 0.2 <= cfg.arrivals.burst_on_fraction[0] <= 1.0
+            assert 10.0 <= cfg.arrivals.burst_on_mean[0] <= 40.0
+        if "slow" in regime:
+            assert group == "general" and 2.5 <= cfg.laser.speed_x <= 5.0
+            slow_v.append(cfg.laser.speed_x)
+        elif group == "general":
+            assert cfg.laser.speed_x >= 5.0
+    bursty = sum("burst" in r for r in regimes) / len(regimes)
+    assert 0.35 < bursty < 0.65 and len(slow_v) > 5                  # nominal 50 %, 30 % of general
+    # the regime draw leaves every other parameter of the cell as it was
+    for seed in (100003, 100011, 100042):
+        r = draw_regime(seed)
+        c0, d0 = general_config(seed, p_obs=GENERAL["p_observation"])
+        c1, d1 = general_config(seed, p_obs=GENERAL["p_observation"], regime=r)
+        keep = {k: v for k, v in d0.items() if k not in ("vx", "vy", "regime")}
+        assert {k: d1[k] for k in keep} == keep
+        assert c1.conveyors[0].speed == c0.conveyors[0].speed
+        assert c1.arrivals.mean_interarrival == c0.arrivals.mean_interarrival
+        if not r["slow"]:
+            assert (c1.laser.speed_x, c1.laser.speed_y) == (c0.laser.speed_x, c0.laser.speed_y)
+    # validation cells: Poisson arrivals and the main laser draw (no regime)
+    for seed in (2500, 2501, 2507):
+        cfg = val_config("general", seed)
+        assert cfg.arrivals.distribution == "exponential" and cfg.laser.speed_x >= 5.0
+    assert VAL_GROUPS == ("real", "heavy", "general", "real_burst")
+    rb, real = val_config("real_burst", 2000), val_config("real", 2000)
+    assert rb.arrivals.distribution == "burst" and real.arrivals.distribution == "exponential"
+    assert rb.arrivals.burst_on_fraction == (0.3,) * 3 and rb.arrivals.burst_on_mean == (20.0,) * 3
+    assert (rb.laser.speed_x, rb.laser.prepositioning) == (real.laser.speed_x, real.laser.prepositioning)
+    assert len(BURST_VAL) == 3

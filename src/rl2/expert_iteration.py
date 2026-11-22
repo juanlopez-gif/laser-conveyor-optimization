@@ -13,16 +13,18 @@ Approximate policy iteration with a search teacher (``rl2.search``):
 * **Losses:** cross-entropy to the softmin of the teacher's look-ahead costs
   (temperature ``--temp`` seconds), plus ``--value-coef`` × MSE of the normalized
   cost-to-go, where cost-to-go = remaining Σ F + λ_N ΔN_B + λ_T ΔT_B.
-* **Gating:** validation on three groups with ``none``: the real cell and the heavy
-  example (seeds 2000+), and 2n general cells (seeds 2500+). Per group, the mean
+* **Gating:** validation on four groups (``--val-mode``): the real cell and the heavy
+  example (seeds 2000+), 2n general cells (seeds 2500+) and, since 0.7.11, the real
+  cell with bursty arrivals (``real_burst``, seeds 2000+). Per group, the mean
   paired delta of penalized flow time vs ``nearest_job``; the score is the mean of
-  the three groups.
+  the groups.
   ``net_k`` is kept as the best model only if its score improves. The teacher of
   each iteration is scored too: it must beat the network it is built on.
 * **Domain randomization** per training episode (seeds 100000+): the general problem
   (N belts with their own speeds and arrival rates, processing time, laser speeds,
   geometry, penalties, stop rule), plus the real cell and the heavy example; see
-  :data:`GENERAL` and :func:`sample_config`.
+  :data:`GENERAL` and :func:`sample_config`. Since 0.7.11 half the training cells
+  get bursty arrivals and some general cells a slow head (:func:`draw_regime`).
 
 Usage::
 
@@ -70,7 +72,48 @@ GENERAL = {
     # laser zone only (zone; forces pre-positioning none) or the hidden upstream queue
     # (full), so one network serves the treatments A/B/C of docs/plans/papers.md
     "p_observation": {"belts": 0.7, "zone": 0.15, "full": 0.15},
+    # arrival regime and head speed of a training cell (0.7.11, owner's decision after
+    # the information pilot): half the cells get bursty arrivals (on/off Poisson source
+    # with the same mean rate, simulation/arrivals.py) and 30 % of the general cells a
+    # slow head below the 0.7.2 range. Drawn from a separate random stream
+    # (draw_regime), so every other draw of a cell, and the validation cells (no draw),
+    # are unchanged.
+    "p_burst": 0.5,
+    "burst_on_fraction": (0.2, 1.0),     # fraction of time the source is on
+    "burst_on_mean": (10.0, 40.0),       # s, mean length of an on-period
+    "p_slow": 0.3,
+    "slow_laser_speed": (2.5, 5.0),      # cm/s, vx and vy independent (general cells)
 }
+
+#: bursty setting of the validation group ``real_burst`` and of the information bench
+BURST_VAL = ("arrivals.stochastic.distribution=burst",
+             "arrivals.stochastic.burst.on_fraction=0.3",
+             "arrivals.stochastic.burst.on_mean=20")
+
+
+def draw_regime(seed: int, G: dict | None = None) -> dict:
+    """Arrival regime and head speed of training cell ``seed`` (0.7.11), from its own
+    random stream: ``burst`` = (on_fraction, on_mean) or None, ``slow`` = (vx, vy) or
+    None. Every draw is made so the stream is the same whatever the outcome."""
+    G = GENERAL if G is None else G
+    rng = random.Random(f"rl2regime/{seed}")
+    u_b, f, tau = rng.random(), rng.uniform(*G["burst_on_fraction"]), rng.uniform(*G["burst_on_mean"])
+    u_s, vx, vy = rng.random(), rng.uniform(*G["slow_laser_speed"]), rng.uniform(*G["slow_laser_speed"])
+    return {"burst": (round(f, 4), round(tau, 4)) if u_b < G["p_burst"] else None,
+            "slow": (round(vx, 4), round(vy, 4)) if u_s < G["p_slow"] else None}
+
+
+def regime_name(regime: dict | None) -> str:
+    if not regime or not (regime.get("burst") or regime.get("slow")):
+        return "regular"
+    return "+".join(k for k in ("burst", "slow") if regime.get(k))
+
+
+def _burst_items(burst) -> list[str]:
+    f, tau = burst
+    return ["arrivals.stochastic.distribution=burst",
+            f"arrivals.stochastic.burst.on_fraction={f}",
+            f"arrivals.stochastic.burst.on_mean={tau}"]
 
 
 def draw_observation(seed: int, p_obs: dict | None) -> str | None:
@@ -88,7 +131,8 @@ def draw_observation(seed: int, p_obs: dict | None) -> str | None:
 
 
 def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
-                   extra: tuple = (), p_obs: dict | None = None):
+                   extra: tuple = (), p_obs: dict | None = None,
+                   regime: dict | None = None):
     """A random cell of the general problem (ranges in :data:`GENERAL`).
 
     * N conveyors at evenly spaced y; speed v_k per belt.
@@ -101,6 +145,9 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
     * Observation level (0.7.9): drawn from ``p_obs`` (``GENERAL["p_observation"]`` for
       training cells) in a separate random stream; ``zone`` forces ``none``. None (the
       validation cells) keeps the default ``belts``.
+    * Regime (0.7.11): ``regime`` from :func:`draw_regime` (training cells) may give
+      bursty arrivals and/or a slow head (vx, vy replaced); None (the validation
+      cells) keeps Poisson arrivals and the laser speeds of the main draw.
 
     ``extra`` are further ``key=value`` overrides. Returns ``(config, description)``.
     """
@@ -127,7 +174,13 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
     obs = draw_observation(seed, p_obs)
     if obs == "zone":
         mode = "none"                     # the zone level cannot pre-position
-    items = ([f"simulation.observation={obs}"] if obs else []) + [
+    burst = slow = None
+    if regime:
+        burst, slow = regime.get("burst"), regime.get("slow")
+        if slow:
+            vx, vy = slow
+    items = ([f"simulation.observation={obs}"] if obs else []) + (
+        _burst_items(burst) if burst else []) + [
         "arrivals.mode=stochastic", f"simulation.seed={seed}", f"laser.prepositioning={mode}",
         f"conveyors.count={n}", "conveyors.y_positions=null",
         f"conveyors.spacing={12.0 * gf[3]:.4f}",
@@ -147,7 +200,7 @@ def general_config(seed: int, p_none: float = 0.5, mode: str | None = None,
     ] + list(extra)
     desc = {"n": n, "v": v, "rho": rho, "p_mean": pm, "dist": dist, "vx": vx, "vy": vy,
             "motion": motion, "mode": mode, "stop": stop, "lambda_n": ln, "lambda_t": lt,
-            "obs": obs or "belts"}
+            "obs": obs or "belts", "regime": regime_name(regime)}
     return load_config(None, set_items=items), desc
 
 
@@ -163,29 +216,37 @@ def sample_config(seed: int, p_real: float = 0.25, p_heavy: float = 0.10,
       ``when_idle`` is the design mode of the cell, ``none`` the variant without entry
       detection).
     * Observation level (0.7.9): ``GENERAL["p_observation"]`` (belts 70 %, zone 15 %,
-      full 15 %; ``zone`` forces ``none``), from a separate random stream. The kind
-      string is ``group/mode/observation``.
+      full 15 %; ``zone`` forces ``none``), from a separate random stream.
+    * Regime (0.7.11): :func:`draw_regime`; general cells may get bursty arrivals
+      and/or a slow head, the real and heavy cells bursty arrivals only (their head
+      is the cell's). The kind string is ``group/mode/observation/regime``.
     """
     from simulation.config import load_config
     rng = random.Random(f"rl2cfg/{seed}")
     u = rng.random()
     p_obs = GENERAL["p_observation"]
+    regime = draw_regime(seed)
     if u >= p_real + p_heavy:
-        cfg, d = general_config(seed, p_none, extra=extra, p_obs=p_obs)
-        return cfg, f"general/{d['mode']}/{d['obs']}"
+        cfg, d = general_config(seed, p_none, extra=extra, p_obs=p_obs, regime=regime)
+        return cfg, f"general/{d['mode']}/{d['obs']}/{d['regime']}"
     mode = "none" if rng.random() < p_none else "when_idle"
     obs = draw_observation(seed, p_obs)
     if obs == "zone":
         mode = "none"
+    regime = {"burst": regime["burst"]}
     items = [f"simulation.observation={obs}", "arrivals.mode=stochastic",
-             f"simulation.seed={seed}", f"laser.prepositioning={mode}"] + list(extra)
+             f"simulation.seed={seed}", f"laser.prepositioning={mode}"] + (
+             _burst_items(regime["burst"]) if regime["burst"] else []) + list(extra)
+    kind = f"{mode}/{obs}/{regime_name(regime)}"
     if u < p_real:
-        return load_config(None, set_items=items), f"real/{mode}/{obs}"
-    return load_config(HEAVY, set_items=items), f"heavy/{mode}/{obs}"
+        return load_config(None, set_items=items), f"real/{kind}"
+    return load_config(HEAVY, set_items=items), f"heavy/{kind}"
 
 
 VAL_GENERAL_SEED_BASE = 2500
-VAL_GROUPS = ("real", "heavy", "general")
+#: validation groups: the real cell, the heavy example, 2n general cells and (0.7.11)
+#: the real cell with bursty arrivals (``BURST_VAL``), seeds 2000+ like the real cell
+VAL_GROUPS = ("real", "heavy", "general", "real_burst")
 #: validation modes (0.7.7): ``design`` = the real cell and the heavy example with
 #: ``when_idle`` (the design mode, docs/assumptions.md C4) and general cells with the
 #: mode drawn 50/50; ``none`` = every cell with ``none`` (the validation of 0.7.2–0.7.6)
@@ -193,18 +254,23 @@ VAL_MODES = ("design", "none")
 
 
 def val_config(group: str, seed: int, mode: str = "design", extra: tuple = ()):
-    """Validation cell: the real cell, the heavy example, or a general cell (seeds
-    2500+, drawn by :func:`general_config`). ``mode`` is one of :data:`VAL_MODES`."""
+    """Validation cell: the real cell, the heavy example, a general cell (seeds
+    2500+, drawn by :func:`general_config`, Poisson arrivals, main laser draw) or the
+    real cell with bursty arrivals (``real_burst``, 0.7.11). ``mode`` is one of
+    :data:`VAL_MODES`."""
     from simulation.config import load_config
     if mode not in VAL_MODES:
         raise ValueError(f"validation mode must be one of {VAL_MODES}, not {mode!r}")
     if group == "general":
         return general_config(seed, mode=None if mode == "design" else "none",
                               extra=extra)[0]
+    if group not in VAL_GROUPS:
+        raise ValueError(f"validation group must be one of {VAL_GROUPS}, not {group!r}")
     mode = "when_idle" if mode == "design" else "none"
+    burst = list(BURST_VAL) if group == "real_burst" else []
     return load_config(HEAVY if group == "heavy" else None,
                        set_items=["arrivals.mode=stochastic", f"simulation.seed={seed}",
-                                  f"laser.prepositioning={mode}"] + list(extra))
+                                  f"laser.prepositioning={mode}"] + burst + list(extra))
 
 
 def _extra(job: dict) -> tuple:
@@ -393,11 +459,11 @@ def train(net, data: list, scale, epochs: int, lr: float, batch: int, temp: floa
 def validate(ex, net_path, n: int, who: list[str], k: int, w_pen: float,
              horizon: float | None = None, la: tuple = (0.0, 0),
              val_mode: str = "design") -> dict:
-    """Paired delta vs ``nearest_job`` per group (real, heavy, general: 2n cells);
-    score = mean of the three group means. ``la`` = (horizon_s, scenarios, cut,
+    """Paired delta vs ``nearest_job`` per group (real, heavy, general: 2n cells,
+    real_burst); score = mean of the group means. ``la`` = (horizon_s, scenarios, cut,
     window_s) of the cost-to-go teacher (0.7.6; (0, 0) = known-parts look-ahead);
     ``val_mode`` is one of :data:`VAL_MODES` (0.7.7)."""
-    seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
+    seeds = {g: VAL_GENERAL_SEED_BASE if g == "general" else VAL_SEED_BASE for g in VAL_GROUPS}
     jobs = [{"load": g, "seed": seeds[g] + i, "who": w, "net": net_path, "k": k,
              "w_pen": w_pen, "horizon": horizon, "la": la, "mode": val_mode}
             for w in who + ["nearest_job"] for g in VAL_GROUPS

@@ -6,6 +6,41 @@ summarized from the git history.
 
 ---
 
+## 0.7.11 — 2026-11-22 — Bursty arrivals and slow heads in the training mix; validation group `real_burst`; run `rl2_gen_s_b`
+
+* **Why.** After the information pilot (0.7.10) the owner decided that bursty
+  arrivals and slow heads are part of the scope to be defended, and to retrain the S
+  network once, keeping `rl2_gen_s_d` as the reference. Up to 0.7.10 every training
+  cell had Poisson arrivals and laser speeds in 5–20 cm/s, and the network did not
+  beat `nearest_job` on the heavy cell with a 2.5 cm/s head.
+* **What** (`rl2.expert_iteration`, `docs/methods/rl2.md` §6.1): `GENERAL` gains
+  `p_burst 0.5`, `burst_on_fraction (0.2, 1)`, `burst_on_mean (10, 40) s`, `p_slow
+  0.3`, `slow_laser_speed (2.5, 5) cm/s`. `draw_regime(seed)` draws them from a
+  separate random stream (`rl2regime/<seed>`), so every other parameter of a cell
+  with a given seed is unchanged and the general validation cells (no draw) are the
+  same cells as in 0.7.9 (a test checks both). General training cells may get
+  bursts and/or a slow head; the real and heavy training cells bursts only (their
+  head is the cell's). The kind string of an episode becomes
+  `group/mode/observation/regime`. The previous `laser_speed` range of the main draw
+  is untouched (widening it would have changed every existing cell).
+* **Validation:** fourth group `real_burst` (the real cell with `on_fraction 0.3`,
+  `on_mean 20 s`, the setting of the information bench, now `BURST_VAL`; seeds
+  2000+); the score is the mean of the four groups, so it is not comparable with the
+  three-group scores of earlier runs (the per-group deltas are).
+* **Not changed:** the tokens (the network is not told the burst parameters or the
+  regime; it keeps the mean rates and must infer the burstiness), so `rl2_gen_s_d`
+  can initialize the new run and remains loadable; the teacher's sampled futures
+  (Poisson at the mean rates); the validation seeds; the cell model.
+* **Run `rl2_gen_s_b`** launched on the workstation: size S from `rl2_gen_s_d.pt`,
+  sampled-future teacher (8 futures, 30 s, w_pen 0), `--val-mode design`, 50
+  validation seeds per group, up to 8 iterations, patience 2, 2 000 episodes per
+  iteration. Results: `docs/methods/rl2.md` §8.8.
+* **Tests:** `tests/test_rl2_search.py` gains the regime test (mix fractions,
+  ranges, separate stream, validation cells unchanged, `real_burst` group); the kind
+  split updated. Full suite passes.
+
+---
+
 ## 0.7.10 — 2026-11-22 — Bursty arrivals and the visible length of the entry zone; information bench
 
 * **Why.** The first A/B/C/D measurement (0.7.9) showed that, on the nominal cell,

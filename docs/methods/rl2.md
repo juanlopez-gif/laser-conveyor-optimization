@@ -166,8 +166,23 @@ Every training episode (seeds 100000+) draws one cell:
 | blocking penalty | λ_N ~ U[0, 20] s per event, λ_T ~ U[0, 2] s per blocked belt-second |
 | conveyor stop rule | only the processing belt (70 %) or all belts (30 %) |
 | pre-positioning | `none` or `when_idle`, 50 % each since 0.7.7 (`when_idle` is the design mode of the cell, `none` the variant without entry detection; 70 / 30 up to 0.7.6) |
+| observation level | `belts` 70 %, `zone` 15 % (forces `none`), `full` 15 % (0.7.9) |
+| arrival regime (0.7.11) | Poisson, or with probability 0.5 the on/off source of `arrivals.stochastic.distribution: burst` with `on_fraction` ~ U[0.2, 1] and `on_mean` ~ U[10, 40] s at the same mean rate; also for the real and heavy training cells |
+| slow head (0.7.11) | with probability 0.3 a general cell gets vx, vy ~ U[2.5, 5] cm/s instead of the main draw |
 
-All values reach the network through the conveyor and context tokens.
+All values reach the network through the conveyor and context tokens, **except the
+burst parameters and the regime itself** (0.7.11): the network knows the mean rates
+and must infer the burstiness from what it sees, so the tokens and the saved models
+stay compatible across 0.7.9–0.7.11. The observation level and the regimes are drawn
+from their own random streams (`draw_observation`, `draw_regime`), so the other
+parameters of a cell with a given seed, and the validation cells (which take no
+draw), are unchanged by their introduction.
+
+**Validation groups** (`VAL_GROUPS`): the real cell and the heavy example (seeds
+2000+), 2n general cells (2500+, Poisson, main laser draw) and, since 0.7.11, the real
+cell with bursty arrivals (`real_burst`: `on_fraction 0.3`, `on_mean 20 s`, seeds
+2000+); the score is the mean of the four group deltas, so scores from 0.7.11 on are
+not comparable with the three-group scores of §8.4–§8.6 (the per-group deltas are).
 
 **Not generalized yet:**
 
@@ -739,6 +754,19 @@ Findings:
   7000–7029) is still to run, once the regimes and the training mix are frozen.
 * Decisions taken by the owner on this pilot (hypothesis reformulated, retraining
   conditional on the scope, phase 4 after freezing): `docs/plans/papers.md`.
+
+### 8.8 Retraining with bursty arrivals and slow heads in the mix (`rl2_gen_s_b`, 0.7.11)
+
+The owner included bursty arrivals and slow heads in the scope (2026-11-22). Run
+`rl2_gen_s_b`: size S, continuation of `rl2_gen_s_d.pt`, the sampled-future teacher
+(8 futures, 30 s window, w_pen 0), validation in the design mode on the four groups
+of §6.1 with 50 seeds (100 general), 8 iterations at most, patience 2, 2 000 episodes
+per iteration, replay 2. The training mix is that of §6.1 with the 0.7.11 rows; the
+teacher's futures stay Poisson at the mean rates. `rl2_gen_s_d` is kept as the
+reference; the choice between the two is to be made on development seeds, never on
+the confirmatory seeds 7000–7029.
+
+B_RESULTS_PLACEHOLDER
 
 ## 9. Reproduce (phase 3)
 

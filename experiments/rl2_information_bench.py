@@ -34,13 +34,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from rl2.expert_iteration import HEAVY, VAL_SEED_BASE, _init_worker, val_config  # noqa: E402
+from rl2.expert_iteration import (BURST_VAL, HEAVY, VAL_SEED_BASE,  # noqa: E402
+                                  _init_worker, val_config)
 
 TREATMENTS = {"A": ("zone", "none"), "B": ("belts", "none"),
               "C": ("belts", "when_idle"), "D": ("full", "none")}
-BURST = ("arrivals.stochastic.distribution=burst",
-         "arrivals.stochastic.burst.on_fraction=0.3",
-         "arrivals.stochastic.burst.on_mean=20")
+BURST = BURST_VAL        # the bursty setting of the validation group real_burst
 
 _NET = {}
 
