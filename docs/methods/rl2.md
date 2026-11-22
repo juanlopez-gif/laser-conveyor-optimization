@@ -591,7 +591,52 @@ general cells with the mode drawn. The `nearest_job` reference of every paired �
 run in the same mode as the policy, so these Δ measure the policy alone; the value of
 pre-positioning itself is in `docs/assumptions.md` C4.
 
-D_RESULTS_PLACEHOLDER
+Run of 2026-11-22 on the workstation (4 h 21 min; iterations 1–4, stopped by the
+patience rule; best **iteration 2**). Reference on the same seeds in the design mode
+(both policies with `when_idle`): `nearest_head` −0.37 ±1.34 / +0.48 ±1.02 /
++1.23 ±1.07 %; search over `nearest_job` −3.73 ±1.37 / +0.51 ±1.33 / −1.74 ±1.13 %.
+
+| it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | −6.40 ±1.50 | −2.04 ±1.28 | −3.08 ±1.08 | −3.84 | −6.54 ±1.32 | −2.86 ±1.28 | −3.06 ±1.20 | yes | 3 275 / 32 / 310 |
+| **2** | **−6.61 ±1.40** | **−2.45 ±1.20** | **−2.88 ±1.07** | **−3.98** | −6.69 ±1.31 | −3.14 ±1.22 | −3.22 ±1.29 | yes | 3 431 / 62 / 305 |
+| 3 | −6.67 ±1.36 | −2.40 ±1.32 | −2.87 ±1.06 | −3.98 | −6.40 ±1.29 | −2.29 ±1.36 | −3.31 ±1.29 | no | 3 718 / 61 / 291 |
+| 4 | −6.37 ±1.43 | −2.45 ±1.32 | −2.82 ±1.05 | −3.88 | −6.54 ±1.30 | −2.89 ±1.32 | −3.17 ±1.20 | no | 3 765 / 62 / 306 |
+
+* In the design mode the paired Δ is measured against `nearest_job` **with**
+  pre-positioning, which already gains 7.4 points on its own at the real load
+  (`docs/assumptions.md` C4), so the network's −6.6 % here is on top of that: against
+  `nearest_job` without pre-positioning it is −13.3 % (table below).
+* The network is again at its teacher from iteration 2 (−6.6 vs −6.7 % real); the
+  run stopped after two iterations within the intervals.
+* `models/rl2_gen_s_d.pt` is the iteration-2 model, `models/rl2_gen_s_d_training.json`
+  the log.
+
+**Information treatments A/B/C/D with one network** (`results/experiments/abcd_rl2_gen_s_d.json`;
+30 seeds, paired Δ vs `nearest_job` in B; A = `zone`/`none`, B = `belts`/`none`,
+C = `belts`/`when_idle`, D = `full`/`none`, the treatments of `docs/plans/papers.md`):
+
+| policy | real A | real B | real C | real D | heavy A | heavy B | heavy C | heavy D |
+|---|---|---|---|---|---|---|---|---|
+| `nearest_job` | 0 | 0 | −7.43 ±2.48 | 0 | 0 | 0 | +0.05 ±1.54 | 0 |
+| `nearest_head` | −1.60 ±1.68 | −1.60 ±1.68 | −8.14 ±2.22 | −1.60 ±1.68 | +0.37 ±1.38 | +0.37 ±1.38 | +0.75 ±1.48 | +0.37 ±1.38 |
+| **`rl2_gen_s_d` alone** | −7.72 ±1.99 | −8.02 ±1.75 | **−13.33 ±1.81** | −7.34 ±1.83 | −3.77 ±1.46 | −4.01 ±1.81 | −3.26 ±1.62 | −5.24 ±1.21 |
+
+Paired contrasts of the network between treatments (same seeds): **B vs A −0.22 ±1.33 %**
+(real) and −0.22 ±1.35 % (heavy); **C vs B −5.67 ±1.71 %** (real) and +0.91 ±1.64 %
+(heavy); **D vs B +0.76 ±0.92 %** (real) and −1.16 ±1.24 % (heavy).
+
+* **Seeing the entry zone without being allowed to act on it is worth nothing** (B vs
+  A), at either load and with a network that anticipates the future. The rules are
+  identical in A, B and D by construction (they choose among candidates only).
+* **Acting on it is worth 5.7 points** at the design load (C vs B) and nothing at the
+  heavy load, where the head is never idle.
+* **Seeing the hidden upstream queue** (D) adds nothing at the design load and about
+  1.2 points at the heavy load.
+* Caveat: the network saw `zone` cells in 15 % of its training episodes only; a
+  network trained more on A could narrow or widen the B–A gap. This is the first
+  measurement of the main contrast of Paper 2, on the nominal cell only.
+
 
 ## 9. Reproduce (phase 3)
 

@@ -24,7 +24,17 @@ summarized from the git history.
   design mode (`--val-mode design`: real and heavy cells with `when_idle`, general
   cells with the mode drawn). Its scores are therefore not comparable with the
   `none` scores of §8.4–§8.5; the reference rows of its log give the new baselines.
-  Results: `docs/methods/rl2.md` §8.6.
+* **Results** (`docs/methods/rl2.md` §8.6): 4 h 21 min, best iteration 2, network
+  alone −6.6 / −2.5 / −2.9 % against `nearest_job` **with** pre-positioning (score
+  −3.98 %), i.e. −13.3 % at the design load against `nearest_job` without it.
+  Committed: `models/rl2_gen_s_d.pt`, `models/rl2_gen_s_d_training.json`.
+* **First measurement of the information treatments A/B/C/D** of the research plan,
+  with this network on the nominal cells (30 seeds, paired): seeing the entry zone
+  without acting on it (B vs A) is worth −0.2 ±1.3 % at both loads, i.e. nothing;
+  acting on it (C vs B) is worth 5.7 points at the design load and nothing at the
+  heavy load; seeing the hidden upstream queue (D vs B) adds 1.2 points at the heavy
+  load only. The network saw `zone` cells in 15 % of its training, so the A–B gap may
+  move with more A training; the bench of the plan is still to run.
 
 ---
 

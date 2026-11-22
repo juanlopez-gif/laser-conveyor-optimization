@@ -1,0 +1,518 @@
+{
+  "tag": "rl2_gen_s_d",
+  "args": {
+    "tag": "rl2_gen_s_d",
+    "size": "S",
+    "iters": 8,
+    "episodes0": 800,
+    "episodes": 2000,
+    "epochs0": 12,
+    "epochs": 4,
+    "lr": 0.001,
+    "lr_ft": 0.0003,
+    "batch": 256,
+    "temp": 1.0,
+    "value_coef": 0.25,
+    "k": 6,
+    "w_pen": 0.0,
+    "la_horizon": Infinity,
+    "scenarios": 8,
+    "la_cut": "time",
+    "la_window": 30.0,
+    "beta": 0.3,
+    "eps": 0.1,
+    "replay": 2,
+    "val": 50,
+    "val_mode": "design",
+    "patience": 2,
+    "workers": 47,
+    "threads": 4,
+    "device": "auto",
+    "horizon": null,
+    "init": "models/rl2_gen_s_sf.pt",
+    "resume": false
+  },
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "started": "2026-11-22 01:27:09",
+  "iterations": [
+    {
+      "iteration": 1,
+      "episodes": 2000,
+      "decisions": 98167,
+      "buffer": 98167,
+      "seeds": [
+        100000,
+        101999
+      ],
+      "kinds": {
+        "general/none/belts": 456,
+        "general/none/full": 88,
+        "general/none/zone": 220,
+        "general/when_idle/belts": 480,
+        "general/when_idle/full": 92,
+        "heavy/none/belts": 79,
+        "heavy/none/full": 12,
+        "heavy/none/zone": 21,
+        "heavy/when_idle/belts": 64,
+        "heavy/when_idle/full": 14,
+        "real/none/belts": 179,
+        "real/none/full": 44,
+        "real/none/zone": 58,
+        "real/when_idle/belts": 157,
+        "real/when_idle/full": 36
+      },
+      "acting_cost_mean": 29.31438265290051,
+      "gen_s": 3274.972234677989,
+      "train_s": 32.03969723917544,
+      "val_s": 309.63500975398347,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.3999785728452744,
+            "value": 0.12272206900213699,
+            "acc": 0.8580887671009606
+          },
+          {
+            "policy": 0.38551299759268326,
+            "value": 0.06303505934834455,
+            "acc": 0.864139680340644
+          },
+          {
+            "policy": 0.3656956800807484,
+            "value": 0.05499654901153274,
+            "acc": 0.8701498466898245
+          },
+          {
+            "policy": 0.3481705327815772,
+            "value": 0.05044094850741474,
+            "acc": 0.8735623987694439
+          }
+        ],
+        "device": "cuda"
+      },
+      "val": {
+        "net/real": {
+          "delta": -0.06404745479230207,
+          "ci": 0.015032283035575722,
+          "secs": 0.4250850156322122,
+          "n": 50,
+          "wins": 45
+        },
+        "net/heavy": {
+          "delta": -0.020436794086613582,
+          "ci": 0.012773112239268759,
+          "secs": 0.6877736014313995,
+          "n": 50,
+          "wins": 36
+        },
+        "net/general": {
+          "delta": -0.030795190811339097,
+          "ci": 0.01081889968614842,
+          "secs": 0.32253853098489343,
+          "n": 100,
+          "wins": 47
+        },
+        "net/score": -0.03842647989675158,
+        "teacher/real": {
+          "delta": -0.06536766454365671,
+          "ci": 0.013228256296043538,
+          "secs": 25.222120659276843,
+          "n": 50,
+          "wins": 47
+        },
+        "teacher/heavy": {
+          "delta": -0.028619005021659105,
+          "ci": 0.012824171343831287,
+          "secs": 125.45782980008983,
+          "n": 50,
+          "wins": 37
+        },
+        "teacher/general": {
+          "delta": -0.03064786309268838,
+          "ci": 0.012027112455999842,
+          "secs": 29.326153005515224,
+          "n": 100,
+          "wins": 55
+        },
+        "teacher/score": -0.041544844219334735
+      },
+      "accepted": true,
+      "model": "models/rl2_gen_s_d_it1.pt"
+    },
+    {
+      "iteration": 2,
+      "episodes": 2000,
+      "decisions": 97615,
+      "buffer": 195782,
+      "seeds": [
+        102000,
+        103999
+      ],
+      "kinds": {
+        "general/none/belts": 468,
+        "general/none/full": 100,
+        "general/none/zone": 191,
+        "general/when_idle/belts": 455,
+        "general/when_idle/full": 90,
+        "heavy/none/belts": 87,
+        "heavy/none/full": 11,
+        "heavy/none/zone": 40,
+        "heavy/when_idle/belts": 58,
+        "heavy/when_idle/full": 22,
+        "real/none/belts": 183,
+        "real/none/full": 35,
+        "real/none/zone": 63,
+        "real/when_idle/belts": 165,
+        "real/when_idle/full": 32
+      },
+      "acting_cost_mean": 30.755584706681006,
+      "gen_s": 3431.467661161907,
+      "train_s": 61.96873750118539,
+      "val_s": 305.4667612230405,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.3748774843657703,
+            "value": 0.08513126557473515,
+            "acc": 0.8707235598778232
+          },
+          {
+            "policy": 0.36912829587716783,
+            "value": 0.07266673697583298,
+            "acc": 0.8710351309109111
+          },
+          {
+            "policy": 0.3511316986612913,
+            "value": 0.06466992234987592,
+            "acc": 0.8783289577182785
+          },
+          {
+            "policy": 0.3339211386902686,
+            "value": 0.05971228499220664,
+            "acc": 0.8847493640886291
+          }
+        ],
+        "device": "cuda"
+      },
+      "val": {
+        "net/real": {
+          "delta": -0.06610207534217773,
+          "ci": 0.014015507720834257,
+          "secs": 0.3897768998797983,
+          "n": 50,
+          "wins": 46
+        },
+        "net/heavy": {
+          "delta": -0.02451050284277291,
+          "ci": 0.011980660162925956,
+          "secs": 0.7020436051581055,
+          "n": 50,
+          "wins": 41
+        },
+        "net/general": {
+          "delta": -0.028846826527957874,
+          "ci": 0.010739516755274302,
+          "secs": 0.3302514272602275,
+          "n": 100,
+          "wins": 48
+        },
+        "net/score": -0.0398198015709695,
+        "teacher/real": {
+          "delta": -0.06687508172060262,
+          "ci": 0.013099308303539673,
+          "secs": 25.1004763262067,
+          "n": 50,
+          "wins": 49
+        },
+        "teacher/heavy": {
+          "delta": -0.03138441287197725,
+          "ci": 0.0121678816354486,
+          "secs": 127.177324367119,
+          "n": 50,
+          "wins": 38
+        },
+        "teacher/general": {
+          "delta": -0.03223014635946691,
+          "ci": 0.01293625651135814,
+          "secs": 30.374114697650075,
+          "n": 100,
+          "wins": 55
+        },
+        "teacher/score": -0.043496546984015595
+      },
+      "accepted": true,
+      "model": "models/rl2_gen_s_d_it2.pt"
+    },
+    {
+      "iteration": 3,
+      "episodes": 2000,
+      "decisions": 101316,
+      "buffer": 198931,
+      "seeds": [
+        104000,
+        105999
+      ],
+      "kinds": {
+        "general/none/belts": 476,
+        "general/none/full": 93,
+        "general/none/zone": 186,
+        "general/when_idle/belts": 447,
+        "general/when_idle/full": 94,
+        "heavy/none/belts": 74,
+        "heavy/none/full": 17,
+        "heavy/none/zone": 35,
+        "heavy/when_idle/belts": 75,
+        "heavy/when_idle/full": 16,
+        "real/none/belts": 166,
+        "real/none/full": 47,
+        "real/none/zone": 66,
+        "real/when_idle/belts": 161,
+        "real/when_idle/full": 47
+      },
+      "acting_cost_mean": 30.678173243400916,
+      "gen_s": 3718.3160030390136,
+      "train_s": 60.629351924173534,
+      "val_s": 290.5391041492112,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.3640878149133382,
+            "value": 0.0983535041450157,
+            "acc": 0.8743634727619124
+          },
+          {
+            "policy": 0.3576100593958092,
+            "value": 0.07796954980290839,
+            "acc": 0.8774851581704209
+          },
+          {
+            "policy": 0.33955469344363576,
+            "value": 0.06883536751638528,
+            "acc": 0.8833263794984191
+          },
+          {
+            "policy": 0.32217831640091654,
+            "value": 0.06264414029518348,
+            "acc": 0.8931589345049289
+          }
+        ],
+        "device": "cuda"
+      },
+      "val": {
+        "net/real": {
+          "delta": -0.0667118474850639,
+          "ci": 0.013620692127450804,
+          "secs": 0.4091142063122243,
+          "n": 50,
+          "wins": 48
+        },
+        "net/heavy": {
+          "delta": -0.02396564119820276,
+          "ci": 0.013169060063392496,
+          "secs": 0.6716596243716776,
+          "n": 50,
+          "wins": 38
+        },
+        "net/general": {
+          "delta": -0.028717095584975566,
+          "ci": 0.010629933728146395,
+          "secs": 0.31937678895425053,
+          "n": 100,
+          "wins": 49
+        },
+        "net/score": -0.03979819475608074,
+        "teacher/real": {
+          "delta": -0.06396574429536069,
+          "ci": 0.012855818540742433,
+          "secs": 24.524566320693122,
+          "n": 50,
+          "wins": 48
+        },
+        "teacher/heavy": {
+          "delta": -0.022858115985542514,
+          "ci": 0.013567574478997639,
+          "secs": 118.22099051292054,
+          "n": 50,
+          "wins": 37
+        },
+        "teacher/general": {
+          "delta": -0.03314901752748581,
+          "ci": 0.012916238717907837,
+          "secs": 29.175921857687644,
+          "n": 100,
+          "wins": 54
+        },
+        "teacher/score": -0.039990959269463
+      },
+      "accepted": false,
+      "model": "models/rl2_gen_s_d_it3.pt"
+    },
+    {
+      "iteration": 4,
+      "episodes": 2000,
+      "decisions": 100423,
+      "buffer": 201739,
+      "seeds": [
+        106000,
+        107999
+      ],
+      "kinds": {
+        "general/none/belts": 447,
+        "general/none/full": 91,
+        "general/none/zone": 208,
+        "general/when_idle/belts": 430,
+        "general/when_idle/full": 97,
+        "heavy/none/belts": 72,
+        "heavy/none/full": 11,
+        "heavy/none/zone": 26,
+        "heavy/when_idle/belts": 65,
+        "heavy/when_idle/full": 20,
+        "real/none/belts": 179,
+        "real/none/full": 40,
+        "real/none/zone": 76,
+        "real/when_idle/belts": 198,
+        "real/when_idle/full": 40
+      },
+      "acting_cost_mean": 30.304602679487207,
+      "gen_s": 3765.3574902550317,
+      "train_s": 61.649004452396184,
+      "val_s": 305.92961597815156,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.378485189527104,
+            "value": 0.11283802788449195,
+            "acc": 0.8700697435795756
+          },
+          {
+            "policy": 0.36817916389231126,
+            "value": 0.07736172595911961,
+            "acc": 0.8718591843917141
+          },
+          {
+            "policy": 0.35231915863602553,
+            "value": 0.06648131458501828,
+            "acc": 0.8774951794149867
+          },
+          {
+            "policy": 0.33695336163985884,
+            "value": 0.060862682307947634,
+            "acc": 0.8851040205413926
+          }
+        ],
+        "device": "cuda"
+      },
+      "val": {
+        "net/real": {
+          "delta": -0.06373995974438662,
+          "ci": 0.014277192110759215,
+          "secs": 0.45812042218633,
+          "n": 50,
+          "wins": 46
+        },
+        "net/heavy": {
+          "delta": -0.024488327695760558,
+          "ci": 0.013181583892155728,
+          "secs": 0.7030428593140096,
+          "n": 50,
+          "wins": 36
+        },
+        "net/general": {
+          "delta": -0.028178937250347,
+          "ci": 0.010542856463649537,
+          "secs": 0.3126014619041234,
+          "n": 100,
+          "wins": 50
+        },
+        "net/score": -0.03880240823016473,
+        "teacher/real": {
+          "delta": -0.06538307996935255,
+          "ci": 0.012976717482644149,
+          "secs": 25.449243634874,
+          "n": 50,
+          "wins": 48
+        },
+        "teacher/heavy": {
+          "delta": -0.028916149746749907,
+          "ci": 0.013154671357357166,
+          "secs": 123.47135413630866,
+          "n": 50,
+          "wins": 38
+        },
+        "teacher/general": {
+          "delta": -0.03168782683683526,
+          "ci": 0.012005108381508934,
+          "secs": 30.64411752022803,
+          "n": 100,
+          "wins": 59
+        },
+        "teacher/score": -0.04199568551764591
+      },
+      "accepted": false,
+      "model": "models/rl2_gen_s_d_it4.pt"
+    }
+  ],
+  "machine": [
+    {
+      "host": "isecapstone",
+      "cpus": 48,
+      "workers": 47,
+      "device": "cuda",
+      "cuda": "NVIDIA GeForce RTX 3080",
+      "torch": "2.11.0+cu128",
+      "python": "3.12.3"
+    }
+  ],
+  "reference": {
+    "nearest_head/real": {
+      "delta": -0.0036979642186033977,
+      "ci": 0.013401188327595698,
+      "secs": 0.012523911278694868,
+      "n": 50,
+      "wins": 28
+    },
+    "nearest_head/heavy": {
+      "delta": 0.004807406892788551,
+      "ci": 0.010210533261117745,
+      "secs": 0.014609837559983135,
+      "n": 50,
+      "wins": 22
+    },
+    "nearest_head/general": {
+      "delta": 0.012279544515877374,
+      "ci": 0.010697500446721572,
+      "secs": 0.008738050223328173,
+      "n": 100,
+      "wins": 20
+    },
+    "nearest_head/score": 0.004462995730020842,
+    "teacher/real": {
+      "delta": -0.037263570972808004,
+      "ci": 0.0137333192837689,
+      "secs": 0.08282695619389414,
+      "n": 50,
+      "wins": 40
+    },
+    "teacher/heavy": {
+      "delta": 0.005144923423993586,
+      "ci": 0.013300544229608578,
+      "secs": 0.3281776560470462,
+      "n": 50,
+      "wins": 25
+    },
+    "teacher/general": {
+      "delta": -0.01738954598484605,
+      "ci": 0.011333711371460168,
+      "secs": 0.12002367471344769,
+      "n": 100,
+      "wins": 45
+    },
+    "teacher/score": -0.016502731177886823
+  },
+  "best": {
+    "model": "models/rl2_gen_s_d_it2.pt",
+    "score": -0.0398198015709695
+  },
+  "finished": "2026-11-22 05:47:59"
+}

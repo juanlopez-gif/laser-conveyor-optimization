@@ -259,6 +259,13 @@ only to parts already in the working zone), which is the level of every result o
 `when_idle`) against B; the 0.7.9 training mix adds `zone` and `full` cells so one
 network serves all treatments.
 
+**First A/B/C/D measurement (0.7.9, `rl2.md` §8.6).** With the network trained on
+all levels, on the nominal cells (30 seeds): B vs A −0.2 ±1.3 % (nothing), C vs B
+−5.7 ±1.7 % at the design load and +0.9 ±1.6 % at the heavy load, D vs B +0.8 ±0.9 %
+(design) and −1.2 ±1.2 % (heavy). The main hypothesis of Paper 2 therefore needs the
+bursty/high-travel regimes to find any value of seeing earlier *without* acting
+earlier; on the nominal cell the value is in the action, not the information.
+
 **Where the plan's steps already stand.**
 
 | step | status |
