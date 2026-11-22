@@ -316,7 +316,7 @@ narrower than in §8.1.
 |---|---|---|---|---|---|---|
 | `rl2_gen_s_big` | S | 0.88 M | 4 000 / 2 000 | 194 k / 98 k decisions | 0–5 | it. 3 |
 | `rl2_gen_m` | M | 6.7 M | 8 000 / 4 000 | 394 k / 197 k | 0–5 | it. 3 |
-| `rl2_gen_l` | L | 39 M | 16 000 / 8 000 | 793 k / 400 k | 0 (iteration 1 in progress at the time of writing) | it. 0 |
+| `rl2_gen_l` | L | 39 M | 16 000 / 8 000 | 793 k / 394 k | 0–1 (iteration 2 running) | it. 1 |
 
 Both S and M stopped by the rule of §6.3 (two rejections after their iteration 3).
 Reference on the same 50/100 seeds: `nearest_head` −1.81 ±1.32 / +0.21 ±0.96 /
@@ -350,10 +350,11 @@ Reference on the same 50/100 seeds: `nearest_head` −1.81 ±1.32 / +0.21 ±0.96
 | it | net real | net heavy | net general | score | search real | search heavy | search general | accepted | gen / train / val [s] |
 |---|---|---|---|---|---|---|---|---|---|
 | 0 | −3.88 ±1.38 | −1.07 ±1.76 | −1.49 ±1.03 | −2.15 | −5.02 ±1.48 | −1.73 ±1.33 | −2.02 ±1.09 | yes | 77 / 5 184 / 1 108 |
+| **1** | **−4.25 ±1.53** | **−1.67 ±1.32** | **−1.40 ±1.04** | **−2.44** | −4.90 ±1.50 | −1.77 ±1.27 | −2.21 ±1.03 | yes | 39 250 / 3 805 / 1 100 |
 
-Iteration 1 of L (8 000 episodes labelled by the search over the L network, about
-5 s per episode on the CPU workers) was still running when this section was written;
-its result will be appended if it is accepted.
+Iteration 1 of L took 10 h 54 min to generate (8 000 episodes labelled by the search
+over the L network, 4.9 s each on the CPU workers) and was accepted; after two
+iterations L (−2.44 %) is still below the best S (−2.79 %) and M (−2.88 %).
 
 **Best models on the 30-seed validation set of §8.1 and of the laptop references**
 (seeds 2000–2029 and 2500–2559, `results/experiments/compare_val30_*.json`):
@@ -366,7 +367,7 @@ its result will be appended if it is accepted.
 | search over S | −5.23 ±1.91 | −2.69 ±1.72 | −2.49 ±1.52 |
 | **M alone** (`rl2_gen_m.pt`) | −5.25 ±2.03 | −1.96 ±1.75 | −2.02 ±1.42 |
 | search over M | −5.59 ±1.85 | −2.45 ±1.47 | −2.43 ±1.76 |
-| **L alone** (`rl2_gen_l.pt`, it. 0) | −4.01 ±1.58 | −0.69 ±2.37 | −1.47 ±1.42 |
+| L alone (it. 0) | −4.01 ±1.58 | −0.69 ±2.37 | −1.47 ±1.42 |
 | search over L (it. 0) | −5.63 ±1.89 | −1.95 ±1.71 | −2.20 ±1.61 |
 
 * The `nearest_head` row reproduces the laptop reference (−1.6 / +0.4 / +1.2 %)
@@ -399,7 +400,8 @@ its result will be appended if it is accepted.
   (15–19 ms vs 4 ms, §4): the gain does not pay for the cost under the 5 ms budget.
   **L** at iteration 0, with 4× the data of S, scores −2.15 %: between S (−1.88 %)
   and M (−2.29 %) at the same stage, with a higher final training loss (0.469 vs
-  0.454 for M) after the same 8 epochs. The 39 M model is not under-fitted by lack
+  0.454 for M) after the same 8 epochs; at iteration 1 it reaches −2.44 % against
+  −2.20 % (S) and −2.46 % (M). The 39 M model is not under-fitted by lack
   of data; it learns the same teacher more slowly, and its teacher runs about 6×
   slower than M's (validation 1 108 s vs 185 s). On this evidence the ladder stops at
   M: more parameters do not raise the ceiling set by the teacher.
@@ -413,10 +415,10 @@ its result will be appended if it is accepted.
 | step | S | M | L |
 |---|---|---|---|
 | generation, rule teacher (it. 0) | 4 000 episodes in 18 s | 8 000 in 38 s | 16 000 in 77 s |
-| generation, network teacher (it. ≥ 1) | 2 000 episodes in 160–190 s (0.09 s each) | 4 000 in 3 250–3 580 s (0.85 s each) | ≈ 5 s each (projected from validation: 11 h for 8 000) |
+| generation, network teacher (it. ≥ 1) | 2 000 episodes in 160–190 s (0.09 s each) | 4 000 in 3 250–3 580 s (0.85 s each) | 8 000 in 39 250 s (4.9 s each) |
 | training, per epoch | 14 s for 194 k decisions (≈ 13 500 decisions/s) | 90 s for 394 k (≈ 4 400/s) | 650 s for 793 k (≈ 1 200/s) |
 | validation (50/50/100 cells × net, search, `nearest_job`) | 20 s | 185 s | 1 108 s |
-| whole run | 25 min (6 iterations) | 5 h 53 min (6 iterations) | 1 h 46 min for iteration 0; iteration 1 running |
+| whole run | 25 min (6 iterations) | 5 h 53 min (6 iterations) | 14 h for iterations 0–1 (12 h per iteration ≥ 1) |
 
 The laptop needed 4–5 min per epoch of 50 000 decisions on the CPU; the GPU does the
 same in about 4 s. On this machine the bottleneck moved to data generation with a

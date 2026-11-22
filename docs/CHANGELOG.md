@@ -35,7 +35,7 @@ no code; it adds the trained models and documents the runs and what was learned.
 |---|---|---|---|---|---|
 | `rl2_gen_s_big` | S | 4 000 / 2 000 (defaults) | 0–5, stopped by patience | it. 3 | 25 min |
 | `rl2_gen_m` | M | 8 000 / 4 000 | 0–5, stopped by patience | it. 3 | 5 h 53 min |
-| `rl2_gen_l` | L | 16 000 / 8 000 | 0 (iteration 1 in progress at the time of writing) | it. 0 | 1 h 46 min (it. 0); it. 1 running |
+| `rl2_gen_l` | L | 16 000 / 8 000 | 0–1 (iteration 2 running) | it. 1 | 14 h for its. 0–1 |
 
 * **Data for L** was set at 4× S and 2× M by the rule of the plan (§3: a larger model
   needs proportionally more search data). The user did not fix this number; it is the
@@ -56,8 +56,8 @@ no code; it adds the trained models and documents the runs and what was learned.
 | search over S | −4.7 ±1.5 % | −2.2 ±1.4 % | −2.4 ±1.1 % |
 | **M alone** (it. 3) | −4.5 ±1.6 % | −2.2 ±1.4 % | −1.9 ±1.1 % |
 | search over M | −5.0 ±1.5 % | −2.4 ±1.3 % | −2.2 ±1.2 % |
-| **L alone** (it. 0) | −3.9 ±1.4 % | −1.1 ±1.8 % | −1.5 ±1.0 % |
-| search over L (it. 0) | −5.0 ±1.5 % | −1.7 ±1.3 % | −2.0 ±1.1 % |
+| **L alone** (it. 1) | −4.3 ±1.5 % | −1.7 ±1.3 % | −1.4 ±1.0 % |
+| search over L (it. 1) | −4.9 ±1.5 % | −1.8 ±1.3 % | −2.2 ±1.0 % |
 
 * **Against the laptop references** (30 seeds, `rl2.md` §8.4): `nearest_head` matches
   them exactly. The rule teacher matches at the real load and on general cells but
@@ -75,9 +75,9 @@ no code; it adds the trained models and documents the runs and what was learned.
     iteration 2–3; the remaining iterations are rejected. The teacher, not the model,
     is the ceiling;
   * M's best score (−2.88 %) is not distinguishable from S's (−2.79 %) and M costs
-    8.5× more per generated episode and 4× per decision; L at iteration 0 (4× the data) scores
-    −2.15 %, between S and M at the same stage, with a higher training loss and a
-    teacher 6× slower than M's. The scaling ladder stops at M.
+    8.5× more per generated episode and 4× per decision; L (4× the data) scores −2.15 % at
+    iteration 0 and −2.44 % at iteration 1, below S and M at the same stage, with a
+    higher training loss and 12 h per iteration. The scaling ladder stops at M.
 * **Recommendation:** keep **S** as the deployed model (`rl2_gen_s_big.pt`) for the
   5 ms budget and the phase-4 evaluation; spend the next effort on a stronger teacher
   (plan §4: value-head truncation with sampled futures, larger K, Gumbel search)
