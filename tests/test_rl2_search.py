@@ -167,3 +167,143 @@ def test_episode_labels_and_one_training_step(tmp_path):
     h = train(net, ep["samples"], sc, epochs=4, lr=1e-3, batch=32, temp=1.0,
               value_coef=0.25, seed=0, threads=2)["epochs"]
     assert h[-1]["policy"] < h[0]["policy"]
+
+
+# ------------------------------------------------- value-truncated teacher (0.7.5)
+def _small_net():
+    torch.manual_seed(0)
+    return DispatchNet(ModelConfig(1, 32, 2)).eval()
+
+
+def test_truncated_lookaheads_cut_at_a_decision_after_the_horizon():
+    """Every look-ahead stops at a decision with >= 2 candidates at or after
+    t + horizon, or at the end of its clone; the costs are finite."""
+    from rl2.search import _Look
+    net = _small_net()
+    sim = FastSim(cfg(HEAVY, 6))
+    cands = first_multi_decision(sim)
+    t0 = sim.t
+    scen = sample_scenarios(sim, 2, 80.0, "t")
+    looks = []
+    for c in cands[:2]:
+        for sc in scen:
+            cl = sim.lookahead_clone(sc, 80.0)
+            lk = _Look(cl, [], c, 0, t0 + 20.0)
+            cl.apply(c)
+            looks.append(lk)
+    run_lookaheads(looks, net)
+    assert all(lk.done for lk in looks)
+    for lk in looks:
+        if lk.stopped:
+            assert lk.sim.t >= t0 + 20.0 - 1e-9 and len(lk.sim.candidates()) >= 2
+        else:
+            assert lk.sim.done
+    t = SearchTeacher(net, k=6, horizon_s=20.0, scenarios=2, scale=RunningScale(),
+                      cut="decision")
+    costs = t.costs(sim, cands)
+    assert t.truncated and set(costs) <= set(cands)
+    assert all(math.isfinite(v) for v in costs.values())
+    assert next(iter(costs)) == t.preference(sim, cands)[0]        # base choice first
+
+
+def test_truncated_teacher_batched_equals_sequential_and_ignores_the_real_future():
+    net = _small_net()
+    sim = FastSim(cfg(HEAVY, 6))
+    cands = first_multi_decision(sim)
+    other = sim.clone()
+    other.arr = sim.arr[: sim.next_arr] + tuple((r + 0.5, (k + 1) % 3, p)
+                                               for r, k, p in sim.arr[sim.next_arr:])
+    for kw in ({"horizon_s": 20.0, "cut": "decision"}, {"horizon_s": 20.0, "cut": "time"},
+               {"horizon_s": math.inf, "window_s": 40.0}):
+        t = SearchTeacher(net, k=6, scenarios=2, w_pen=1.0, scale=RunningScale(), **kw)
+        together = t.costs(sim, cands)
+        alone = {}
+        for c in together:
+            t1 = SearchTeacher(net, k=6, scenarios=2, w_pen=1.0, scale=RunningScale(), **kw)
+            t1.preference = lambda s, cs, c=c: [c]
+            alone.update(t1.costs(sim, cands))
+        for c in together:
+            assert together[c] == pytest.approx(alone[c], abs=1e-6)
+        assert t.costs(other, cands) == together
+
+
+def test_truncated_cost_is_realized_cost_plus_scaled_value():
+    """cost = Δ WIP integral + λ_N ΔN_B + λ_T ΔT_B (w_pen = 1) + denormalized value."""
+    from rl2.search import WINDOW_MARGIN_S, _Look
+    net = _small_net()
+    sim = FastSim(cfg(HEAVY, 6))
+    cands = first_multi_decision(sim)
+    sc = RunningScale()
+    sc.n, sc.mean, sc.m2 = 10, 100.0, 9 * 25.0          # std 5
+    t = SearchTeacher(net, k=6, horizon_s=15.0, scenarios=1, w_pen=1.0, scale=sc,
+                      cut="decision")
+    costs = t.costs(sim, cands)
+    c = next(iter(costs))
+    scen = sample_scenarios(sim, 1, 15.0 + WINDOW_MARGIN_S, t.key)[0]
+    cl = sim.lookahead_clone(scen, 15.0 + WINDOW_MARGIN_S)
+    lk = _Look(cl, [], c, 0, sim.t + 15.0)
+    cl.apply(c)
+    run_lookaheads([lk], net)
+    assert lk.stopped
+    from rl2.features import encode
+    from rl2.model import collate
+    with torch.inference_mode():
+        v = float(net(collate([encode(cl, cl.candidates())]))[1][0])
+    lam_n, lam_t = sim.cfg.blocking_penalty_per_event, sim.cfg.blocking_penalty_per_second
+    expect = (cl.wip_area - sim.wip_area) + lam_n * (cl.n_block_events - sim.n_block_events) \
+        + lam_t * (cl.blocked_area - sim.blocked_area) + sc.denormalize(v)
+    assert costs[c] == pytest.approx(expect, abs=1e-6)
+
+
+def test_rule_base_keeps_the_known_parts_lookahead():
+    sim = FastSim(cfg(None, 9))
+    cands = first_multi_decision(sim, skip=2)
+    assert SearchTeacher(None, k=6, horizon_s=20.0, scenarios=2).costs(sim, cands) == \
+        SearchTeacher(None, k=6).costs(sim, cands)
+
+
+def test_load_scale_roundtrip(tmp_path):
+    from rl2.model import load_scale, save
+    net = _small_net()
+    save(net, tmp_path / "m.pt", {"scale": [7, 12.5, 48.0]})
+    sc = load_scale(tmp_path / "m.pt")
+    assert (sc.n, sc.mean, sc.m2) == (7, 12.5, 48.0)
+    assert sc.denormalize(sc.normalize(3.0)) == pytest.approx(3.0)
+    save(net, tmp_path / "n.pt")
+    assert load_scale(tmp_path / "n.pt") is None
+
+
+def test_time_cut_stops_every_clone_at_the_same_instant():
+    net = _small_net()
+    sim = FastSim(cfg(HEAVY, 6))
+    cands = first_multi_decision(sim)
+    t = SearchTeacher(net, k=6, horizon_s=12.0, scenarios=2, scale=RunningScale(), cut="time")
+    costs = t.costs(sim, cands)
+    assert all(math.isfinite(v) for v in costs.values())
+    cl = sim.lookahead_clone(sample_scenarios(sim, 1, 72.0, t.key)[0], 72.0)
+    cl.max_time = sim.t + 12.0
+    cl.apply(next(iter(costs)))
+    assert not cl.run(POLICIES["nearest_job"]) is None
+    assert cl.t == pytest.approx(sim.t + 12.0)
+
+
+def test_rollout_to_the_end_uses_no_value_head():
+    """horizon inf: cost = realized cost-to-go of the drained clone, V = 0."""
+    net = _small_net()
+    sim = FastSim(cfg(HEAVY, 6))
+    cands = first_multi_decision(sim)
+    sc = RunningScale()
+    sc.n, sc.mean, sc.m2 = 10, 1e6, 9.0          # a huge value offset would show up
+    t = SearchTeacher(net, k=6, horizon_s=math.inf, scenarios=1, window_s=20.0, w_pen=1.0,
+                      scale=sc)
+    costs = t.costs(sim, cands)
+    assert all(v < 1e5 for v in costs.values())
+    c = next(iter(costs))
+    cl = sim.lookahead_clone(sample_scenarios(sim, 1, 20.0, t.key)[0], 20.0)
+    cl.apply(c)
+    from rl2.model import NetPolicy
+    cl.run(NetPolicy(net))
+    lam_n, lam_t = sim.cfg.blocking_penalty_per_event, sim.cfg.blocking_penalty_per_second
+    expect = (cl.wip_area - sim.wip_area) + lam_n * (cl.n_block_events - sim.n_block_events) \
+        + lam_t * (cl.blocked_area - sim.blocked_area)
+    assert costs[c] == pytest.approx(expect, abs=1e-6)

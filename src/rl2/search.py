@@ -13,6 +13,32 @@ At a decision the teacher scores each kept candidate c by a look-ahead:
    mean flow time, as in ``rollout@avg_flow_time``) + ``w_pen`` · (λ_N ΔN_B + λ_T ΔT_B),
    averaged over the scenarios.
 
+**Cost-to-go look-aheads (0.7.5, plan §4).** With ``horizon_s > 0`` and a network
+base the look-ahead scores the realized cost-to-go of all parts instead of the
+completion times of the known ones:
+
+   cost(c) = Δ(WIP integral) + w_pen · (λ_N ΔN_B + λ_T ΔT_B) over the look-ahead
+             + V̂(state at the cut),
+
+averaged over ``scenarios`` sampled futures (common random numbers: every candidate
+sees the same futures). This is the quantity the value head is trained on (the
+realized cost-to-go of ``play_episode``), so it sees the effect of a choice on the
+parts that arrive later, which the known-parts look-ahead cannot. Three cuts:
+
+* ``horizon_s = inf``: no cut; the clone runs until it drains after the synthetic
+  window ``window_s`` and V̂ = 0 (a sampled-future rollout, no value head);
+* ``cut = "time"``: the clone stops at exactly ``t + horizon_s`` and V̂ is the value
+  head there (the same instant for every candidate, so the realized parts are
+  comparable and the value errors are correlated);
+* ``cut = "decision"``: the clone stops at the first decision with ≥ 2 candidates at
+  or after ``t + horizon_s`` (in-distribution states for the value head, but a
+  different instant per candidate).
+
+The synthetic window of the cut modes is ``horizon_s + 60 s``. ``scale``
+(:class:`rl2.model.RunningScale`, saved with the model) denormalizes the value head.
+With the rule base (no network, iteration 0) a ``horizon_s > 0`` falls back to the
+known-parts look-ahead without scenarios.
+
 The base policy is either the rule ``nearest_job`` (iteration 0, i.e. the rollout
 of 0.4–0.6 on the exact simulator) or the current network (iterations ≥ 1, i.e. the
 ``rl_rollout`` hybrid of 0.6 with a better base each round). Rollout improves on its
@@ -64,13 +90,19 @@ def sample_scenarios(sim: FastSim, m: int, window_s: float, key: str) -> list[li
     return out
 
 
-class _Look:
-    __slots__ = ("sim", "known", "done", "nb0", "tb0", "cand", "sc")
+#: synthetic-arrival window beyond the truncation horizon (value-truncated mode)
+WINDOW_MARGIN_S = 60.0
 
-    def __init__(self, sim, known, cand, sc):
+
+class _Look:
+    __slots__ = ("sim", "known", "done", "nb0", "tb0", "w0", "cand", "sc", "t_stop", "stopped")
+
+    def __init__(self, sim, known, cand, sc, t_stop=None):
         self.sim, self.known, self.cand, self.sc = sim, known, cand, sc
         self.done = False
-        self.nb0, self.tb0 = sim.n_block_events, sim.blocked_area
+        self.nb0, self.tb0, self.w0 = sim.n_block_events, sim.blocked_area, sim.wip_area
+        self.t_stop = t_stop      # None: run until the known parts are done
+        self.stopped = False      # cut at a decision at or after t_stop
 
 
 def _known_done(lk: _Look) -> bool:
@@ -80,18 +112,25 @@ def _known_done(lk: _Look) -> bool:
 
 @torch.inference_mode()
 def run_lookaheads(looks: list[_Look], net: DispatchNet | None, rule=nearest_job) -> None:
-    """Advance every look-ahead until its known parts are processed (lock-step
-    batching of the network calls)."""
+    """Advance every look-ahead until its known parts are processed, or (``t_stop``
+    set) until the first decision with ≥ 2 candidates at or after ``t_stop``
+    (lock-step batching of the network calls)."""
     active = [lk for lk in looks if not lk.done]
     while active:
         need = []
         for lk in active:
             s = lk.sim
             while True:
-                if _known_done(lk) or not s.run_until_decision():
+                if lk.t_stop is None and _known_done(lk):
+                    lk.done = True
+                    break
+                if not s.run_until_decision():
                     lk.done = True
                     break
                 c = s.candidates()
+                if lk.t_stop is not None and len(c) >= 2 and s.t >= lk.t_stop - _TIE:
+                    lk.done = lk.stopped = True
+                    break
                 if len(c) == 1:
                     s.apply(c[0])
                 elif net is None:
@@ -112,11 +151,42 @@ class SearchTeacher:
     """Rollout teacher over a base policy (rule or network)."""
 
     def __init__(self, net: DispatchNet | None = None, k: int = 6, scenarios: int = 0,
-                 window_s: float = 30.0, w_pen: float = 0.0, key: str = "0"):
+                 window_s: float = 30.0, w_pen: float = 0.0, key: str = "0",
+                 horizon_s: float = 0.0, scale=None, cut: str = "time"):
+        if cut not in ("time", "decision"):
+            raise ValueError(f"cut must be 'time' or 'decision', not {cut!r}")
+        self.cut = cut
         self.net = None if net is None else net.eval()
+        if net is None and horizon_s > 0:
+            # value truncation needs the value head: with the rule base (iteration 0)
+            # fall back to the known-parts look-ahead, without the sampled futures that
+            # were requested for the truncated mode (they hurt that objective, §6.2)
+            horizon_s, scenarios = 0.0, 0
         self.k, self.m, self.window, self.w_pen, self.key = k, scenarios, window_s, w_pen, key
+        self.horizon = float(horizon_s)
+        self.scale = scale
         self.last_costs: dict[int, float] = {}
         self.lookaheads = 0
+
+    @property
+    def truncated(self) -> bool:
+        return self.horizon > 0
+
+    @torch.inference_mode()
+    def _values(self, looks: list[_Look], max_time: float) -> list[float]:
+        """Denormalized value-head estimate of the cost-to-go at the cut of each
+        look-ahead: 0 for a clone that drained (nothing left of the synthetic
+        future) or reached the episode's time limit."""
+        out = [0.0] * len(looks)
+        idx = [i for i, lk in enumerate(looks)
+               if lk.stopped and lk.sim.t < max_time - _TIE]
+        if not idx:
+            return out
+        obs = [encode(looks[i].sim, looks[i].sim.candidates()) for i in idx]
+        _, val = self.net(collate(obs))
+        for i, v in zip(idx, val.tolist()):
+            out[i] = float(self.scale.denormalize(v)) if self.scale is not None else v
+        return out
 
     @torch.inference_mode()
     def preference(self, sim: FastSim, cands: list[int]) -> list[int]:
@@ -136,22 +206,39 @@ class SearchTeacher:
         pref = self.preference(sim, cands)
         kept = pref[: self.k] if self.k else pref
         known = [j for j in range(len(sim.pk)) if sim.pC[j] is None and sim.observable(j)]
-        scen = sample_scenarios(sim, self.m, self.window, self.key) if self.m > 0 else [[]]
+        trunc = self.truncated
+        finite = trunc and math.isfinite(self.horizon)
+        window = self.horizon + WINDOW_MARGIN_S if finite else self.window
+        scen = sample_scenarios(sim, self.m, window, self.key) if self.m > 0 else [[]]
+        t_stop = None
+        if finite and self.cut == "decision":
+            t_stop = sim.t + self.horizon
+        elif trunc:
+            t_stop = math.inf                  # run until the clone ends
         looks = []
         for c in kept:
             for si, sc in enumerate(scen):
-                cl = sim.lookahead_clone(sc, self.window)
-                lk = _Look(cl, known, c, si)
+                cl = sim.lookahead_clone(sc, window)
+                if finite and self.cut == "time":
+                    cl.max_time = min(cl.max_time, sim.t + self.horizon)
+                lk = _Look(cl, known, c, si, t_stop)
                 cl.apply(c)
                 looks.append(lk)
         run_lookaheads(looks, self.net)
+        if finite and self.cut == "time":      # the clone stopped at its time limit
+            for lk in looks:
+                lk.stopped = lk.sim.t >= sim.t + self.horizon - _TIE
         self.lookaheads += len(looks)
+        values = self._values(looks, sim.max_time) if trunc else None
         lam_n = sim.cfg.blocking_penalty_per_event
         lam_t = sim.cfg.blocking_penalty_per_second
         tot = {c: 0.0 for c in kept}
-        for lk in looks:
+        for i, lk in enumerate(looks):
             s = lk.sim
-            v = sum(s.pC[j] for j in known)
+            if trunc:
+                v = (s.wip_area - lk.w0) + values[i]
+            else:
+                v = sum(s.pC[j] for j in known)
             if self.w_pen:
                 v += self.w_pen * (lam_n * (s.n_block_events - lk.nb0)
                                    + lam_t * (s.blocked_area - lk.tb0))

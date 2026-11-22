@@ -212,3 +212,18 @@ def load(path) -> DispatchNet:
     net = DispatchNet(ModelConfig(**ck["config"]))
     net.load_state_dict(ck["state"])
     return net.eval()
+
+
+def load_extra(path) -> dict:
+    """The ``extra`` dict saved with the model (iteration, value scale ...)."""
+    return torch.load(path, map_location="cpu", weights_only=False).get("extra", {})
+
+
+def load_scale(path) -> RunningScale | None:
+    """The value-head scale saved with the model (``extra["scale"]``), or None."""
+    sc = load_extra(path).get("scale")
+    if sc is None:
+        return None
+    r = RunningScale()
+    r.n, r.mean, r.m2 = int(sc[0]), float(sc[1]), float(sc[2])
+    return r

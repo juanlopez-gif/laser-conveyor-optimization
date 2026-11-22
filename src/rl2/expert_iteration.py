@@ -185,6 +185,30 @@ def _net(path):
     return _NETS[path]
 
 
+_SCALES: dict = {}
+
+
+def _scale(path):
+    """Value-head scale saved with the model at ``path`` (cached per path)."""
+    if path is None:
+        return None
+    if path not in _SCALES:
+        from rl2.model import load_scale
+        _SCALES.clear()
+        _SCALES[path] = load_scale(path)
+    return _SCALES[path]
+
+
+def _teacher(job: dict, net, key: str):
+    """The search teacher of a job: known-parts look-ahead, or (``la`` =
+    (horizon_s, scenarios), 0.7.5) the value-truncated look-ahead over the network."""
+    from rl2.search import SearchTeacher
+    la = tuple(job.get("la", ()))
+    horizon, scen, cut, window = la + (0.0, 0, "time", 30.0)[len(la):]
+    return SearchTeacher(net, k=job["k"], w_pen=job["w_pen"], key=key, horizon_s=horizon,
+                         scenarios=scen, scale=_scale(job["net"]), cut=cut, window_s=window)
+
+
 def _init_worker():
     import torch
     torch.set_num_threads(1)
@@ -196,12 +220,11 @@ def play_episode(job: dict) -> dict:
     from fastsim import FastSim
     from rl2.features import encode
     from rl2.model import NetPolicy
-    from rl2.search import SearchTeacher
 
     seed = job["seed"]
     cfg, kind = sample_config(seed, **job.get("mix", {}), extra=_extra(job))
     net = _net(job["net"])
-    teacher = SearchTeacher(net, k=job["k"], w_pen=job["w_pen"], key=str(seed))
+    teacher = _teacher(job, net, str(seed))
     actor = NetPolicy(net) if net is not None else None
     rng = random.Random(f"rl2act/{seed}")
     sim = FastSim(cfg)
@@ -240,13 +263,12 @@ def play_episode(job: dict) -> dict:
 def val_episode(job: dict) -> dict:
     from fastsim import POLICIES, FastSim
     from rl2.model import NetPolicy
-    from rl2.search import SearchTeacher
     cfg = val_config(job["load"], job["seed"], job.get("mode", "none"), _extra(job))
     net = _net(job["net"])
     if job["who"] == "net":
         pol = NetPolicy(net)
     elif job["who"] == "teacher":
-        pol = SearchTeacher(net, k=job["k"], w_pen=job["w_pen"], key=str(job["seed"]))
+        pol = _teacher(job, net, str(job["seed"]))
     else:
         pol = POLICIES[job["who"]]
     t0 = time.perf_counter()
@@ -327,12 +349,14 @@ def train(net, data: list, scale, epochs: int, lr: float, batch: int, temp: floa
 
 # ------------------------------------------------------------- validation
 def validate(ex, net_path, n: int, who: list[str], k: int, w_pen: float,
-             horizon: float | None = None) -> dict:
+             horizon: float | None = None, la: tuple = (0.0, 0)) -> dict:
     """Paired delta vs ``nearest_job`` per group (real, heavy, general: 2n cells);
-    score = mean of the three group means."""
+    score = mean of the three group means. ``la`` = (horizon_s, scenarios, cut,
+    window_s) of the cost-to-go teacher (0.7.5; (0, 0) = known-parts look-ahead)."""
     seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
     jobs = [{"load": g, "seed": seeds[g] + i, "who": w, "net": net_path, "k": k,
-             "w_pen": w_pen, "horizon": horizon} for w in who + ["nearest_job"] for g in VAL_GROUPS
+             "w_pen": w_pen, "horizon": horizon, "la": la}
+            for w in who + ["nearest_job"] for g in VAL_GROUPS
             for i in range(n * (2 if g == "general" else 1))]
     res = list(ex.map(val_episode, jobs, chunksize=1))
     ref = {(r["load"], r["seed"]): r["cost"] for r in res if r["who"] == "nearest_job"}
@@ -405,7 +429,20 @@ def main(argv=None) -> int:
     ap.add_argument("--temp", type=float, default=1.0, help="softmin temperature [s]")
     ap.add_argument("--value-coef", type=float, default=0.25)
     ap.add_argument("--k", type=int, default=6)
-    ap.add_argument("--w-pen", type=float, default=0.0)
+    ap.add_argument("--w-pen", type=float, default=0.0,
+                    help="weight of the blocking penalty in the look-ahead cost")
+    ap.add_argument("--la-horizon", type=float, default=0.0,
+                    help="cost-to-go look-ahead over the network (rl2.search): cut after "
+                         "this many seconds and add the value head; inf = run until the "
+                         "synthetic window drains, no value head; 0 = known-parts "
+                         "look-ahead")
+    ap.add_argument("--scenarios", type=int, default=0,
+                    help="sampled future-arrival scenarios per look-ahead (0 = none)")
+    ap.add_argument("--la-cut", default="time", choices=["time", "decision"],
+                    help="where a finite --la-horizon cuts: at that instant, or at the "
+                         "first decision after it")
+    ap.add_argument("--la-window", type=float, default=30.0,
+                    help="synthetic-arrival window [s] of --la-horizon inf")
     ap.add_argument("--beta", type=float, default=0.3, help="teacher-acts probability (k >= 1)")
     ap.add_argument("--eps", type=float, default=0.1, help="random action when the teacher acts")
     ap.add_argument("--replay", type=int, default=3)
@@ -437,6 +474,10 @@ def main(argv=None) -> int:
         saved = st["log"]["args"]
         for k, v in saved.items():                       # same experiment
             if k not in RESUMABLE_ARGS:
+                setattr(args, k, v)
+        for k, v in (("la_horizon", 0.0), ("scenarios", 0), ("la_cut", "time"),
+                     ("la_window", 30.0)):                  # runs from before 0.7.5
+            if k not in saved:
                 setattr(args, k, v)
         log = st["log"]
         log["args"].update({k: getattr(args, k) for k in RESUMABLE_ARGS})
@@ -489,9 +530,10 @@ def main(argv=None) -> int:
                 break
             t_it = time.perf_counter()
             n_ep = args.episodes0 if it == 0 else args.episodes
+            la = (args.la_horizon, args.scenarios, args.la_cut, args.la_window)
             jobs = [{"seed": seed_next + e, "net": prev, "k": args.k, "w_pen": args.w_pen,
                      "beta": 1.0 if prev is None else args.beta, "eps": args.eps,
-                     "horizon": args.horizon}
+                     "horizon": args.horizon, "la": la}
                     for e in range(n_ep)]
             seed_next += n_ep
             eps = list(ex.map(play_episode, jobs, chunksize=2))
@@ -519,7 +561,7 @@ def main(argv=None) -> int:
 
             t_v = time.perf_counter()
             v = validate(ex, path, args.val, ["net", "teacher"], args.k, args.w_pen,
-                         args.horizon)
+                         args.horizon, la)
             val_s = time.perf_counter() - t_v
             score = v["net/score"]
             accepted = score < best_score - 1e-6

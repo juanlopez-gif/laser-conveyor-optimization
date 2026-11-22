@@ -1,4 +1,4 @@
-# Strong RL: representation, model and expert iteration (0.7.1–0.7.4, strong-RL plan phases 2–3)
+# Strong RL: representation, model and expert iteration (0.7.1–0.7.5, strong-RL plan phases 2–3)
 
 Code: `src/rl2/features.py` (tokens), `src/rl2/model.py` (network, batching, policy,
 save/load). Tests: `tests/test_rl2_model.py`. Latency: `experiments/rl2_latency.py`.
@@ -238,6 +238,61 @@ All values reach the network through the conveyor and context tokens.
 5. **Logging.** Seeds, arguments, versions, times, losses and validation are written
    to `models/<tag>_training.json`.
 
+### 6.4 A stronger teacher over the trained network (0.7.5)
+
+The large runs of §8.4 showed that the known-parts look-ahead is the ceiling: every
+network reaches it within 0.3–0.7 points and later iterations are rejected. The plan
+(§4) names three levers: value-head truncation, sampled futures and a larger K. They
+were compared over the trained S network on the 30-seed validation cells
+(`experiments/rl2_teacher_variants.py`, paired Δ vs `nearest_job`; the network alone
+gives −4.55 / −2.52 / −1.59 %, score −2.88 %). All variants score the **realized
+cost-to-go of all parts** (Δ WIP integral, optionally + penalties) instead of the
+completion times of the known parts, with common random numbers across candidates.
+
+| teacher over the S network | real | heavy | general | score | s / episode (real / heavy / general) |
+|---|---|---|---|---|---|
+| known parts, K = 6 (0.7.2, used so far) | −5.23 ±1.91 | −2.69 ±1.72 | −2.49 ±1.52 | −3.47 | 2.0 / 7.0 / 3.1 |
+| known parts, all candidates | −5.23 ±1.91 | −2.69 ±1.72 | −2.49 ±1.52 | −3.47 | 1.8 / 8.4 / 3.7 |
+| value head at the first decision after t + 20 s, 4 futures | +18.1 ±4.5 | +37.9 ±3.0 | +22.8 ±7.5 | +26.3 | 7.9 / 26.3 / 13.1 |
+| value head at exactly t + 20 s, 4 futures | +54.4 ±7.8 | +67.0 ±5.4 | +37.7 ±10.7 | +53.0 | 10.4 / 26.7 / 13.9 |
+| 1 sampled future, 30 s window, no value head | −1.59 ±2.04 | +6.73 ±2.12 | +2.82 ±2.79 | +2.65 | 5.7 / 18.5 / 8.1 |
+| 2 sampled futures, 30 s | −4.11 ±1.73 | +0.47 ±1.42 | +0.12 ±2.03 | −1.17 | 7.8 / 25.9 / 12.3 |
+| 4 sampled futures, 30 s, penalty in the cost | −6.68 ±1.93 | −1.40 ±1.76 | −0.94 ±1.79 | −3.01 | 11.9 / 45.5 / 23.4 |
+| 4 sampled futures, 30 s | −6.67 ±1.78 | −3.52 ±1.51 | −3.00 ±1.53 | −4.40 | 11.6 / 47.7 / 25.0 |
+| 4 sampled futures, 20 s | −6.60 ±1.85 | −3.82 ±1.47 | −2.43 ±1.68 | −4.28 | 10.6 / 36.8 / 19.6 |
+| 4 sampled futures, 45 s | −6.85 ±2.14 | −3.65 ±1.35 | −2.20 ±1.37 | −4.23 | 18.3 / 68.0 / 33.3 |
+| 4 sampled futures, 60 s | −4.66 ±1.93 | −0.23 ±1.64 | −0.49 ±1.79 | −1.79 | 20.2 / 77.9 / 39.0 |
+| 6 sampled futures, 30 s | −6.51 ±1.94 | −4.01 ±1.46 | −2.96 ±1.52 | −4.49 | 19.0 / 78.1 / 39.7 |
+| **8 sampled futures, 30 s (used from 0.7.5)** | **−7.50 ±1.92** | **−3.83 ±1.33** | **−3.19 ±1.53** | **−4.84** | 21.9 / 112.2 / 58.3 |
+| 8 sampled futures, 20 s | −7.39 ±1.83 | −3.53 ±1.57 | −3.15 ±1.51 | −4.69 | 17.7 / 85.9 / 42.4 |
+
+Other rows checked: all candidates instead of K = 6 changes nothing with 4 futures
+(the top 6 already hold the best); half-weight penalty −4.54; value-head cuts at 10 and
+40 s, and without the penalty, all between +24 and +58 %. Full tables:
+`results/experiments/rl2_teacher_variants_s{,2,3}/variants.json`.
+
+* **The value head cannot bootstrap the look-ahead.** The trained cost-to-go depends
+  mostly on the random future arrivals, so its scale (hundreds of part-seconds) and
+  the value head's error (normalized MSE 0.06, i.e. a quarter of that scale) are far
+  larger than the differences between candidates (seconds). Cutting at a fixed instant,
+  where the value errors should be correlated, is even worse than cutting at a
+  decision: the value head was trained on decision states only. Truncation with a
+  learned value is therefore out until the value head is much more accurate (plan §4,
+  Gumbel search, would need the same).
+* **Sampled futures work once the objective counts every part.** The 0.7.2 attempt
+  (§6.2, +7.9 %) counted only the known parts, so synthetic arrivals rewarded starving
+  them. With the WIP integral of all parts, 4 futures already beat the known-parts
+  teacher in every group and 8 futures gain another half point. One or two futures
+  are worse than none: the sampled future is noise until it is averaged.
+* **Window.** 20–30 s is best; 45–60 s add noise faster than information. The clone
+  drains after the window, so the look-ahead is also bounded.
+* **Penalty.** Including λ_N, λ_T in the look-ahead cost hurts (−3.01 vs −4.40 with 4
+  futures), as in 0.4 and 0.7.2: the policies are judged on the penalized flow time,
+  yet a flow-time look-ahead ranks candidates better.
+* **Cost.** The chosen teacher is about 10× the known-parts one per episode (the
+  look-aheads are 8× more numerous and longer). On the workstation that is 40 min per
+  iteration of 2 000 episodes, acceptable.
+
 ## 7. Fast simulator on general cells (check before training)
 
 The fast simulator was validated in 0.7.0 on the 3-belt cells only. It was rerun
@@ -424,6 +479,16 @@ The laptop needed 4–5 min per epoch of 50 000 decisions on the CPU; the GPU do
 same in about 4 s. On this machine the bottleneck moved to data generation with a
 network teacher, which runs single-state network calls on the CPU workers.
 
+### 8.5 Expert iteration with the sampled-future teacher (`rl2_gen_s_sf`, 0.7.5)
+
+Continuation of the best S model (`rl2_gen_s_big.pt`, §8.4) with the teacher of
+§6.4 (8 sampled futures, 30 s window, no penalty in the look-ahead): `--init`, so the
+run starts at iteration 1; 2 000 episodes and 4 epochs per iteration, replay 2, 50
+validation seeds per group (100 general), patience 2. Same seeds as §8.4 (training
+continues from 100000; the run's seeds are its own).
+
+SF_RESULTS_PLACEHOLDER
+
 ## 9. Reproduce (phase 3)
 
 ```bash
@@ -432,4 +497,10 @@ python experiments/fastsim_validation.py --loads general --seeds 40 --seed-base 
     --dt 0.01 --workers 8 --modes none when_idle --tag fastsim_val_general_dt01
 python experiments/rl2_train.py --tag rl2_gen_s --iters 6 --episodes0 1000 --episodes 500 \
     --epochs0 8 --epochs 4 --replay 2 --val 30 --workers 8
+# 0.7.5: teacher variants over a trained network, then training with the chosen one
+python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_big.pt --val 30 \
+    --variants known:k6 roll:m4:w30:p0 roll:m8:w30:p0 cut:h20:m4 dcut:h20:m4
+python experiments/rl2_train.py --tag rl2_gen_s_sf --init models/rl2_gen_s_big.pt \
+    --la-horizon inf --scenarios 8 --la-window 30 --w-pen 0 --iters 8 --episodes 2000 \
+    --epochs 4 --replay 2 --val 50
 ```

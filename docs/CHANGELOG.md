@@ -6,6 +6,72 @@ summarized from the git history.
 
 ---
 
+## 0.7.5 — 2026-11-21 — Stronger search teacher: sampled-future rollout over the network
+
+The large runs of 0.7.4 showed that the search teacher, not the model size, limits
+expert iteration: every network reaches its known-parts look-ahead within 0.3–0.7
+points and the next iterations are rejected. The user asked to stop the L run and to
+develop the stronger teacher (plan §4). Details and tables: `docs/methods/rl2.md`
+§6.4 and §8.5.
+
+### What changed (`src/rl2/search.py`, `expert_iteration.py`, `model.py`)
+
+* **Cost-to-go look-aheads** (`SearchTeacher(horizon_s, scenarios, cut, window_s,
+  scale)`). With a network base and `horizon_s > 0` the look-ahead scores the realized
+  cost-to-go of all parts, Δ(WIP integral) + `w_pen` · penalties, averaged over
+  `scenarios` sampled futures with common random numbers, plus a value-head estimate
+  at the cut:
+  * `horizon_s = inf`: no cut, the clone drains after the synthetic window, no value
+    head (**the teacher adopted**, with 8 futures and a 30 s window);
+  * `cut = "time"`: cut at exactly t + `horizon_s`, value head there;
+  * `cut = "decision"`: cut at the first decision with ≥ 2 candidates after it.
+  * The known-parts look-ahead of 0.7.2 is unchanged and remains the default
+    (`horizon_s = 0`); with the rule base (iteration 0) a `horizon_s > 0` falls back
+    to it without scenarios.
+  * *Why the objective changed:* with synthetic arrivals, the completion times of the
+    known parts reward starving the new ones (the +7.9 % of 0.7.2); the WIP integral
+    of all parts is the cost the policies are judged on.
+* `rl2.model.load_extra` / `load_scale`: read the value scale saved with a model, so
+  a worker can denormalize the value head.
+* `experiments/rl2_train.py`: `--la-horizon`, `--scenarios`, `--la-cut`,
+  `--la-window`; the teacher of each job is built by `_teacher`. Runs saved before
+  0.7.5 resume with the known-parts teacher.
+* `experiments/rl2_teacher_variants.py`: compares teacher variants over a trained
+  network on the validation cells (Δ vs `nearest_job`, Δ vs the network alone, time
+  per episode).
+* **Tests** (`tests/test_rl2_search.py`, 7 new): cut at a decision after the horizon,
+  cut at the exact instant, rollout to the end without value head, cost = realized
+  cost-to-go + scaled value, lock-step batching equals sequential and the real future
+  is ignored in every mode, the rule base keeps the known-parts look-ahead, value
+  scale round-trip. 243 tests pass.
+
+### Findings (30 validation seeds per group, teacher over `rl2_gen_s_big.pt`)
+
+| teacher | real | heavy | general | score |
+|---|---|---|---|---|
+| network alone | −4.6 % | −2.5 % | −1.6 % | −2.88 |
+| known parts (0.7.2) | −5.2 % | −2.7 % | −2.5 % | −3.47 |
+| value head at a cut (any variant) | +17 … +58 % | | | |
+| 4 sampled futures, 30 s, no value head | −6.7 % | −3.5 % | −3.0 % | −4.40 |
+| **8 sampled futures, 30 s** | **−7.5 %** | **−3.8 %** | **−3.2 %** | **−4.84** |
+
+* **The value head cannot bootstrap.** Its error (a quarter of the cost-to-go scale,
+  which is dominated by the random future) is far larger than the differences
+  between candidates. Every value-head variant is catastrophic; the fixed-instant cut
+  is worse still because the head only saw decision states.
+* **Averaged sampled futures beat the known-parts teacher in every group**, by 1.4
+  points of score with 8 futures; one or two futures are worse than none. A 20–30 s
+  window is best; the penalty in the look-ahead hurts, as in 0.4 and 0.7.2; K = all
+  changes nothing.
+* The chosen teacher costs about 10× the old one per episode (40 min per 2 000
+  episodes on the workstation).
+
+### Training (`rl2_gen_s_sf`)
+
+SF_CHANGELOG_PLACEHOLDER
+
+---
+
 ## 0.7.4 — 2026-11-21 — Large-scale training on a GPU workstation (sizes S, M, L)
 
 The user asked to train the expert-iteration dispatcher of 0.7.2–0.7.3 on a larger
@@ -35,7 +101,7 @@ no code; it adds the trained models and documents the runs and what was learned.
 |---|---|---|---|---|---|
 | `rl2_gen_s_big` | S | 4 000 / 2 000 (defaults) | 0–5, stopped by patience | it. 3 | 25 min |
 | `rl2_gen_m` | M | 8 000 / 4 000 | 0–5, stopped by patience | it. 3 | 5 h 53 min |
-| `rl2_gen_l` | L | 16 000 / 8 000 | 0–1 (iteration 2 running) | it. 1 | 14 h for its. 0–1 |
+| `rl2_gen_l` | L | 16 000 / 8 000 | 0–1; stopped by the user during iteration 2 (0.7.5) | it. 1 | 14 h for its. 0–1 |
 
 * **Data for L** was set at 4× S and 2× M by the rule of the plan (§3: a larger model
   needs proportionally more search data). The user did not fix this number; it is the
