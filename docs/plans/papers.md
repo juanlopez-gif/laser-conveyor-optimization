@@ -435,7 +435,13 @@ head's idle time and the gain per move by the queue behind it, and that v_x (hel
 in the pilot) must be a factor, since phase 4's slow head on both axes needed the whole
 zone. Same-τ_cross cells are identical by the model's structure (H0, exact). The
 confirmatory protocol is to be fixed from `geometry.md` §4.4 and needs a new reserved
-seed range from the owner.
+seed range from the owner. **Frozen (0.7.20, `geometry.md` §5):** 72 regimes (v_x 5 / 10
+added, load by the arrival rates, Poisson / bursts), common grid in seconds, 60
+realizations on seeds 9000–9059, criteria and predictor comparison pre-registered;
+`experiments/geometry_bench.py` smoke-tested; the run awaits the owner's go. The
+paper's final question (owner): how much anticipation does the camera need when the
+head can pre-position, and what predicts it better, the transverse crossing or the
+moves the head actually makes.
 
 **Where the plan's steps already stand.**
 

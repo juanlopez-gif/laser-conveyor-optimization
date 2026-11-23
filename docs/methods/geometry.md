@@ -198,9 +198,13 @@ durations at the largest length, `when_idle`.)
   idle time (31 % → 8 % of the time from the fastest to the slowest head), not by the
   camera. What grows with the anticipation is the *gain per move*, and it saturates
   at 1.2–3 s in every geometry: 0.7 → 2.3 s per move for τ_cross 0.8, 2.8 → 6.2 for
-  2.4, 8 → 27 for 7.2. These gains per move exceed the move's own duration by a
-  factor 2–9 because a second saved on the head's cycle is saved by every part waiting
-  behind it in the busy period, which is longer when the head is busier. The move
+  2.4, 8 → 27 for 7.2. "Gain per move" is an aggregate ratio (seconds saved summed over
+  all parts, divided by the number of moves), not the saving of one part: it exceeds
+  the move's own duration by a factor 2–9. *Interpretation, not yet measured:* a second
+  saved on the head's cycle is saved by every part queued behind it in the busy period,
+  which is longer when the head is busier. The confirmatory bench records the number
+  of unfinished parts at each move (H5, §5) to check how much of the saving is
+  transmitted to the waiting parts. The move
   durations actually made are 0.7–3.0 s (mean of max(t_x, t_y)), always below τ_cross
   because most moves change one lane, not two, and the x component is 0.5–1.3 s. The
   share of y-dominated moves is 45–58 %, so the along-belt component is not
@@ -279,3 +283,93 @@ seed count of the confirmatory bench can take into account.
    exact-equality check of H0 as a regression test, and the development seeds
    3000–3029 for any further pilot. The confirmatory bench needs a new reserved
    range.
+
+## 5. Confirmatory protocol (frozen 2026-11-23, before the run)
+
+Owner's instructions after the pilot (2026-11-23): a common grid in seconds; v_x = 5
+and 10 cm/s crossed with the nine spacing × v_y cells; `nearest_job` primary, the
+frozen network secondary; seconds of penalized flow saved per part, the cost of less
+coverage, `when_idle` vs `none` at the same length, and for the network also
+`when_idle(ℓ)` vs `when_idle(0)`; 60 paired realizations; seeds 9000–9059 once checked
+unused; the grid, the minimum useful benefit and the 90 % criterion frozen before the
+run; mechanism separated from interpretation. The final question of the paper: how
+much anticipation does the camera need when the head can pre-position, and what
+predicts it better, the transverse crossing or the moves the head actually makes?
+
+### 5.1 Seeds
+
+Seeds 9000–9059. Check (2026-11-23): no episode in `results/experiments/**/*.json` and
+no bench or pilot in the documentation used them. The only occurrence in the
+repository is `tests/test_rl2_search.py`, which calls `general_config(9000 + i)` to
+draw *general* cells (random geometry and rates) for two unit tests; those are
+different cells, and no policy result on the real cell at these seeds exists. The
+owner confirmed the range on that basis. `geometry_bench.py --confirmatory` sets the
+range, refuses to overwrite its `bench.json`, and refuses the range without the flag.
+
+### 5.2 Design (`experiments/geometry_bench.py`, constants at the top of the file)
+
+* **Regimes (72):** spacing 6 / 12 / 18 cm × v_y 5 / 10 / 15 cm/s × v_x 5 / 10 cm/s ×
+  load nominal / high × Poisson / bursts. Loads by the arrival rates only: nominal =
+  mean inter-arrivals 10 / 12 / 14 s (ρ_p 0.64), high = 7 / 8.5 / 10 s (ρ_p 0.90);
+  belts 3 cm/s, processing 2.5 s, geometry, penalties and the 35 cm entry zone fixed.
+  Bursts: the on/off source of phase 4 (`on_fraction` 0.3, `on_mean` 20 s) at the
+  same mean rate per belt. Offered load (ρ_p), observed saturation (blocking events,
+  blocked belt-seconds) and the head's idle fraction are reported per regime.
+* **Coverage grid, common in seconds:** τ_vis ∈ {0, 0.5, 1, 1.5, 2, 2.5, 3.33, 5, 7.5,
+  10} s, i.e. ℓ_v = 3 τ_vis ∈ {0, 1.5, …, 30} cm (within the 35 cm entry). The nominal
+  anticipation is the design quantity; the effective one is recorded.
+* **Modes:** `none` and `when_idle` at every grid point; same arrivals and processing
+  times (common random numbers).
+* **Controllers:** `nearest_job` (primary) and the frozen network `rl2_gen_s_b`
+  (secondary; the 35 cm entry and v_x = 5 with v_y = 15 lie at or beyond its training
+  ranges, which its results also measure).
+* **Realizations:** 60 per configuration, seeds 9000–9059. 72 × 10 × 2 × 2 × 60 =
+  172 800 episodes, plus the physical-length check below (6 720). Smoke test on
+  seeds 3000–3001: 5 984 episodes in 0.44 CPU-hours, so ≈ 13 CPU-hours, ≈ 20 min on
+  40 workers.
+* **Physical-length check (H3):** the original geometry (12 / 10 / v_x 10) at entry
+  10 cm, both loads and both arrival processes, at the grid points ≤ 10 cm, against
+  the 35 cm entry at the same points.
+* **Traces per episode:** as in the pilot, plus the number of unfinished parts in the
+  system at each pre-positioning move (H5).
+
+### 5.3 Measures and criteria (frozen)
+
+* **Primary:** G(τ_vis) = J_none(τ_vis) − J_when_idle(τ_vis) in seconds of penalized
+  flow time per part, paired, 95 % CI; also the unpenalized flow, blocking events and
+  blocked belt-seconds. Percentages, where given, are against the flow net of the free
+  transit (entry length / belt speed).
+* **Cost of less coverage:** J_when_idle(τ_vis) − J_when_idle(10 s) at τ_vis = 1.5, 2.5
+  and 3.33 s, paired.
+* **Network only:** `when_idle(τ_vis)` − `when_idle(0)` (value of widening the view
+  with the mode token fixed) and `none(0)` − `none(τ_vis)` (value of seeing with the
+  same actions). Two different questions, reported apart.
+* **Minimum useful benefit:** a regime is worth sizing the coverage for when G(10 s)
+  ≥ 1.0 s/part and its lower 95 % bound ≥ 0.5 s/part. Otherwise the absolute effects
+  are reported and the sufficient coverage is left *undetermined* for that regime.
+* **Knee (sufficient coverage):** the first grid anticipation τ whose paired contrast
+  G(τ) − 0.9 G(10 s) is ≥ 0 (point estimate) and, conservatively, whose lower
+  simultaneous 95 % bound is ≥ 0 with a Bonferroni factor over the nine non-zero grid
+  points (z = 2.773). Both are reported; the conservative one is the headline.
+* **Predictors of the knee** (rule, regimes with a useful benefit): Spearman rank
+  correlation of the knee with τ_cross and with τ_pp (the mean duration max(t_x, t_y)
+  of the pre-positioning moves at 10 s, `when_idle`), and leave-one-out mean absolute
+  error of four models: knee = τ_cross; knee = a τ_cross; knee = b τ_pp; knee =
+  constant. The predictor with the lowest leave-one-out error is the paper's answer;
+  if the constant wins, the answer is "a number of seconds at this load", as the pilot
+  suggests.
+* **H0** (same τ_cross, identical cells for the rule) and the checks (ii)–(iii) of §3
+  are rerun as regression tests.
+* **H5 (mechanism):** the aggregate gain per move divided by the mean number of
+  unfinished parts at the moves should be of the order of the saving one pre-positioned
+  part can receive (bounded by the move duration plus the chase; within a factor of
+  two). If it is much larger, the saving is not transmitted through the queue as
+  assumed and the interpretation of §4.1 is dropped.
+
+### 5.4 Outputs
+
+`results/experiments/geometry_bench/{bench.json, tables.md, extract.csv.gz}` (the
+gzip extract with the per-episode fields is the versioned data of the paper, copied to
+`docs/papers/paper2/data/` after the run), figures
+`docs/methods/figures/geometry_bench_{nearest_job,net}_{poisson,burst}.pdf` and
+`geometry_bench_{nearest_job,net}_knee.pdf`, and section 6 of this document.

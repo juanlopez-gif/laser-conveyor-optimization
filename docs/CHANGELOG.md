@@ -6,6 +6,36 @@ summarized from the git history.
 
 ---
 
+## 0.7.20 — 2026-11-23 — Geometry bench: frozen confirmatory protocol and script (`experiments/geometry_bench.py`), not yet run
+
+* **Why.** The owner's reading of the pilot (0.7.18): the knee in seconds barely moved
+  while τ_cross went from 0.8 to 7.2 s, and phase 4's slow head (both axes) needed more
+  coverage than the pilot's slow transverse axis alone, so v_x must be varied in a
+  controlled way. Instructions: common grid in seconds; v_x 5 / 10 crossed with the
+  nine spacing × v_y cells; `nearest_job` primary, network secondary; seconds of
+  penalized flow saved per part and the cost of less coverage; for the network also
+  `when_idle(ℓ)` vs `when_idle(0)`; 60 paired realizations on seeds 9000–9059 once
+  checked unused; grid, minimum useful benefit and 90 % criterion frozen before the
+  run; mechanism separated from its interpretation.
+* **What.** `docs/methods/geometry.md` §5: the frozen protocol (72 regimes = 9
+  geometries × v_x 5 / 10 × load nominal / high by the arrival rates, ρ_p 0.64 / 0.90
+  × Poisson / bursts; grid τ_vis ∈ {0, 0.5, 1, 1.5, 2, 2.5, 3.33, 5, 7.5, 10} s; useful
+  benefit G(10 s) ≥ 1 s/part with lower bound ≥ 0.5; knee = first grid point with
+  G(τ) − 0.9 G(10 s) ≥ 0, point and Bonferroni-conservative (z 2.773); predictor
+  comparison by leave-one-out error of knee = τ_cross / a τ_cross / b τ_pp / constant;
+  H5 on the queue mechanism with the number of unfinished parts at each move).
+  `experiments/geometry_bench.py`: the bench, its analysis, figures and a gzip
+  per-episode extract; refuses the reserved ranges without `--confirmatory` and
+  refuses to overwrite a confirmatory `bench.json`. `src/fastsim/core.py`:
+  `prepos_wip_mean` in the trace statistics. §4.1 of `geometry.md` reworded: "gain per
+  move" is an aggregate ratio; the queue transmission is an interpretation to be
+  tested (H5). Seed check: no episode result used 9000–9059; `tests/test_rl2_search.py`
+  draws *general* cells with `general_config(9000 + i)`, different cells.
+* **Smoke test** on seeds 3000–3001: 5 984 episodes in 42 s on 40 workers (0.44
+  CPU-hours); H0 exact for the rule in all eight v_x × load × arrivals blocks; 0 mask
+  violations; tests pass. Estimated confirmatory run: 179 520 episodes, ≈ 20 min.
+  **The confirmatory run waits for the owner's go** (the reserved seeds are used once).
+
 ## 0.7.19 — 2026-11-23 — `models/rl2_gen_l.pt` versioned through Git LFS
 
 * **Why.** The size-L model (157 MB, final checkpoint of run `rl2_gen_l`, iteration 1,
