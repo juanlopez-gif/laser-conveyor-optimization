@@ -6,6 +6,45 @@ summarized from the git history.
 
 ---
 
+## 0.7.17 — 2026-11-23 — Paper 2 draft 0.4: direct 7.5 vs 10 cm contrast, paired robustness, two sentences corrected
+
+* **Why.** The owner's reading of draft 0.3 (2026-11-23) asked for three adjustments
+  before submission: (1) distinguish the two answers to "is 7.5 cm enough?": the share
+  of the pre-positioning benefit retained (each gain against `none` at the same
+  length; widening the network's view from 7.5 to 10 cm adds 1.59 ±1.08 points of
+  benefit, the 78 %) and the direct cost of the cell already pre-positioning with
+  7.5 cm instead of 10 (+0.24 ±0.57 % for the network), which is what the coverage
+  decision needs; (2) measure the robustness to the network with the paired per-seed
+  difference between the two networks' contrasts, since comparing intervals by the sum
+  of their half-widths loses the pairing; (3) the abstract said that at the heavy load
+  the head "is never idle and the gain disappears" although C vs B is −1.60 ±1.14 with
+  bursts and the nominal head, and §§5.3 and 6.4 described the hidden queue as if the
+  network had not trained with `full`, while the training mix has `full` in 15 % of
+  the episodes (`rl2.md` §8.6). The economic translation stays deferred (owner).
+* **What.** `experiments/paper2_figures.py`: `Bench.gain_loss` (gain at ℓ minus gain
+  at 10 cm, per seed), `Bench.net_diff` (frozen − reference contrast, per seed), new
+  table `direct` (cost of 5 / 7.5 cm against 10 cm with `when_idle` at both lengths,
+  and benefit lost, 8 regimes × 2 policies), table `robustness` with three paired
+  columns added and its level columns (frozen vs reference in B and C) moved to the
+  new table `robustness_levels` for legibility; `main()` prints the direct contrasts, the `none` level at ℓ vs 10 cm
+  and the paired summary. All four numbers of the owner's memo reproduce exactly from
+  the versioned extract. Finding: the network's `none` level at 7.5 cm is 1.41 ±1.04
+  points *below* its level at 10 cm, which is what separates the two readings.
+  Paired robustness: within 1 point in 18 of 24 cells (same point values as 0.7.16,
+  since the mean of the paired difference is the difference of the means), max 2.13;
+  the paired interval excludes zero in two cells (C vs B: real / Poisson / nominal
+  −0.92 ±0.87; heavy / burst / nominal −1.30 ±1.05), where the frozen network obtains
+  more from pre-positioning. The 0.7.16 sentence "within ±0.8 points in B in seven
+  regimes" was also wrong (six regimes); corrected.
+* **Paper** (`docs/papers/paper2/paper2.tex`, draft 0.4, PDF rebuilt): abstract,
+  contributions 3–4, §4.1 (training mix), §5.2 new paragraph "Two answers to 'is
+  7.5 cm enough?'" with Table `direct`, §5.3 ("seldom idle", "nearly flat", 15 %
+  `full`), §5.4 rewritten around the paired difference with the conclusion "pattern
+  conserved, differences of magnitude in some regimes", §6.1, §6.4, conclusions.
+* **Docs.** `confirmatory.md` §9.2: new bullet on the direct cost, robustness bullet
+  rewritten with the paired statement (0.7.16 version kept as a note);
+  `docs/plans/papers.md` updated.
+
 ## 0.7.16 — 2026-11-23 — Paper 2 draft 0.3: owner's four corrections, related work, robustness claim corrected
 
 * **Why.** The owner's reading of draft 0.2 found four statements that went beyond

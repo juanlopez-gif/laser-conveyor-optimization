@@ -27,7 +27,7 @@
 \title{\textbf{How Far Must the Camera See?}\\[0.3em]
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.3 (results of version 0.7.13)}
+\date{November 2026 --- draft 0.4 (results of version 0.7.13)}
 
 \begin{document}
 \maketitle
@@ -48,12 +48,16 @@ actions, widening the view produced small effects in every regime tested (within
 $\pm1.5$ points of the penalized flow time; the one significant case, $-1.3$ points, is
 the heavy load with bursts and a slow head). Acting on the same view reduces the penalized flow time by 7.4\,\% at the nominal load
 with the nominal head, and by 2.8--4.3\,\% with bursts or a head twice as slow; at the
-heavy load the head is never idle and the gain disappears. The gain grows with the
+heavy load the head is seldom idle and the gain was generally small (the one significant
+case is $-1.6$\,\% with bursts and the nominal head). The gain grows with the
 anticipation and levels off near the head's travel time across the conveyors, $\thead$
-(2.4~s for the nominal head): half of the entry zone (1.7~s) gives 64--84\,\% of the
-gain, and 7.5~cm (2.5~s) gives 78\,\% for the learned policy and 99\,\% for the rule;
-with a head twice as slow ($\thead=4.8$~s) the whole 10~cm zone (3.3~s) is needed and
-the curve has not saturated. The head's travel time, in seconds of belt travel, is
+(2.4~s for the nominal head): half of the entry zone (1.7~s) retains 64--84\,\% of the
+gain and 7.5~cm (2.5~s) 78\,\% for the learned policy and 99\,\% for the rule; measured
+directly, pre-positioning with a 7.5~cm view instead of the whole 10~cm zone costs
+$0.2\pm0.6$\,\% (learned policy) and $0.05$\,\% (rule) of the penalized flow time,
+against 1.3\,\% with 5~cm. With a head twice as slow ($\thead=4.8$~s) the whole zone
+(3.3~s) is needed, the curve has not saturated, and 7.5~cm costs 0.7--1.4\,\%. The
+head's travel time, in seconds of belt travel, is
 therefore a useful reference for sizing the coverage, rather than a fixed fraction of
 the entry zone; whether it is a minimum in general is a prediction the grid does not
 reach (14.4~cm for the slow head). The upstream queue hidden from the camera matters
@@ -110,11 +114,13 @@ the part appears. The experiment is designed around this quantity.
 \item A coverage curve with a physical reading: the gain of pre-positioning grows with the
   anticipation $\tv$ and levels off near the head's travel time $\thead$, which makes
   $\thead$ seconds of belt travel a reference for the stretch to cover: 7.5~cm retains
-  78--99\,\% of the gain for the nominal head, and the whole 10~cm zone is not enough for
+  78--99\,\% of the gain for the nominal head, at a direct cost of 0.05--0.2\,\% of the
+  penalized flow time against the whole zone, and the whole 10~cm zone is not enough for
   a head twice as slow (Section~\ref{sec:coverage}).
 \item The finding that the queue hidden upstream of the camera matters only when the cell is
-  overloaded, where no length of camera can help, and that every contrast survives the
-  retraining of the learned policy, measured against the checkpoint it was retrained from
+  overloaded, where no length of camera can help, and that the pattern of the contrasts
+  survives the retraining of the learned policy, measured against the checkpoint it was
+  retrained from, with differences of magnitude in two regimes
   (Sections~\ref{sec:hidden} and \ref{sec:robust}).
 \end{enumerate}
 
@@ -337,7 +343,9 @@ tied to one policy:
 \item the \emph{network}: the learned dispatching policy of Paper~1, a Transformer over
   tokens of the observable parts, the belts, the head and the cell parameters, trained by
   expert iteration from a sampled-future search teacher on a family of cells that includes
-  the regimes below. It uses every observable part, so it can turn upstream visibility into
+  the regimes below, with the three information levels in its training mix
+  (\texttt{belts} 70\,\%, \texttt{zone} 15\,\%, \texttt{full} 15\,\% of the episodes). It
+  uses every observable part, so it can turn upstream visibility into
   better choices among the zone parts (B vs A) and use the hidden queue (D vs B). A second
   network of the same size (the \emph{reference network}: the checkpoint from which the
   frozen network's training was continued, trained before bursty arrivals and slow heads
@@ -519,10 +527,44 @@ measured gain, and since $\tv<\thead$ at every point of the grid, a longer entry
 presumably add more. With bursts and the slow head the shape is the same (74--87\,\% at
 1.67--2.5~s).
 
+\textbf{Two answers to ``is 7.5~cm enough?''} The share answers how much of the benefit
+attributable to pre-positioning a shorter view retains, each gain measured against
+\texttt{none} at the same length; in those units (Table~\ref{tab:direct}, right
+columns) widening the network's view from 7.5 to 10~cm adds $1.59\pm1.08$ points of
+benefit at the nominal regime, which is the 78\,\%. The designer's question is a
+different one: how much worse is the cost of the cell, already pre-positioning, if the
+camera covers 7.5~cm instead of 10? Measured directly, pairing the \texttt{when\_idle}
+configurations at the two lengths (Table~\ref{tab:direct}, left columns), the answer at
+the nominal regime is $+0.24\pm0.57$\,\% for the network and $+0.05\pm0.04$\,\% for the
+rule, against $+1.33\pm0.91$ and $+1.36\pm0.86$\,\% with 5~cm; with the slow head,
+7.5~cm costs $1.4\pm1.1$\,\% (network) and $0.7\pm1.8$\,\% (rule) and 5~cm
+$2.2\pm1.5$ and $2.7\pm2.3$\,\%; with bursts, 7.5~cm costs at most 0.6\,\% and 5~cm
+1.2--1.6\,\% with the slow head (not significant). The two readings differ for the
+network because its \texttt{none} level at 7.5~cm is $1.4\pm1.0$ points below its level
+at 10~cm (the baseline noise of Section~\ref{sec:share}), which the share counts as
+benefit lost and the direct contrast does not carry; for the rule, whose \texttt{none}
+level does not depend on $\lv$, the two coincide. The direct contrast answers the
+coverage decision; the share describes the shape of the curve.
+
+\begin{table}[t]
+\centering\small
+\caption{Two answers to ``is a shorter view enough?'' Left: cost of pre-positioning
+with 5 or 7.5~cm against with the whole 10~cm zone (\texttt{when\_idle} at both
+lengths; paired $\Delta$ of the penalized flow time, \%, 95\,\% CI; positive = the
+shorter view costs more; in parentheses, realizations in which the shorter view was
+better). Right: pre-positioning benefit lost, the gain of Table~\ref{tab:coverage} at
+the shorter length minus the gain at 10~cm, per realization (points). Bold: the
+interval excludes zero.}
+\label{tab:direct}
+\resizebox{\linewidth}{!}{\input{tables/direct}}
+\end{table}
+
 \textbf{Reading.} The head's travel time in seconds of belt travel is a useful reference
 for sizing the coverage. For the nominal head, $\thead=2.4$~s is 7.2~cm of belt at
 3~cm/s: the 7.5~cm point retains 99\,\% of the gain for the rule and 78\,\% for the
-network, and the 5~cm point (half the zone, 1.67~s) only 84 and 64\,\%. For the slow
+network, and the 5~cm point (half the zone, 1.67~s) only 84 and 64\,\%; measured
+directly, 7.5~cm costs 0.05--0.2\,\% of the penalized flow time against the whole zone
+and 5~cm 1.3\,\%. For the slow
 head the same reference gives 14.4~cm, beyond the entry zone: this is a prediction of
 the reference, not a measurement, since the grid stops at 10~cm; what the data show is
 that the curve has not saturated there. The pilot's figure of 97\,\% at 5~cm, obtained
@@ -567,13 +609,13 @@ hidden queue is usually empty. The pilot's $-6.4\pm2.4$ on development realizati
 (slow head) is confirmed in sign with a smaller size. This is the one regime in which more
 information, as opposed to more capability, has value, and it is the regime in which the
 camera's length cannot provide it: the heavy cell's entry zone is 2~s of belt against a
-head travel of 4.8~s, and the head is never idle, so the coverage curve is flat
+head travel of 4.8~s, and the head is seldom idle, so the coverage curve is nearly flat
 (Figure~\ref{fig:coverageheavy} and Table~\ref{tab:coverageheavy}: no point is beyond 2.4 points of zero, and the only
 significant gains are the network's 1.6 points at 7.5 and 10~cm with bursts and the
 nominal head). The
-network was trained with the \texttt{belts} level; its use of the queue under
-\texttt{full} is an indication of what a controller trained for it could obtain, not a
-measurement of it.
+network saw the \texttt{full} level in 15\,\% of its training episodes
+(Section~\ref{sec:design}); its use of the queue is that of a controller trained mostly
+without it, and a controller trained for it could obtain more.
 
 \begin{figure}[t]
 \centering
@@ -597,27 +639,44 @@ whole-zone gain is itself within noise.}
 Table~\ref{tab:robust} repeats the three contrasts with the reference network, the
 checkpoint from which the frozen network was retrained with bursts and slow heads in the
 training mix; it is a check against that retraining, not against an independent run.
-Every contrast is reproduced within the noise of the measurement: the two networks'
-values differ by less than 1 point in 18 of the 24 cells and by at most 2.1 points (B vs
-A at the heavy load with Poisson arrivals and a slow head, $-1.3\pm1.7$ against
-$+0.8\pm2.1$), in every cell by less than the sum of the two half-widths, with the same
-sign wherever either network's interval excludes zero and the same significant cells
-except one (C vs B at the heavy load with
-bursts and the nominal head: $-1.6\pm1.1$ for the frozen network, $-0.3\pm0.9$ for the
-reference), and its coverage curve at the
+The comparison that respects the pairing is the difference, realization by realization,
+between the two networks' contrasts (frozen minus reference; middle columns of the
+table): its mean is within 1 point in 18 of the 24 cells and within 0.5 in 12, its
+largest value is 2.1 points (B vs A at the heavy load with Poisson arrivals and a slow
+head, $-2.1\pm2.9$), and its interval excludes zero in two cells, both C vs B, in which
+the frozen network obtains more from pre-positioning: $-0.92\pm0.87$ points at the
+nominal regime with Poisson arrivals and $-1.30\pm1.05$ at the heavy load with bursts
+and the nominal head (where the reference's contrast, $-0.3\pm0.9$, is not significant
+and the frozen network's, $-1.6\pm1.1$, is). These are 24 exploratory comparisons with
+individual 95\,\% intervals, close to the one or two exclusions of zero that chance
+alone would give. The conclusion we keep is that the pattern of the contrasts (the null
+B vs A, the value of acting at the nominal load, the value of the hidden queue at the
+heavy load, the sign of every significant cell) is conserved after the retraining, with
+differences of magnitude in some regimes. The reference network's coverage curve at the
 nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~cm
-(same-length baseline; 97 and 112\,\% with the pooled one). The two networks are within $\pm0.8$ points of each other in~B in seven
-regimes, and the frozen one is 0.4--1.3 points better in~C in seven of the eight
-(significant in two), which is the difference the training of Paper~1 was meant to
-produce; it does not alter any contrast.
+(same-length baseline; 97 and 112\,\% with the pooled one). In the levels
+(Table~\ref{tab:robustlevels}), the two networks are within $\pm0.8$ points of each other in~B in six regimes
+and within $\pm1.6$ in all, and the frozen one is 0.4--1.3 points better in~C in seven
+of the eight (significant in two) and equal in the eighth, which is the difference the
+training of Paper~1 was meant to produce.
 
 \begin{table}[t]
 \centering\small
-\caption{Robustness: the reference network's contrasts (as Table~\ref{tab:contrasts}) and
-the frozen network against the reference network in B and in C (negative favours the
-frozen network).}
+\caption{Robustness: the reference network's contrasts (as Table~\ref{tab:contrasts})
+and the paired difference between the frozen and the reference network's contrasts
+(frozen minus reference, per realization, points; negative = the frozen network obtains
+more from the treatment). Bold: the interval excludes zero.}
 \label{tab:robust}
 \resizebox{\linewidth}{!}{\input{tables/robustness}}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Levels of the frozen network against the reference network in B and in C
+(paired $\Delta$, \%; negative favours the frozen network; in parentheses, realizations
+in which the frozen network was better). Bold: the interval excludes zero.}
+\label{tab:robustlevels}
+\input{tables/robustness_levels}
 \end{table}
 
 %====================================================================
@@ -634,7 +693,8 @@ and the cell must let the idle head move to a visible part and wait. Below $\the
 gain of pre-positioning is roughly proportional to the anticipation; near it the curve
 levels off, and the visibility beyond it is not used by the action and, in this cell,
 little used by the dispatching (B vs A). For the nominal cell the reference gives 7.2~cm,
-between the 5~cm point (64--84\,\% of the gain) and the 7.5~cm point (78--99\,\%); for a
+between the 5~cm point (64--84\,\% of the gain; 1.3\,\% of cost against the whole zone)
+and the 7.5~cm point (78--99\,\%; 0.05--0.2\,\%); for a
 head twice as slow it gives 14.4~cm, more than the entry zone, and the curve indeed does
 not saturate within it. The data support the reference at the nominal head and are
 consistent with it at the slow head; they do not show that $\thead\vb$ is a minimum in
@@ -682,7 +742,8 @@ The study measures the \emph{reach} of the camera, not its precision: detection 
 latency and losses are a separate question. Processing times are constant, parts are
 points with a minimum spacing, and the head has no acceleration. The heavy regime is a
 bound, not a design point: it is overloaded with every controller, and the value of the
-hidden queue there is indicated by a controller not trained to use it. Finally, the
+hidden queue there is indicated by a controller that saw it in 15\,\% of its training
+episodes only. Finally, the
 confirmatory realizations have been used once; a second study (other burst settings, a
 load grid between the nominal and the heavy cell, the economic translation) needs new
 reserved realizations.
@@ -699,12 +760,14 @@ small effects, within $\pm1.5$ points, in the eight regimes tested. The gain gro
 the anticipation the camera gives and levels off near the head's travel time across the
 conveyors, which makes $\thead$ seconds of belt travel a reference for the stretch to
 cover: 7.5~cm here, for a head that crosses the lanes in 2.4~s on a belt at 3~cm/s,
-retains 78--99\,\% of the gain, and the 10~cm entry zone is not enough for a head twice
-as slow. The
+retains 78--99\,\% of the gain and costs 0.05--0.2\,\% of the penalized flow time
+against the whole zone (5~cm costs 1.3\,\%), and the 10~cm entry zone is not enough for
+a head twice as slow. The
 queue the camera cannot see matters only when the cell is overloaded, where no camera
 length helps. These are measurements on 30 reserved realizations per configuration,
-reproduced by a dispatching rule, a learned policy and the checkpoint that policy was
-retrained from, and they give the cell's designer a coverage reference in physical units.
+reproduced in their pattern by a dispatching rule, a learned policy and the checkpoint
+that policy was retrained from, and they give the cell's designer a coverage reference
+in physical units.
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references}

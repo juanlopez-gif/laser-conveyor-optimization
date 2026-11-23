@@ -370,16 +370,40 @@ of `rl2.md` §5).
   conveyors, in seconds of belt travel, not a fixed fraction of the entry zone. At
   the heavy load every point of the curve is within ±1–2 points of zero (the full
   table is in `phase4_tables.md`).
-* **Robustness to the network.** The reference network reproduces every contrast
-  within the noise (B vs A, C vs B, D vs B: the two networks differ by less than 1 point
-  in 18 of the 24 cells and by at most 2.1 points, heavy / Poisson / slow head B vs A,
-  −1.34 ±1.66 vs +0.79 ±2.10; in every cell by less than the sum of the two half-widths;
-  same sign wherever either interval excludes zero; same significant cells except C vs B
-  at heavy / burst / nominal, −1.60 ±1.14 vs −0.30 ±0.86; `phase4_tables.md`).
+* **Direct cost of a shorter view** (added in 0.7.17, owner's reading of draft 0.3;
+  `experiments/paper2_figures.py`, table `direct`). The share above answers how much
+  of the pre-positioning benefit a shorter view retains, each gain against `none` at
+  the same length. The designer's question is how much worse the cell, already
+  pre-positioning, is with 7.5 cm instead of 10: paired `when_idle` at the two lengths,
+  real / Poisson / nominal head, **+0.24 ±0.57 %** for the network and +0.05 ±0.04 %
+  for `nearest_job`, against +1.33 ±0.91 / +1.36 ±0.86 % with 5 cm; slow head: 7.5 cm
+  +1.36 ±1.11 / +0.73 ±1.82 %, 5 cm +2.23 ±1.46 / +2.70 ±2.32 %; with bursts 7.5 cm
+  costs at most 0.6 %. In share units, widening the network's view from 7.5 to 10 cm
+  adds 1.59 ±1.08 points of benefit (the 78 %); the two readings differ because the
+  network's `none` level at 7.5 cm is 1.41 ±1.04 points below its level at 10 cm,
+  which the share counts as benefit lost and the direct contrast does not carry. The
+  direct contrast is the one that answers the coverage decision.
+* **Robustness to the network.** The reference network is the checkpoint from which
+  `rl2_gen_s_b` was retrained (0.7.11), not an independent run. The comparison that
+  respects the pairing is the per-seed difference between the two networks' contrasts
+  (frozen − reference; added in 0.7.17, table `robustness` of
+  `experiments/paper2_figures.py`): within 1 point in 18 of the 24 cells, within 0.5
+  in 12, at most 2.13 (heavy / Poisson / slow head, B vs A, −2.13 ±2.90); its 95 %
+  interval excludes zero in two cells, both C vs B, where the frozen network obtains
+  more from pre-positioning: −0.92 ±0.87 (real / Poisson / nominal head) and −1.30
+  ±1.05 (heavy / burst / nominal head, where the reference's own contrast, −0.30 ±0.86,
+  is not significant and the frozen network's, −1.60 ±1.14, is). These are 24
+  exploratory comparisons with individual intervals. Conclusion kept: the pattern of
+  the contrasts (null B vs A, value of acting at the real load, value of the hidden
+  queue at the heavy load, sign of every significant cell) is conserved after the
+  retraining, with differences of magnitude in some regimes.
   *Corrected in 0.7.16: the first version of this bullet said "within ±0.5 points in
-  every regime", which was wrong (12 of 24 cells).* The reference network is the
-  checkpoint from which `rl2_gen_s_b` was retrained (0.7.11), not an independent run. In C the frozen network is 0.5–1.5 points better than
-  the reference in every regime (significant in three), in B the two are equal.
+  every regime", which was wrong (12 of 24 cells). Refined in 0.7.17: the 0.7.16
+  version compared the two networks' intervals by the sum of their half-widths, which
+  loses the pairing; the paired statement above replaces it.* In the levels, the two
+  networks are within ±0.8 points of each other in B in six regimes (±1.6 in all), and
+  the frozen network is 0.4–1.3 points better in C in seven of the eight (significant
+  in two) and equal in the eighth.
 
 ### 9.3 Paper 1: search, teacher and network
 

@@ -413,8 +413,17 @@ reading: τ_head is the lane component of the travel (the along-belt component c
 reference network is the checkpoint `rl2_gen_s_b` was retrained from, not an independent
 run, and the "within ±0.5 points" claim of 0.7.13 was corrected (within the noise, at
 most 2.1 points); one sign convention (Δ = 100 (J_X / J_Y − 1) for "X vs Y"); related-work
-section written from `docs/literature/`. Open for the next draft: the economic
-translation (needs cost data or explicit scenarios) and the owner's reading of draft 0.3.
+section written from `docs/literature/`. Draft 0.4 (0.7.17) after the owner's third
+reading: the two answers to "is 7.5 cm enough?" are now both given (share of the
+benefit retained, 78 %; direct cost of 7.5 cm against 10 cm with pre-positioning, +0.24
+±0.57 % for the network, +0.05 % for the rule, 1.3 % at 5 cm), with the direct contrast
+in the foreground as the coverage decision; the robustness to the network is measured
+with the paired per-seed difference of the contrasts (within 1 point in 18 of 24 cells,
+two C-vs-B cells where the frozen network obtains 0.9–1.3 points more; pattern conserved,
+differences of magnitude in some regimes); "never idle, gain disappears" became "seldom
+idle, generally small"; the network saw `full` in 15 % of its training. Open for the
+next draft: the economic translation (deferred by the owner) and the owner's reading of
+draft 0.4.
 
 **Where the plan's steps already stand.**
 
@@ -424,4 +433,4 @@ translation (needs cost data or explicit scenarios) and the owner's reading of d
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
 | 3 Close the evaluation of Paper 1 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: network vs teacher vs known-parts search with latencies, on eight regimes; the hindsight reference, the 36-configuration bench and the budget ablations remain for a second run on new reserved seeds; the teacher contrast (Poisson vs burst-aware futures) is done (0.7.12, `rl2.md` §8.9): no gain, teacher of record unchanged |
 | 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
-| 5 Close the evaluation of Paper 2 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: A/B/C/D contrasts and the coverage curve on eight regimes, with both networks; **draft 0.3 of the paper written (0.7.14–0.7.16, `docs/papers/paper2/`)**; what remains is the economic translation (scenario-based, no cell data) and, if wanted, other burst settings; pilots: `docs/assumptions.md` C4, `rl2.md` §8.7–§8.8 |
+| 5 Close the evaluation of Paper 2 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: A/B/C/D contrasts and the coverage curve on eight regimes, with both networks; **draft 0.4 of the paper written (0.7.14–0.7.17, `docs/papers/paper2/`)**; what remains is the economic translation (scenario-based, no cell data) and, if wanted, other burst settings; pilots: `docs/assumptions.md` C4, `rl2.md` §8.7–§8.8 |
