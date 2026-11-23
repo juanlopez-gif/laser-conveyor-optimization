@@ -441,7 +441,14 @@ realizations on seeds 9000–9059, criteria and predictor comparison pre-registe
 `experiments/geometry_bench.py` smoke-tested; the run awaits the owner's go. The
 paper's final question (owner): how much anticipation does the camera need when the
 head can pre-position, and what predicts it better, the transverse crossing or the
-moves the head actually makes.
+moves the head actually makes. **Run (0.7.21, seeds 9000–9059 used once; `geometry.md`
+§6):** coverage worth sizing in 18 of 56 distinct cells for the rule; knee 2.0–7.5 s
+conservative, 3.33 s costs ≤ 0.44 s/part against 10 s; v_x is a first-order factor
+(halving it doubles the gain and moves the knee from 1.5–3.3 to 3.3–5 s); the moves the
+head makes (b τ_pp, b = 1.74, error 1.0 s) predict the knee better than τ_cross (1.5 s,
+the worst candidate), a constant 3 s nearly as well; the queue mechanism holds at the
+nominal load only. Next: rewrite Paper 2 around the bench (the original study becomes
+the reference cell), with the owner's reading of §6 first.
 
 **Where the plan's steps already stand.**
 

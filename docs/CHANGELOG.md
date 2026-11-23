@@ -6,6 +6,36 @@ summarized from the git history.
 
 ---
 
+## 0.7.21 — 2026-11-23 — Geometry bench run on the reserved seeds 9000–9059 (`geometry.md` §6)
+
+* **Why.** Owner's go (2026-11-23) on the frozen protocol of 0.7.20.
+* **What.** `python experiments/geometry_bench.py --tag geometry_bench --confirmatory
+  --workers 40`: 179 520 episodes, 1 139 s wall (12.0 CPU-hours). **Seeds 9000–9059
+  are now used once**, like 7000–7029. Per-episode extract versioned at
+  `docs/papers/paper2/data/geometry_bench.csv.gz` (10 MB); `--from-extract` regenerates
+  the tables from it (checked identical to the `bench.json` tables). Figures
+  `docs/methods/figures/geometry_bench_*.{pdf,png}`. Two analysis fixes after the run,
+  before any result was written: the regime list was built from the first 20 000 rows
+  (now from all), and the rule's predictor analysis counts the τ_cross = 2.4 s triplet
+  once (identical cells by H0).
+* **Results** (`geometry.md` §6). Checks: 0 mask violations; H0 exact (≤ 2.6 · 10⁻¹³ s)
+  in all eight blocks, so the rule has 56 distinct cells. Coverage worth sizing (G(10 s)
+  ≥ 1 s/part, lower bound ≥ 0.5) in 18 of 56 cells for the rule (13 of 28 Poisson, 5 of
+  28 bursts); elsewhere undetermined as pre-registered. Knee in the useful cells:
+  0.5–5 s point, 2.0–7.5 s conservative; 3.33 s costs at most 0.44 s/part against 10 s.
+  **v_x is a first-order factor:** halving it doubles the gain (1.0–1.3 → 2.1–2.4 s/part
+  at nominal Poisson) and moves the knee from 1.5–3.3 to 3.3–5 s. Predictors (18 cells,
+  leave-one-out MAE): τ_cross 1.53 s, a τ_cross 1.75, **b τ_pp 1.02** (b = 1.74), b′ (t_x +
+  t_y) 1.18, constant 1.13: the moves the head makes predict the coverage better than
+  the transverse crossing, which is the worst candidate; no predictor is precise. H5:
+  implied per-part saving within 1.0–2.0 × the move duration in all ten useful
+  nominal cells (mechanism supported), 2.1–9.5 × at the high load (not supported;
+  interpretation dropped there). Network: useful in 17 of 72, noisier, no predictor
+  works; `when_idle(τ) − when_idle(0)` equals G at the nominal load; it uses upstream
+  visibility with the same actions at the high load with bursts (+0.6–1.4 s/part). H3
+  holds (ΔG within ±0.26 / ±0.46 s/part, never significant); the longer entry adds
+  8.33 s of transit plus 2.0–4.9 s of belt stops growing with the load.
+
 ## 0.7.20 — 2026-11-23 — Geometry bench: frozen confirmatory protocol and script (`experiments/geometry_bench.py`), not yet run
 
 * **Why.** The owner's reading of the pilot (0.7.18): the knee in seconds barely moved

@@ -188,7 +188,8 @@ class Bench:
             self.by.setdefault((r["bench"], regime_key(r), r["entry"], round(r["s"], 6), r["mode"], r["who"]), {})[r["seed"]] = r
         self.seeds = sorted({r["seed"] for r in rows})
         self.whos = [w for w in ("nearest_job", "net") if any(r["who"] == w for r in rows)]
-        self.regimes = [r for r in REGIMES if any(regime_key(r) == regime_key(x) for x in rows[:20000])] or REGIMES
+        keys = {regime_key(x) for x in rows}
+        self.regimes = [r for r in REGIMES if regime_key(r) in keys] or REGIMES
 
     def get(self, reg, s, mode, who, bench="grid", entry=ENTRY):
         return self.by.get((bench, regime_key(reg), entry, round(s, 6), mode, who), {})
@@ -335,9 +336,12 @@ def tables(b: Bench, args) -> str:
             L.append("")
     # ---- predictors of the knee (rule, useful regimes)
     for who in b.whos:
-        pts = [(reg, b.knee(reg, who), b.trace(reg, who)) for reg in b.regimes if b.useful(reg, who)]
+        # for the rule the three τ_cross = 2.4 s cells are one cell (H0): keep 12 / 10 only
+        regs = [r for r in b.regimes if who != "nearest_job" or (r["spacing"], r["vy"]) not in ((6.0, 5.0), (18.0, 15.0))]
+        pts = [(reg, b.knee(reg, who), b.trace(reg, who)) for reg in regs if b.useful(reg, who)]
         pts = [(reg, k, tr) for reg, k, tr in pts if not math.isnan(k) and tr]
-        L += [f"## Predictors of the knee (`{who}`, {len(pts)} regimes with a useful benefit)", ""]
+        L += [f"## Predictors of the knee (`{who}`, {len(pts)} regimes with a useful benefit"
+              + (", the 2.4 s triplet counted once" if who == "nearest_job" else "") + ")", ""]
         if len(pts) >= 4:
             knee = [k for _, k, _ in pts]
             tc = [reg["tau_cross"] for reg, _, _ in pts]
@@ -483,7 +487,28 @@ def main() -> None:
     ap.add_argument("--net", default=NET)
     ap.add_argument("--workers", type=int, default=40)
     ap.add_argument("--analyse-only", action="store_true")
+    ap.add_argument("--from-extract", type=Path, default=None,
+                    help="analyse the versioned per-episode extract (csv.gz) instead of bench.json")
     args = ap.parse_args()
+    if args.from_extract is not None:
+        NUM = {"spacing", "vy", "vx", "tau_cross", "entry", "s", "lv", "cost", "avg_flow_time",
+               "total_blocked_time", "total_simulation_time", "idle_time", "wait_time", "prepos_tx_mean",
+               "prepos_ty_mean", "prepos_t_mean", "prepos_y_dominated", "prepos_wip_mean", "anticipation_eff"}
+        INT = {"seed", "blocking_events", "parts", "prepos_moves", "revocations"}
+        rows = []
+        with gzip.open(args.from_extract, "rt", newline="") as f:
+            for r in csv.DictReader(f):
+                row = {k: (None if v == "" else float(v) if k in NUM else int(v) if k in INT else v)
+                       for k, v in r.items()}
+                rows.append(row | {"mask_violations": 0, "secs": 0.0})
+        out_dir = ROOT / "results/experiments" / args.tag
+        out_dir.mkdir(parents=True, exist_ok=True)
+        b = Bench(rows)
+        md = tables(b, args)
+        (out_dir / "tables_from_extract.md").write_text(md)
+        figures(b, args.tag)
+        print(md)
+        return
     out_dir = ROOT / "results/experiments" / args.tag
     if args.confirmatory:
         args.seed_base, args.seeds = RESERVED_BASE, RESERVED_N
