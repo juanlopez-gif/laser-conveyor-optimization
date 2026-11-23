@@ -371,8 +371,14 @@ of `rl2.md` §5).
   the heavy load every point of the curve is within ±1–2 points of zero (the full
   table is in `phase4_tables.md`).
 * **Robustness to the network.** The reference network reproduces every contrast
-  (B vs A, C vs B, D vs B within ±0.5 points of the frozen network's values in every
-  regime, `phase4_tables.md`). In C the frozen network is 0.5–1.5 points better than
+  within the noise (B vs A, C vs B, D vs B: the two networks differ by less than 1 point
+  in 18 of the 24 cells and by at most 2.1 points, heavy / Poisson / slow head B vs A,
+  −1.34 ±1.66 vs +0.79 ±2.10; in every cell by less than the sum of the two half-widths;
+  same sign wherever either interval excludes zero; same significant cells except C vs B
+  at heavy / burst / nominal, −1.60 ±1.14 vs −0.30 ±0.86; `phase4_tables.md`).
+  *Corrected in 0.7.16: the first version of this bullet said "within ±0.5 points in
+  every regime", which was wrong (12 of 24 cells).* The reference network is the
+  checkpoint from which `rl2_gen_s_b` was retrained (0.7.11), not an independent run. In C the frozen network is 0.5–1.5 points better than
   the reference in every regime (significant in three), in B the two are equal.
 
 ### 9.3 Paper 1: search, teacher and network

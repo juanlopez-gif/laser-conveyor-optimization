@@ -27,7 +27,7 @@
 \title{\textbf{How Far Must the Camera See?}\\[0.3em]
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.2 (results of version 0.7.13)}
+\date{November 2026 --- draft 0.3 (results of version 0.7.13)}
 
 \begin{document}
 \maketitle
@@ -113,14 +113,68 @@ the part appears. The experiment is designed around this quantity.
   78--99\,\% of the gain for the nominal head, and the whole 10~cm zone is not enough for
   a head twice as slow (Section~\ref{sec:coverage}).
 \item The finding that the queue hidden upstream of the camera matters only when the cell is
-  overloaded, where no length of camera can help, and that every contrast is reproduced by
-  a second, independently trained controller (Sections~\ref{sec:hidden} and
-  \ref{sec:robust}).
+  overloaded, where no length of camera can help, and that every contrast survives the
+  retraining of the learned policy, measured against the checkpoint it was retrained from
+  (Sections~\ref{sec:hidden} and \ref{sec:robust}).
 \end{enumerate}
 
 The companion paper (Paper~1) presents the learned policy used here and its comparison with
 search-based controllers; this paper uses it only as one of two controllers and does not
 depend on its training.
+
+%====================================================================
+\section{Related work}\label{sec:related}
+%====================================================================
+Three strands of work touch the cell studied here; none asks the instrumentation
+question.
+
+\textbf{Picking and sorting from moving conveyors.} With one arm over one belt and
+Poisson arrivals, \cite{S02_Han2020} sequence the reachable objects by dynamic
+programming and show by example that greedy rules (first-in, nearest-first) are not
+optimal in general, with first-in best at low arrival rates and worst at high ones; the
+belt never stops and objects that leave the reachable window are lost. Sorting on a
+moving belt \cite{S01_Mattone2000} and value-aware sorting with availability windows
+\cite{S05_Kokkalis2026} share that setting. With several arms, \cite{S03_Nielsen2023}
+batch items from an infeed belt into tray lanes with a goal program solved per tray
+inside a 1.8~s decision budget, and note that a longer buffer zone improves the objective
+but raises the computation beyond the budget; \cite{S04_Schettini2023} schedule
+identical robots along input and output conveyors by row generation and local search,
+with cameras that see items 5--10~s ahead and items not picked lost at the end of the
+belt. In all of these the belt never stops because of the processing and an unserved
+item leaves the system; in our cell processing stops the part's belt and an unprocessed
+part blocks it, so the trajectories of the remaining parts depend on the schedule, and
+the visibility horizon is a parameter of the setting rather than a quantity whose value
+is measured.
+
+\textbf{Interception of moving targets.} The moving-target travelling salesman problem
+\cite{S06_Helvig2003}, its discrete- and continuous-time formulations with visibility
+windows \cite{S07_Stieber2022} and the mixed-integer conic formulation over a graph of
+convex sets \cite{S08_Philip2024} give exact models of a single agent intercepting
+targets that move with exogenous, constant velocities, offline. The formulation behind
+this paper (the project's formulation document) uses the same interception geometry
+with endogenous motion: a belt's odometer stops while its part is processed or blocked.
+
+\textbf{Blocking in conveyor systems.} Blocking as a schedule-dependent loss appears in
+packaging machines whose devices obstruct each other along one infeed
+\cite{S10_Briskorn2025} and in a food warehouse where full crane buffers stop the
+upstream conveyors, with the blocked time minimised offline by simulation-based
+metaheuristics \cite{S11_SalviaHornos2026}. Our objective charges both the blocking
+events and their duration, inside the dispatching problem.
+
+\textbf{Learned dispatching.} The learned policy used as one of the two controllers
+belongs to the family of dispatching policies trained from search or from expert
+schedules: rollout \cite{M02_Bertsekas1997}, policy-gradient dispatching with
+objective-aligned rewards \cite{S19_Zhang2020,S21_Sun2023}, offline learning from
+constraint-programming schedules \cite{S20_VanRemmerden2025}, action masking
+\cite{M04_Huang2022,S18_Wei2024}, and learned control of conveyor-fed robotic cells
+\cite{S15_Zisgen2025,S16_Drijver2023,S17_Drakaki2017,S12_Wang2004,S13_Li2020}. Its
+design and training are the subject of Paper~1; here it matters only that it uses every
+observable part, so that it can turn a wider view into different decisions, which the
+dispatching rule cannot.
+
+What these works leave open, and this paper measures, is how the value of the sensing
+reach depends on what the controller may do with it, for one cell, on paired
+realizations.
 
 %====================================================================
 \section{The cell and its information model}\label{sec:cell}
@@ -256,11 +310,15 @@ and 2.0~s for the heavy one (Table~\ref{tab:regimes}). When the head is idle at 
 and a part is announced on belt $k$, the pre-positioned head reaches the meeting point
 $(a,y_k)$ after $\max(|X-a|/v_x,|y-y_k|/v_y)$ seconds; across the three conveyors the lane
 component is at most $\thead=24/v_y$, 2.4~s for the nominal head and 4.8~s for a head
-twice as slow. If $\tv\ge\thead$ the head is in place when the part enters, whatever its
-previous lane; if $\tv<\thead$ part of the travel is still paid after the part is
-reachable. The coverage curve is therefore read against $\thead$: the hypothesis, formed on
-the pilot of Section~\ref{sec:pilot}, is that the gain of pre-positioning grows with $\tv$
-up to $\thead$ and saturates beyond it.
+twice as slow. The along-belt component can be larger: up to $35/v_x=3.5$~s at the nominal speed if the
+head is at the far end of the laser zone, and small when it finished its previous part
+near the entry, as it does after a pre-positioned one. If $\tv$ covers the travel, the
+head is in place when the part enters; otherwise part of the travel is still paid after
+the part is reachable. We take $\thead$, the lane component, as the reference against
+which the coverage curve is read: the hypothesis, formed on the pilot of
+Section~\ref{sec:pilot}, is that the gain of pre-positioning grows with $\tv$ up to
+about $\thead$ and levels off beyond it. Whether the along-belt component matters at the
+pre-positioning decisions is something the curve itself has to show.
 
 %====================================================================
 \section{Experimental design}\label{sec:design}
@@ -280,10 +338,11 @@ tied to one policy:
   tokens of the observable parts, the belts, the head and the cell parameters, trained by
   expert iteration from a sampled-future search teacher on a family of cells that includes
   the regimes below. It uses every observable part, so it can turn upstream visibility into
-  better choices among the zone parts (B vs A) and use the hidden queue (D vs B). A second,
-  independently trained network of the same size (the \emph{reference network}, an earlier
-  training run) is used in Section~\ref{sec:robust} to check that the contrasts do not
-  depend on the training run. Both were frozen before the confirmatory run; the decision
+  better choices among the zone parts (B vs A) and use the hidden queue (D vs B). A second
+  network of the same size (the \emph{reference network}: the checkpoint from which the
+  frozen network's training was continued, trained before bursty arrivals and slow heads
+  entered the training mix) is used in Section~\ref{sec:robust} to check that the
+  contrasts survive that retraining; the two are not independent runs. Both were frozen before the confirmatory run; the decision
   latency of the network is 8--12~ms per decision (median, one thread, machine fully
   loaded).
 \end{itemize}
@@ -310,10 +369,15 @@ blocking events and blocked conveyor-seconds are means per episode for \nj\ in B
 \subsection{Pairing, seeds and pre-registration}\label{sec:pilot}
 Every configuration of a regime runs on the same 30 realizations (common random numbers:
 the same arrival instants and processing times), so that every contrast is a paired
-difference per realization. We report the mean over realizations of the relative
-difference of $J$ between two configurations, with a normal 95\,\% confidence interval,
-and the number of realizations in which the second configuration is better. Negative means
-the first-named configuration is better.
+difference per realization. For a contrast written ``X vs Y'' we report
+\[
+\Delta=100\,\Bigl(\frac{1}{30}\sum_{\omega}\frac{J_X(\omega)}{J_Y(\omega)}-1\Bigr)\ [\%],
+\]
+the mean over the realizations $\omega$ of the paired cost ratio, with a normal 95\,\%
+confidence interval, and in parentheses the number of realizations in which
+$J_X(\omega)<J_Y(\omega)$. A negative $\Delta$ favours $X$, the first-named
+configuration: for ``C vs B'' it means that pre-positioning reduced the cost, for ``B vs
+A'' that the wider view did. The same convention holds in every table and figure.
 
 The design was fixed in two stages. Pilots on development realizations (seeds 2000--2029,
 also used to choose the network) shaped the hypotheses: that B vs A is null, that the value
@@ -350,8 +414,8 @@ treatments; Table~\ref{tab:levels} the levels against \nj\ in~B.
 \begin{table}[t]
 \centering\small
 \caption{Contrasts between treatments (paired $\Delta$ of the penalized flow time, \%,
-95\,\% CI; in parentheses the realizations, out of 30, in which the second treatment is
-better; bold: the interval excludes zero). For \nj\ the contrasts B vs A and D vs B are
+95\,\% CI; in parentheses the realizations, out of 30, in which the first-named
+treatment is cheaper; bold: the interval excludes zero). For \nj\ the contrasts B vs A and D vs B are
 zero by construction.}
 \label{tab:contrasts}
 \resizebox{\linewidth}{!}{\input{tables/contrasts}}
@@ -361,8 +425,8 @@ zero by construction.}
 \centering
 \includegraphics[width=\linewidth]{figures/contrasts.pdf}
 \caption{The network's contrasts between treatments on the eight regimes (paired
-$\Delta$ of the penalized flow time, 95\,\% CI; negative = the second treatment is
-better; filled markers: the interval excludes zero).}
+$\Delta$ of the penalized flow time, 95\,\% CI; negative favours the first-named
+treatment; filled markers: the interval excludes zero).}
 \label{fig:contrasts}
 \end{figure}
 
@@ -530,10 +594,17 @@ whole-zone gain is itself within noise.}
 \end{table}
 
 \subsection{Robustness to the controller}\label{sec:robust}
-Table~\ref{tab:robust} repeats the three contrasts with the reference network, an
-independent training run of the same architecture. Every contrast is reproduced within
-$\pm1$ point of the frozen network's value (within $\pm0.5$ in 20 of the 24 cells), with
-the same sign and the same set of significant cells, and its coverage curve at the
+Table~\ref{tab:robust} repeats the three contrasts with the reference network, the
+checkpoint from which the frozen network was retrained with bursts and slow heads in the
+training mix; it is a check against that retraining, not against an independent run.
+Every contrast is reproduced within the noise of the measurement: the two networks'
+values differ by less than 1 point in 18 of the 24 cells and by at most 2.1 points (B vs
+A at the heavy load with Poisson arrivals and a slow head, $-1.3\pm1.7$ against
+$+0.8\pm2.1$), in every cell by less than the sum of the two half-widths, with the same
+sign wherever either network's interval excludes zero and the same significant cells
+except one (C vs B at the heavy load with
+bursts and the nominal head: $-1.6\pm1.1$ for the frozen network, $-0.3\pm0.9$ for the
+reference), and its coverage curve at the
 nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~cm
 (same-length baseline; 97 and 112\,\% with the pooled one). The two networks are within $\pm0.8$ points of each other in~B in seven
 regimes, and the frozen one is 0.4--1.3 points better in~C in seven of the eight
@@ -543,8 +614,8 @@ produce; it does not alter any contrast.
 \begin{table}[t]
 \centering\small
 \caption{Robustness: the reference network's contrasts (as Table~\ref{tab:contrasts}) and
-the frozen network against the reference network in B and in C (negative = the frozen
-network is better).}
+the frozen network against the reference network in B and in C (negative favours the
+frozen network).}
 \label{tab:robust}
 \resizebox{\linewidth}{!}{\input{tables/robustness}}
 \end{table}
@@ -568,22 +639,26 @@ head twice as slow it gives 14.4~cm, more than the entry zone, and the curve ind
 not saturate within it. The data support the reference at the nominal head and are
 consistent with it at the slow head; they do not show that $\thead\vb$ is a minimum in
 general (one geometry, two head speeds, a grid that stops at 10~cm), and the 14.4~cm
-figure is a prediction to be tested with a longer entry zone. The reference has a second
-reading: if the entry stretch a camera can cover is fixed by the layout, the
+figure is a prediction to be tested with a longer entry zone. Nor is $\thead$ a bound on
+the head's travel: the along-belt component can reach 3.5~s in this cell, and a curve that
+levels off near 2.4~s says that it seldom does at a pre-positioning decision, not that it
+cannot. The reference has a second reading: if the entry stretch a camera can cover is fixed by the layout, the
 head's speed across the lanes sets how much of the value of pre-positioning the cell can
 collect, and a faster $y$ axis is a substitute for a longer camera.
 
 \subsection{Why widening the view alone changes little here}
-Under treatment~B the controller can only choose among the parts already in the zone.
-Upstream visibility could help it in two ways: by waiting for a part about to enter a
-belt near the head, or by ordering the zone parts so that the head ends near the belt
-with the next arrival. In this cell neither pays much: processing takes 2.5~s and the head
-crosses the lanes in 2.4~s, so a part that enters the zone during a processing is
-reachable soon after it ends whatever the order, and waiting for an announced part delays a
-reachable one. The learned policy, which was free to find such uses, did not improve on
-its level in~A. We expect this to change in cells where the lane travel is long relative
-to the processing, which the heavy regime with the slow head begins to show ($-1.3\pm1.7$
-and $-1.3\pm0.7$ for B vs A, the two largest values of the table).
+Under treatment~B the controller can only choose among the parts already in the zone,
+and it must choose one whenever there is one: a decision epoch has a non-empty candidate
+set, and waiting for a part that is about to enter is not an action. Upstream visibility
+can therefore help it only through the order of the zone parts, for instance by finishing
+near the belt on which the next part will enter. In this cell that is worth little:
+processing takes 2.5~s and the head crosses the lanes in 2.4~s, so a part that enters the
+zone during a processing is reachable soon after it ends whatever the order. The learned
+policy, which was free to find such uses, did not improve on its level in~A except at the
+heavy load with bursts and a slow head ($-1.3\pm0.7$), the regime in which the lane travel
+is longest relative to the processing; the other slow-head heavy regime points the same
+way without reaching significance ($-1.3\pm1.7$). We expect the effect to grow in cells
+with that property.
 
 \subsection{Bursts and slow heads}
 The design's original hypothesis was that upstream visibility is worth more when parts
@@ -628,8 +703,8 @@ retains 78--99\,\% of the gain, and the 10~cm entry zone is not enough for a hea
 as slow. The
 queue the camera cannot see matters only when the cell is overloaded, where no camera
 length helps. These are measurements on 30 reserved realizations per configuration,
-reproduced by two independently trained controllers, and they give the cell's designer a
-coverage reference in physical units.
+reproduced by a dispatching rule, a learned policy and the checkpoint that policy was
+retrained from, and they give the cell's designer a coverage reference in physical units.
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references}

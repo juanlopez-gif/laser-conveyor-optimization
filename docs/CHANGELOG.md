@@ -6,6 +6,51 @@ summarized from the git history.
 
 ---
 
+## 0.7.16 — 2026-11-23 — Paper 2 draft 0.3: owner's four corrections, related work, robustness claim corrected
+
+* **Why.** The owner's reading of draft 0.2 found four statements that went beyond
+  the data: (1) τ_head = 2.4 s covers only the lane change, the along-belt travel can
+  reach 35 cm / 10 cm/s = 3.5 s, so "the head is in place whenever τ_v ≥ τ_head" was
+  not justified; (2) "widening the view is worth nothing" ignored the −1.31 ±0.74 cell
+  (heavy / bursts / slow head), and §5.2 explained B vs A with "waiting for an
+  announced part", which `none` cannot do (a decision epoch has a non-empty candidate
+  set and no wait action, `src/fastsim/core.py`); (3) the two networks were called
+  "independently trained" while `rl2_gen_s_b` continued the training of
+  `rl2_gen_s_d` (`rl2.md` §8.8), and "the same set of significant cells" had an
+  exception; (4) the sign convention was stated both ways (§3.3 "negative = first
+  configuration better", Figure 2 "negative = second treatment better"). The owner
+  also asked to go on with the paper, so the related-work section proposed earlier
+  was written.
+* **What** (`docs/papers/paper2/paper2.tex`, draft 0.3; PDF rebuilt, 14 pages).
+  * §2.4 and §5.1: τ_head presented as the lane component of the travel, with the
+    along-belt component (up to 3.5 s) stated and the knee of the curve read as
+    evidence that it seldom matters at pre-positioning decisions, not that it cannot.
+  * §5.2: the "waiting" channel removed; B vs A can act only through the order of
+    the zone parts; the heavy / bursts / slow-head cell kept as the one where the
+    wider view helped.
+  * Networks: "reference network" defined as the checkpoint the frozen network was
+    retrained from (a check against the retraining, not an independent run) in the
+    contributions, §3.1, §4.4 and the conclusions.
+  * §3.3: the contrast written once as Δ = 100 (mean of J_X / J_Y − 1) for "X vs Y",
+    negative favours X, the count is the realizations with J_X < J_Y; Table 2,
+    Figure 2 and Table 7 captions aligned.
+  * New §2 "Related work" from `docs/literature/` (closest_papers.md,
+    review_assessment.md, the evidence map): moving-conveyor picking (S01–S05),
+    moving-target interception (S06–S08), blocking in conveyor systems (S10, S11),
+    learned dispatching (M02, M04, S12–S21); only statements verified in those notes.
+* **Erratum found while checking (3).** The claim "the reference network reproduces
+  every contrast within ±0.5 points" (confirmatory.md §9.2, CHANGELOG 0.7.13, paper
+  drafts 0.1–0.2 "within ±1 point, ±0.5 in 20 of 24 cells") was wrong: recomputed
+  from the extract, the two networks differ by < 0.5 points in 12 cells, < 1 point in
+  18, at most 2.1 (heavy / Poisson / slow head, B vs A: −1.34 ±1.66 vs +0.79 ±2.10),
+  always by less than the sum of the two half-widths; same sign wherever either
+  interval excludes zero; same significant cells except C vs B at heavy / bursts /
+  nominal. Corrected in confirmatory.md (with a note), annotated in the 0.7.13 entry,
+  and stated this way in §4.4 of the paper. The conclusion (the contrasts survive the
+  retraining) stands; the precision claimed for it did not.
+
+---
+
 ## 0.7.15 — 2026-11-23 — Paper 2 draft 0.2: figures redesigned, headline softened, data extract versioned
 
 * **Why.** The owner's review of draft 0.1: the figures were unreadable (eight cramped
@@ -123,7 +168,8 @@ summarized from the git history.
   points) at 10.8 ms per decision (p50, one thread, machine fully loaded) against
   0.4–1.9 s for the teacher. *Engine check:* identical order in 96 % of the 960
   episodes, mean |ΔJ| 0.03–0.06 %, the rest near-tie flips as in `fastsim.md` §4.
-  The reference network reproduces every contrast within ±0.5 points.
+  The reference network reproduces every contrast within ±0.5 points
+  *[corrected in 0.7.16: within the noise; < 1 point in 18 of 24 cells, at most 2.1]*.
 
 ---
 
