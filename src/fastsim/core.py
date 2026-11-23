@@ -136,13 +136,21 @@ class FastSim:
         self._pending: list[int] | None = None       # candidates of an open decision
         self._memo: dict[int, Intercept | None] = {}
         self._zero_steps = 0
+        # trace statistics (0.7.18, geometry bench; no effect on the dynamics)
+        self.idle_area = 0.0             # time with the laser idle
+        self.wait_area = 0.0             # time waiting at the meeting point for the part
+        self.n_prepos = 0                # pre-positioning assignments (target still MOVING)
+        self.n_revoked = 0               # pre-positionings revoked by a READY part
+        self.pp_tx: list[float] = []     # planned x travel of each pre-positioning move [s]
+        self.pp_ty: list[float] = []     # planned y travel [s]
 
     def clone(self) -> "FastSim":
         """Independent copy of the current state (instance data shared, read-only)."""
         c = FastSim.__new__(FastSim)
         c.__dict__.update(self.__dict__)
         for name in ("pk", "pr", "pp", "pst", "pE", "pD0", "pentry", "pvis", "pready", "pS",
-                     "pC", "pB", "pX", "pDS", "pexit", "D", "s_proc", "s_blk", "moved", "order"):
+                     "pC", "pB", "pX", "pDS", "pexit", "D", "s_proc", "s_blk", "moved", "order",
+                     "pp_tx", "pp_ty"):
             setattr(c, name, list(getattr(self, name)))
         c.belt = [list(q) for q in self.belt]
         c.buf = [list(q) for q in self.buf]
@@ -259,6 +267,10 @@ class FastSim:
         self.tx, self.ty = self.ws.clamp(icp.x, icp.y)
         self.planned_v = self.speed(self.pk[j])
         self.lstate = HEADING
+        if self.pst[j] == MOVING:             # a pre-positioning move (trace statistics)
+            self.n_prepos += 1
+            self.pp_tx.append(abs(self.tx - self.lx) / self.vx)
+            self.pp_ty.append(abs(self.ty - self.ly) / self.vy)
         if not self._instant_post():          # if dropped, the next call decides again
             self._advance()
 
@@ -347,6 +359,7 @@ class FastSim:
         # revocation of a pre-positioning (when_idle)
         if (self.mode == "when_idle" and self.lstate == HEADING
                 and self.pst[self.target] == MOVING and self._ready_exists()):
+            self.n_revoked += 1
             self._drop()
 
     def _ready_exists(self) -> bool:
@@ -502,6 +515,10 @@ class FastSim:
         n_wip = len(self.pk) - self.n_completed
         self.wip_area += n_wip * dt
         self.blocked_area += sum(self.s_blk) * dt
+        if self.lstate == IDLE:
+            self.idle_area += dt
+        elif self.lstate == HEADING and abs(self.lx - self.tx) < SNAP and abs(self.ly - self.ty) < SNAP:
+            self.wait_area += dt
         if dt > 0:
             for k in range(self.n):
                 if not (self.s_proc[k] or self.s_blk[k]):
@@ -553,7 +570,21 @@ class FastSim:
         tb = self.blocked_area
         pen = cfg.blocking_penalty_per_event * nb + cfg.blocking_penalty_per_second * tb
         avg_flow = sum(flows) / n if n else None
+        ant = [self.pready[j] - self.pvis[j] for j in range(len(self.pk))
+               if self.pready[j] is not None and self.pvis[j] is not None]
+        npp = len(self.pp_tx)
+        tmax = [max(a, b) for a, b in zip(self.pp_tx, self.pp_ty)]
         return {
+            # trace statistics (0.7.18)
+            "idle_time": self.idle_area,
+            "wait_time": self.wait_area,
+            "prepos_moves": self.n_prepos,
+            "revocations": self.n_revoked,
+            "prepos_tx_mean": sum(self.pp_tx) / npp if npp else None,
+            "prepos_ty_mean": sum(self.pp_ty) / npp if npp else None,
+            "prepos_t_mean": sum(tmax) / npp if npp else None,
+            "prepos_y_dominated": sum(1 for a, b in zip(self.pp_tx, self.pp_ty) if b > a) / npp if npp else None,
+            "anticipation_eff": sum(ant) / len(ant) if ant else None,
             "total_simulation_time": self.t,
             "parts_generated": len(self.pk),
             "parts_completed": n,

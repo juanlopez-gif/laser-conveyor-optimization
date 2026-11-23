@@ -6,6 +6,49 @@ summarized from the git history.
 
 ---
 
+## 0.7.18 — 2026-11-23 — Geometry pilot: does the head's crossing time predict the camera coverage? (`experiments/geometry_pilot.py`)
+
+* **Why.** The owner's brief of 2026-11-23 proposes extending Paper 2 with a bench
+  over belt spacing × transverse head speed (36 regimes, seven coverages at
+  fractions of τ_cross = (y_max − y_min) / v_y), to test whether τ_cross predicts
+  the sufficient coverage across geometries. Agreed first step (owner): a pilot with
+  `nearest_job` as the primary controller, nine geometries, Poisson at the nominal
+  load, development seeds, v_x fixed, benefit in seconds per part, hypotheses
+  written before the run, confirmatory bench only after the protocol is fixed.
+* **What.** `docs/methods/geometry.md`: §1–§3 hypotheses H0–H4 and design, written
+  before the run; §4 results. `experiments/geometry_pilot.py`: nine cells (spacing
+  6 / 12 / 18 cm × v_y 5 / 10 / 15 cm/s, v_x 10, entry zone 35 cm), coverage at
+  0–150 % of τ_cross plus the common lengths 1–10 cm, `none` vs `when_idle`,
+  `nearest_job` and the frozen network, seeds 3000–3029; the physical-length check
+  (original cell at entry 10 cm vs 35 cm, same visible lengths); checks (i)–(iv);
+  tables and figures (`docs/methods/figures/geometry_pilot_*.pdf`). Reserved seeds
+  7000–7029 are refused by the script. `src/fastsim/core.py`: trace statistics in
+  `summary()` (idle time, time waiting at the meeting point, pre-positioning moves
+  with their planned t_x / t_y, revocations, effective anticipation); no change to
+  the dynamics (`tests/test_fastsim.py`, `test_observation.py`,
+  `test_visible_length_burst.py` pass; the original cell reproduces `rl2_eval.run`
+  with Δ = 0).
+* **Results** (14 400 episodes, 45 s). H0 exact: the three cells with τ_cross = 2.4 s
+  are identical for the rule (|ΔJ| ≤ 10⁻¹³), since with simultaneous axes the
+  geometry enters only through spacing / v_y; question 2 of the brief is answered by
+  the model's structure. The rule's knee (90 % of the whole-zone gain) lies between
+  1.2 and 3.3 s of anticipation in all nine geometries while τ_cross spans 0.8–7.2 s:
+  normalization by τ_cross holds only for τ_cross 1.2–2.4 s (knee 1.0–1.25 τ_cross),
+  fails on both sides (2.1–3.1 at 0.8 s; 0.2–0.5 at 4.8–7.2 s). 7.5 cm (2.5 s) keeps
+  91–105 % of the gain in every geometry. Traces: the number of pre-positioning
+  moves is fixed by the head's idle time (31 % → 8 %) and barely depends on the
+  anticipation; what grows and saturates at 1.2–3 s is the gain per move (up to
+  27 s per move with the slowest head, since a second saved on the head's cycle is
+  saved by every part queued behind it); moves last 0.7–3.0 s, below τ_cross, with
+  45–58 % y-dominated. Phase 4's slow head (both axes at half speed) needed the whole
+  zone; slowing v_y alone does not, so v_x must be a factor of the confirmatory bench.
+  H3 holds: the 35 cm entry adds 10.0–10.2 s per part (8.33 s free transit + ≈1.8 s)
+  and leaves the gain at a given length unchanged within ±0.5 s. Network: same curves
+  as the rule, no degradation at the out-of-range entry; its `none` vs `when_idle` at
+  ℓ_v = 0 differ because the mode is a context token, so its baseline should be
+  `when_idle` at 0. Seeds 3000–3029 are a lighter draw than 7000–7029 (70.5 vs 77.5
+  parts). Recommendations for the protocol in `geometry.md` §4.4.
+
 ## 0.7.17 — 2026-11-23 — Paper 2 draft 0.4: direct 7.5 vs 10 cm contrast, paired robustness, two sentences corrected
 
 * **Why.** The owner's reading of draft 0.3 (2026-11-23) asked for three adjustments

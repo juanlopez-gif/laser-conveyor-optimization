@@ -425,6 +425,18 @@ idle, generally small"; the network saw `full` in 15 % of its training. Open for
 next draft: the economic translation (deferred by the owner) and the owner's reading of
 draft 0.4.
 
+**Geometry extension (owner's brief, 2026-11-23; pilot 0.7.18, `docs/methods/geometry.md`).**
+The owner proposes a bench over belt spacing × transverse head speed to test whether
+τ_cross predicts the sufficient coverage. The pilot (nine geometries, the rule as the
+primary controller, development seeds 3000–3029) found that the knee in seconds barely
+moves with the geometry (1.2–3.3 s while τ_cross spans 0.8–7.2 s), that the τ_cross
+normalization holds only for τ_cross 1.2–2.4 s, that the opportunities are fixed by the
+head's idle time and the gain per move by the queue behind it, and that v_x (held fixed
+in the pilot) must be a factor, since phase 4's slow head on both axes needed the whole
+zone. Same-τ_cross cells are identical by the model's structure (H0, exact). The
+confirmatory protocol is to be fixed from `geometry.md` §4.4 and needs a new reserved
+seed range from the owner.
+
 **Where the plan's steps already stand.**
 
 | step | status |
