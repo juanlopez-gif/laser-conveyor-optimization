@@ -316,8 +316,8 @@ heads" unless the confirmatory bench with other burst settings says otherwise.
    laser speeds below 5 cm/s) and is a separate owner decision — taken the same day:
    bursts and slow heads are in the scope, `GENERAL` extended (0.7.11) and
    `rl2_gen_s_b` run (`rl2.md` §8.8): indistinguishable from `rl2_gen_s_d` on the
-   development seeds and in every bench regime; the choice of the frozen network is
-   pending (recommendation: `rl2_gen_s_b`, trained on the declared scope).
+   development seeds and in every bench regime. **Frozen network: `rl2_gen_s_b`,
+   iteration 1** (owner, 2026-11-22, see the decisions below).
 2. *Hypothesis.* Reformulated now (above), with the record that it came from the
    pilot. The confirmatory bench must test the coverage curve and show that, with the
    same actions, the benefit of seeing earlier is small enough for the design decision.
@@ -330,12 +330,58 @@ Reading of the two papers: Paper 1 explains how to decide fast; Paper 2 answers 
 different engineering decision, how far it is worth looking and which capacity to act
 makes that coverage useful.
 
+**Decisions before phase 4 (owner, 2026-11-22, after `rl2_gen_s_b`, `rl2.md` §8.8).**
+
+1. *Network frozen.* `rl2_gen_s_b`, iteration 1 (`models/rl2_gen_s_b.pt`). Reason: its
+   training covers the bursty arrivals and the slow heads that are in the scope, and on
+   the development seeds its paired differences with `rl2_gen_s_d` include zero in the
+   four validation groups. The defensible statement is that extending the training did
+   not produce a detectable improvement on this bench. `rl2_gen_s_d` remains the 0.7.9
+   reference.
+2. *Paper 1, the teacher.* The reading that the Poisson futures of the teacher cap
+   what the network can learn on bursty cells is plausible, not shown. Before any new
+   training from scratch, measure it directly: the Poisson teacher against a teacher
+   whose sampled futures follow the burst model of the cell, on the **same
+   realizations** and with the **same search budget** (same number of futures, window
+   and penalty weight), over the same network. Development seeds; never the
+   confirmatory ones.
+3. *Paper 2, the retrained network.* The bench repeated with a network trained in the
+   regimes reinforces the pilot's reading: the observed benefit comes mostly from being
+   able to act earlier. The −6.4 ±2.4 % of the hidden queue at the heavy load with a
+   slow head shows that extra information can matter in one specific regime. Because
+   the same bench was repeated, present it as a result robust to the change of
+   network, pending confirmation on the reserved realizations.
+4. *Phase 4 priorities.* Two contrasts first: (i) the network alone against the
+   sampled-future teacher over it, to measure quality and decision latency together
+   (Paper 1); (ii) with against without pre-positioning at each visible length, to
+   measure how much of the entry stretch the camera must cover (Paper 2).
+
+**Phase 4 protocol (draft to confirm before launch; nothing has been run on the
+reserved seeds).**
+
+| item | frozen value |
+|---|---|
+| network | `models/rl2_gen_s_b.pt` (iteration 1); `rl2_gen_s_d` reported only as the 0.7.9 reference |
+| seeds | 7000–7029 (30 paired realizations per configuration), used once; any tuning or sample-size check stays on 2000+ |
+| simulator | the exact event-driven simulator (`src/fastsim`, phase 1 acceptance) for every run; two regimes re-run on the engine at `dt = 0.001` as a check |
+| regimes | the eight of the pilot: load real / heavy × arrivals Poisson / burst (`BURST_VAL`: on-fraction 0.3, on-mean 20 s) × head nominal / slow (× 0.5) |
+| treatments | A, B, C, D as in §8.6, plus the coverage grid `visible_length` ∈ {0, 1, 2.5, 5, 7.5, 10} cm with `none` and `when_idle` at every length |
+| contrast (i), Paper 1 | in B and in C: `nearest_job`, `nearest_head`, known-parts search, sampled-future teacher over the network (8 futures, 30 s, w_pen 0) and the network alone; paired Δ of $J$ vs `nearest_job`, and per-decision latency p50 / p95 of every policy on the same decisions |
+| contrast (ii), Paper 2 | at every visible length, `when_idle` vs `none` **at the same length** (network and `nearest_job`); B vs A, C vs B, D vs B as in the pilot; coverage also in seconds of belt travel against the head's travel time |
+| report | paired Δ with 95 % CI and absolute $J$, parts, blocking events and blocked time per regime; the sample size of 30 was judged sufficient from the pilot's intervals (±1–3 points for effects of 3–6 points; a null B vs A is bounded at about ±1.5 points) |
+| script | `experiments/rl2_eval.py` (to write), one invocation, outputs under `results/experiments/phase4/`; tables copied to `docs/methods/confirmatory.md` |
+
+Items not in the two priority contrasts (hindsight reference, the 36-configuration
+bench with the 0.90 load, the sensitivity grid, the search-budget ablations of
+`strong_rl_plan.md` §5) are deferred to a second phase-4 run on other reserved seeds,
+to be decided after the first.
+
 **Where the plan's steps already stand.**
 
 | step | status |
 |---|---|
 | 1 Freeze the base problem | model, KPI, information levels and checks exist; the bursty generator and the visible-length parameter exist since 0.7.10; what remains is to freeze the *paper's* instance formats and the 36-configuration bench (the load grid should add 0.90, review note 4) |
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
-| 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable |
+| 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable; network frozen (`rl2_gen_s_b`, it. 1) and protocol drafted above, pending the owner's confirmation; the teacher contrast (Poisson vs burst-aware futures) comes first, on development seeds |
 | 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
-| 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4; the pilot across regimes with the 0.7.9 network is in `docs/methods/rl2.md` §8.7 |
+| 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4; the pilot across regimes with the 0.7.9 network is in `docs/methods/rl2.md` §8.7 and its repetition with the 0.7.11 network in §8.8 (robust to the network, pending the reserved seeds) |

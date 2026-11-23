@@ -836,12 +836,18 @@ Findings:
 * **Choice of network.** Both are equivalent on development seeds. `rl2_gen_s_b` was
   trained on the declared scope (bursts, slow heads) and loses nothing elsewhere, so
   it is the natural candidate to freeze for phase 4; `rl2_gen_s_d` stays available as
-  the 0.7.9 reference. The decision is the owner's.
+  the 0.7.9 reference. **Decision (owner, 2026-11-22): `rl2_gen_s_b`, iteration 1, is
+  the frozen network of phase 4**; the defensible statement is that extending the
+  training produced no detectable improvement on this bench
+  (`docs/plans/papers.md`, decisions before phase 4).
 * **If more is wanted on bursts**, the lever is the teacher, not the training mix: give
   `rl2.search.sample_scenarios` the burst model of the cell (statistical knowledge,
   not an observation) so its futures are bursty when the cell is, and tell the
   network the burst parameters in the context token (a new token layout, trained from
-  scratch). Not done; a decision for the owner.
+  scratch). Not done. Owner's decision (2026-11-22): the teacher explanation is
+  plausible but unproven; before any training from scratch, compare the Poisson
+  teacher with a burst-aware teacher on the same realizations and the same search
+  budget (development seeds).
 
 ## 9. Reproduce (phase 3)
 

@@ -47,6 +47,18 @@ summarized from the git history.
   `models/rl2_gen_s_b.pt`, `models/rl2_gen_s_b_training.json`. Choice of the network
   to freeze for phase 4 left to the owner (`rl2.md` §8.8 recommends `rl2_gen_s_b`,
   trained on the declared scope, with `rl2_gen_s_d` as the 0.7.9 reference).
+* **Decisions (owner, 2026-11-22, after the results; `docs/plans/papers.md`).**
+  (1) **Network frozen for phase 4: `rl2_gen_s_b`, iteration 1**, because its
+  training covers the bursts and slow heads in the scope and it is statistically equal
+  to `rl2_gen_s_d` on development seeds; `rl2_gen_s_d` stays as the 0.7.9 reference.
+  (2) The teacher-ceiling explanation is to be tested, not assumed: Poisson teacher vs
+  burst-aware teacher on the same realizations with the same search budget, before any
+  training from scratch. (3) The repeated bench is presented as robust to the change
+  of network, pending the reserved seeds. (4) Phase 4 starts with two contrasts:
+  network alone vs sampled-future teacher (quality and latency) and with vs without
+  pre-positioning at each visible length. A phase 4 protocol (network, seeds
+  7000–7029, simulator, regimes, treatments, outputs) is drafted in `papers.md` for
+  the owner to confirm; nothing has been run on the reserved seeds.
 * **Tests:** `tests/test_rl2_search.py` gains the regime test (mix fractions,
   ranges, separate stream, validation cells unchanged, `real_burst` group); the kind
   split updated. Full suite passes.
