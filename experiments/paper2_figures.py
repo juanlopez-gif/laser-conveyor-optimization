@@ -1,8 +1,8 @@
 """Figures and tables of Paper 2 from the phase 4 bench (``docs/papers/paper2``).
 
-Reads ``results/experiments/<tag>/bench.json`` written by ``experiments/rl2_eval.py``
-(the confirmatory run on the reserved seeds, 0.7.13) and writes, so that every number
-of the paper comes from one computation:
+Reads the per-episode results of the confirmatory run (``experiments/rl2_eval.py`` on
+the reserved seeds, 0.7.13) and writes, so that every number of the paper comes from one
+computation:
 
 * ``docs/papers/paper2/figures/coverage_curve.pdf``: the gain of pre-positioning at
   each visible length (``when_idle`` vs ``none`` at the same length, paired), against
@@ -15,12 +15,19 @@ of the paper comes from one computation:
 Paired Δ = mean over seeds of ``cost_x / cost_y - 1`` (penalized flow time), with a
 normal 95 % confidence interval; negative = the first configuration is better.
 
-    python experiments/paper2_figures.py --tag phase4
+The per-episode rows used here (the ``info`` part of ``bench.json``) are versioned as
+``docs/papers/paper2/data/phase4_info.csv`` so that the figures and tables can be rebuilt
+without the local ``results/`` directory; ``--bench`` regenerates that extract from a
+``bench.json`` first.
+
+    python experiments/paper2_figures.py                      # from the versioned extract
+    python experiments/paper2_figures.py --bench results/experiments/phase4/bench.json
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import math
 from pathlib import Path
@@ -58,12 +65,29 @@ def regime_name(g, a, tr):
     return f"{g} / {ARR[a]} / {TRV[tr]} head"
 
 
+FIELDS = ("load", "arrivals", "travel", "belt_speed", "head_span_s", "seed", "t", "who",
+          "cost", "flow", "blocks", "blocked", "parts")
+NUM = {"belt_speed": float, "head_span_s": float, "seed": int, "cost": float, "flow": float,
+       "blocks": int, "blocked": float, "parts": int}
+
+
+def extract(bench_json: Path, csv_path: Path) -> None:
+    """Write the per-episode rows of the information bench to the versioned extract."""
+    raw = json.load(open(bench_json))
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(csv_path, "w", newline="") as f:
+        w = csv.DictWriter(f, FIELDS)
+        w.writeheader()
+        for r in raw["info"]:
+            w.writerow({k: r[k] for k in FIELDS})
+
+
 class Bench:
-    def __init__(self, path: Path):
-        raw = json.load(open(path))
-        self.args = raw["args"]
-        self.seeds = raw["seeds"]
-        self.info = raw["info"]
+    def __init__(self, csv_path: Path):
+        with open(csv_path, newline="") as f:
+            self.info = [{k: (NUM[k](v) if k in NUM else v) for k, v in row.items()}
+                         for row in csv.DictReader(f)]
+        self.seeds = sorted({r["seed"] for r in self.info})
         self.by = {}
         for r in self.info:
             self.by.setdefault((r["load"], r["arrivals"], r["travel"], r["who"], r["t"]), {})[r["seed"]] = r
@@ -215,75 +239,106 @@ def t_robustness(b: Bench):
 
 
 # ----------------------------------------------------------------- figures
-def fig_coverage(b: Bench, path: Path):
+STYLE = {"nearest_job": dict(color="#555555", marker="s", label="nearest_job rule"),
+         "net": dict(color="#1f77b4", marker="o", label="learned policy (network)")}
+
+
+def _rc():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "cm", "font.size": 9,
-                         "axes.titlesize": 9, "legend.fontsize": 8})
-    fig, axes = plt.subplots(2, 4, figsize=(10.0, 5.0), sharey="row")
-    style = {"nearest_job": dict(color="0.35", marker="s", label=r"$\mathrm{nearest\_job}$"),
-             "net": dict(color="tab:blue", marker="o", label="network")}
-    for ax, reg in zip(axes.flat, REGIMES):
-        v, th = b.meta[reg]
-        for who, st in style.items():
-            xs, ys, hs = [], [], []
-            for l in LENGTHS:
-                mu, h, _ = b.gain(reg, who, l)
-                xs.append(l / v); ys.append(-mu); hs.append(h)
-            ax.errorbar(xs, ys, yerr=hs, capsize=2, lw=1.2, ms=4, **st)
-        ax.axvline(th, color="tab:red", ls="--", lw=1)
-        ax.annotate(r"$\tau_{\mathrm{head}}$", (th, 0), xytext=(-3, 3), textcoords="offset points",
-                    ha="right", va="bottom", color="tab:red", fontsize=8)
-        ax.axhline(0, color="0.7", lw=0.8)
-        ax.set_title(regime_name(*reg) + f"\n$\\tau_{{\\mathrm{{head}}}}={th:.1f}$ s")
-        ax.set_xlim(-0.1, max(10.0 / v, th) + 0.3)
-        ax.set_xlabel("anticipation $\\ell_v / v_{\\mathrm{belt}}$ [s]")
-        sec = ax.secondary_xaxis("top", functions=(lambda x, v=v: x * v, lambda x, v=v: x / v))
-        sec.set_xticks([0, 2.5, 5, 7.5, 10] if reg[0] == "real" else [0, 5, 10])
-        sec.set_xlabel("visible length $\\ell_v$ [cm]", fontsize=8)
-        sec.tick_params(labelsize=7)
-    for ax in axes[:, 0]:
-        ax.set_ylabel("reduction of penalized flow time [%]\n(when\\_idle vs none, same $\\ell_v$)")
-    axes[0, 0].legend(loc="upper left")
-    fig.tight_layout()
-    fig.savefig(path)
+    plt.rcParams.update({
+        "font.family": "serif", "mathtext.fontset": "cm", "font.size": 9.5,
+        "axes.titlesize": 9.5, "axes.labelsize": 9.5, "legend.fontsize": 9,
+        "xtick.labelsize": 8.5, "ytick.labelsize": 8.5,
+        "axes.spines.top": False, "axes.spines.right": False,
+        "axes.grid": True, "grid.color": "0.92", "grid.linewidth": 0.6,
+        "axes.axisbelow": True, "lines.linewidth": 1.4, "lines.markersize": 4.5,
+    })
+    return plt
+
+
+def _panel_title(reg):
+    return f"{ARR[reg[1]]} · {TRV[reg[2]]} head"
+
+
+def fig_coverage(b: Bench, path: Path, load: str):
+    """One row of panels for one load: gain of pre-positioning vs anticipation."""
+    plt = _rc()
+    regs = [r for r in REGIMES if r[0] == load]
+    v = b.meta[regs[0]][0]
+    fig, axes = plt.subplots(1, 4, figsize=(10.5, 3.3), sharey=True)
+    zone_s = 10.0 / v
+    xmax = max([zone_s] + [b.meta[r][1] for r in regs if b.meta[r][1] <= 1.6 * zone_s]) * 1.08
+    for ax, reg in zip(axes, regs):
+        th = b.meta[reg][1]
+        for who, st in STYLE.items():
+            xs = np.array([l / v for l in LENGTHS])
+            g = np.array([b.gain(reg, who, l)[:2] for l in LENGTHS])
+            ax.fill_between(xs, -g[:, 0] - g[:, 1], -g[:, 0] + g[:, 1], color=st["color"], alpha=0.12, lw=0)
+            ax.plot(xs, -g[:, 0], color=st["color"], marker=st["marker"], label=st["label"])
+        zone = 10.0 / v
+        label = f"$\\tau_{{\\mathrm{{head}}}}$ = {th:.1f} s"
+        if th <= xmax:
+            ax.axvline(th, color="#c0392b", ls=(0, (4, 2)), lw=1.1)
+            ax.text(th - 0.05 if th > zone else th + 0.05, 0.03, label, transform=ax.get_xaxis_transform(),
+                    ha="right" if th > zone else "left", va="bottom", color="#c0392b", fontsize=8.5, rotation=90)
+            ax.axvspan(zone, xmax, color="0.5", alpha=0.07, lw=0)
+        else:                                   # the head's travel time is off the axis
+            ax.annotate(label + " $\\rightarrow$", (1.0, 0.97), xycoords="axes fraction", ha="right",
+                        va="top", color="#c0392b", fontsize=8.5)
+        ax.axhline(0, color="0.5", lw=0.8)
+        ax.set_title(_panel_title(reg))
+        ax.set_xlim(-0.05, xmax)
+        ticks = [0, 2.5, 5, 7.5, 10]
+        ax.set_xticks([l / v for l in ticks])
+        ax.set_xticklabels([f"{l:g}\n{l / v:.1f}" for l in ticks])
+        ax.set_xlabel("visible length [cm]\nanticipation [s]")
+    axes[0].set_ylabel("gain of pre-positioning [%]")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=2, frameon=False, bbox_to_anchor=(0.5, -0.04))
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
 
 def fig_contrasts(b: Bench, path: Path):
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "cm", "font.size": 9})
-    fig, axes = plt.subplots(1, 3, figsize=(10.0, 3.2), sharey=True)
-    names = [regime_name(*r) for r in REGIMES]
+    plt = _rc()
+    fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.6), sharey=True)
+    names = [f"{r[0]} · {ARR[r[1]]} · {TRV[r[2]]} head" for r in REGIMES]
     ys = np.arange(len(REGIMES))[::-1]
-    for ax, (x, y, title) in zip(axes, (("A", "B", "B vs A: seeing, same actions"),
-                                        ("B", "C", "C vs B: pre-positioning, same view"),
-                                        ("B", "D", "D vs B: hidden upstream queue"))):
-        mus, hs = [], []
-        for reg in REGIMES:
+    panels = (("A", "B", "B vs A\nwider view, same actions"),
+              ("B", "C", "C vs B\npre-positioning on the same view"),
+              ("B", "D", "D vs B\nhidden upstream queue"))
+    for ax, (x, y, title) in zip(axes, panels):
+        for yy, reg in zip(ys, REGIMES):
             mu, h, _ = b.delta(reg, "net", y, "net", x)
-            mus.append(mu); hs.append(h)
-        ax.errorbar(mus, ys, xerr=hs, fmt="o", color="tab:blue", capsize=3, ms=4)
-        ax.axvline(0, color="0.6", lw=0.8)
-        ax.set_title(title, fontsize=9)
+            sig = abs(mu) > h
+            ax.errorbar(mu, yy, xerr=h, fmt="o", color="#1f77b4", mfc="#1f77b4" if sig else "white",
+                        mec="#1f77b4", capsize=3, elinewidth=1.2)
+        ax.axvline(0, color="0.4", lw=0.9)
+        ax.axhline(3.5, color="0.8", lw=0.8, ls=":")
+        ax.set_title(title)
         ax.set_xlabel("paired $\\Delta$ of penalized flow time [%]")
-        ax.set_xlim(-10, 3)
-        ax.grid(axis="x", color="0.9")
+        ax.set_xlim(-10.5, 3.5)
+        ax.grid(axis="y", visible=False)
     axes[0].set_yticks(ys)
     axes[0].set_yticklabels(names)
     fig.tight_layout()
-    fig.savefig(path)
+    fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--tag", default="phase4")
+    ap.add_argument("--bench", type=Path, default=None,
+                    help="bench.json of rl2_eval.py; regenerates data/phase4_info.csv first")
     args = ap.parse_args()
-    b = Bench(ROOT / "results/experiments" / args.tag / "bench.json")
+    data = OUT / "data/phase4_info.csv"
+    if args.bench is not None:
+        extract(args.bench, data)
+        print(f"extract written: {data}")
+    b = Bench(data)
     (OUT / "figures").mkdir(parents=True, exist_ok=True)
     (OUT / "tables").mkdir(parents=True, exist_ok=True)
     tables = {"regimes": t_regimes(b), "levels": t_levels(b), "contrasts": t_contrasts(b),
@@ -291,9 +346,10 @@ def main() -> None:
               "share_alt": t_share_alt(b), "robustness": t_robustness(b)}
     for name, tex in tables.items():
         (OUT / "tables" / f"{name}.tex").write_text(
-            f"% generated by experiments/paper2_figures.py from results/experiments/{args.tag}/bench.json\n"
+            "% generated by experiments/paper2_figures.py from data/phase4_info.csv\n"
             + tex + "\n")
-    fig_coverage(b, OUT / "figures/coverage_curve.pdf")
+    fig_coverage(b, OUT / "figures/coverage_real.pdf", "real")
+    fig_coverage(b, OUT / "figures/coverage_heavy.pdf", "heavy")
     fig_contrasts(b, OUT / "figures/contrasts.pdf")
     # headline numbers for the text
     for reg in [r for r in REGIMES if r[0] == "real"]:

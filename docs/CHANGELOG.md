@@ -6,6 +6,42 @@ summarized from the git history.
 
 ---
 
+## 0.7.15 — 2026-11-23 — Paper 2 draft 0.2: figures redesigned, headline softened, data extract versioned
+
+* **Why.** The owner's review of draft 0.1: the figures were unreadable (eight cramped
+  panels, overlapping secondary axes); the headline overstated the evidence (the data
+  support the head's travel time as a *reference* for sizing the coverage, not
+  ℓ_v ≥ τ_head · v_belt as a universal minimum; 14.4 cm for the slow head is a
+  prediction beyond the 10 cm grid); the network's 78 % at 7.5 cm (same-length
+  baseline, the frozen protocol) must be the primary estimate and the 97 % (pooled
+  baseline) a sensitivity analysis, since the baseline changes the answer to "how
+  much is enough"; "seeing without acting is worth nothing" must become "with the
+  same actions, widening the view produced small effects in the regimes tested", which
+  keeps the heavy / bursts / slow-head cell where the wider view did help (−1.3 ±0.7);
+  the PDF stays versioned and the confirmatory data the generator uses must be in the
+  repository so that anyone with the checkout can rebuild the figures and tables.
+* **What.**
+  * `experiments/paper2_figures.py`: reads the versioned extract
+    `docs/papers/paper2/data/phase4_info.csv` (the 15 360 per-episode rows of the
+    information bench: regime, seed, configuration, policy, cost, flow, blocking,
+    parts), written from `bench.json` with `--bench`; figures redesigned:
+    `coverage_real.pdf` and `coverage_heavy.pdf` (one row of four panels per load,
+    CI bands instead of error bars, a single x axis labelled in cm and seconds, τ_head
+    as a dashed line with its label, or an arrow when it lies beyond the axis, the
+    stretch beyond the entry zone shaded), `contrasts.pdf` (filled markers where the
+    interval excludes zero, nominal and heavy regimes separated). Tables unchanged.
+  * `docs/papers/paper2/paper2.tex` (draft 0.2): abstract, contributions, §4.1 title
+    and B vs A paragraph, §4.2 reading and §4.2.1 (now "sensitivity of the share to
+    the baseline"), §4.4, §5.1 (now "a reference in seconds", with the limits of the
+    evidence stated), §5.2 title, conclusions; new reproducibility item in §3.4; the
+    heavy-load coverage figure added to §4.3. PDF rebuilt.
+* **Checked.** The tables are byte-identical to 0.7.14 apart from the provenance
+  comment; the shares quoted in the text (78 / 99 % at 7.5 cm, 64 / 84 % at 5 cm;
+  pooled 16 / 53 / 81 / 97 %; reference network 76 / 97 % same-length, 97 / 112 %
+  pooled) were recomputed from the extract.
+
+---
+
 ## 0.7.14 — 2026-11-23 — Paper 2 draft in LaTeX (`docs/papers/paper2/`)
 
 * **Why.** With phase 4 closed (0.7.13) the owner decided to write Paper 2 first, in

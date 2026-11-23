@@ -27,7 +27,7 @@
 \title{\textbf{How Far Must the Camera See?}\\[0.3em]
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.1 (results of version 0.7.13)}
+\date{November 2026 --- draft 0.2 (results of version 0.7.13)}
 
 \begin{document}
 \maketitle
@@ -43,17 +43,20 @@ zone), and we measure the gain of acting at six visible lengths, expressed as se
 anticipation at the belt speed. The study is a paired simulation experiment on 30
 realizations per configuration reserved for this purpose and used once, over eight
 regimes (nominal and heavy load, Poisson and bursty arrivals, nominal and slow head), with
-a dispatching rule and a learned dispatching policy as controllers. Seeing without acting
-is worth nothing in every regime (within $\pm1.5$ points of the penalized flow time).
-Acting on the same view reduces the penalized flow time by 7.4\,\% at the nominal load
+a dispatching rule and a learned dispatching policy as controllers. With the same
+actions, widening the view produced small effects in every regime tested (within
+$\pm1.5$ points of the penalized flow time; the one significant case, $-1.3$ points, is
+the heavy load with bursts and a slow head). Acting on the same view reduces the penalized flow time by 7.4\,\% at the nominal load
 with the nominal head, and by 2.8--4.3\,\% with bursts or a head twice as slow; at the
 heavy load the head is never idle and the gain disappears. The gain grows with the
-anticipation until it reaches the head's travel time across the conveyors, $\thead$
-(2.4~s for the nominal head), and then saturates: half of the entry zone (1.7~s) gives
-64--84\,\% of the gain and 7.5~cm (2.5~s) gives 78--99\,\%; with a head twice as slow
-($\thead=4.8$~s) the whole 10~cm zone (3.3~s) is needed and the curve has not saturated.
-The coverage to specify is therefore the head's travel time in seconds of belt travel,
-not a fixed fraction of the entry zone. The upstream queue hidden from the camera matters
+anticipation and levels off near the head's travel time across the conveyors, $\thead$
+(2.4~s for the nominal head): half of the entry zone (1.7~s) gives 64--84\,\% of the
+gain, and 7.5~cm (2.5~s) gives 78\,\% for the learned policy and 99\,\% for the rule;
+with a head twice as slow ($\thead=4.8$~s) the whole 10~cm zone (3.3~s) is needed and
+the curve has not saturated. The head's travel time, in seconds of belt travel, is
+therefore a useful reference for sizing the coverage, rather than a fixed fraction of
+the entry zone; whether it is a minimum in general is a prediction the grid does not
+reach (14.4~cm for the slow head). The upstream queue hidden from the camera matters
 only at the heavy load (2.7--3.7 points), where the camera's length cannot help.
 \end{abstract}
 
@@ -100,13 +103,15 @@ the part appears. The experiment is designed around this quantity.
   measures the gain of acting at six visible lengths, with two unrelated controllers (a
   dispatching rule and a learned policy), on eight operating regimes, on 30 reserved
   realizations per configuration used once (Section~\ref{sec:design}).
-\item The result that seeing without acting is worth nothing in this cell (within
-  $\pm1.5$ points in every regime), while acting on the same view is worth 2.8--7.4\,\% of
-  the penalized flow time whenever the head has idle time (Section~\ref{sec:seeing}).
+\item The result that, with the same actions, widening the view changes little in this
+  cell (within $\pm1.5$ points in every regime tested), while acting on the same view is
+  worth 2.8--7.4\,\% of the penalized flow time whenever the head has idle time
+  (Section~\ref{sec:seeing}).
 \item A coverage curve with a physical reading: the gain of pre-positioning grows with the
-  anticipation $\tv$ and saturates at the head's travel time $\thead$, so that the stretch
-  to cover is $\thead$ seconds of belt travel, 7.5~cm for the nominal head and the whole
-  10~cm zone for a head twice as slow (Section~\ref{sec:coverage}).
+  anticipation $\tv$ and levels off near the head's travel time $\thead$, which makes
+  $\thead$ seconds of belt travel a reference for the stretch to cover: 7.5~cm retains
+  78--99\,\% of the gain for the nominal head, and the whole 10~cm zone is not enough for
+  a head twice as slow (Section~\ref{sec:coverage}).
 \item The finding that the queue hidden upstream of the camera matters only when the cell is
   overloaded, where no length of camera can help, and that every contrast is reproduced by
   a second, independently trained controller (Sections~\ref{sec:hidden} and
@@ -329,13 +334,16 @@ same 30 realizations the fixed-step reference engine at a 1~ms step with the rul
 and C (960 episodes) gives the identical processing order in 96\,\% of the episodes and a
 mean absolute difference of $J$ of 0.03--0.06\,\%, the remainder being order flips at exact
 ties, as in the simulator's acceptance. (iii) \emph{Schedules} produced by the simulator
-are checked against the formal model's constraints.
+are checked against the formal model's constraints. (iv) \emph{Reproducibility}: the
+per-episode results of the confirmatory run used by every figure and table of this paper
+are distributed with the source (\texttt{data/phase4\_info.csv}, 15\,360 episodes)
+together with the script that generates them.
 
 %====================================================================
 \section{Results}\label{sec:results}
 %====================================================================
 
-\subsection{Seeing is worth nothing, acting is worth 3--7\,\%}\label{sec:seeing}
+\subsection{Widening the view alone changes little; acting on it is worth 3--7\,\%}\label{sec:seeing}
 Table~\ref{tab:contrasts} and Figure~\ref{fig:contrasts} give the contrasts between
 treatments; Table~\ref{tab:levels} the levels against \nj\ in~B.
 
@@ -354,7 +362,7 @@ zero by construction.}
 \includegraphics[width=\linewidth]{figures/contrasts.pdf}
 \caption{The network's contrasts between treatments on the eight regimes (paired
 $\Delta$ of the penalized flow time, 95\,\% CI; negative = the second treatment is
-better).}
+better; filled markers: the interval excludes zero).}
 \label{fig:contrasts}
 \end{figure}
 
@@ -366,14 +374,16 @@ CI). \nj\ in A, B and D is the baseline (0 by construction).}
 \resizebox{\linewidth}{!}{\input{tables/levels}}
 \end{table}
 
-\textbf{B vs A.} Seeing the entry zone without being allowed to act on it is a null
-result in every regime. For the network the contrast lies between $-1.3$ and $+0.9$
-points with intervals of $\pm0.6$ to $\pm1.7$; the only interval that excludes zero
-(heavy load, bursts, slow head, $-1.31\pm0.74$) is the smallest effect in the table. The
-network does use the upstream parts, since its inputs change with them and its level in A
-differs from its level in B by up to 1.5 points in either direction, but the use does not
-translate into a better schedule. The pilot's bound of $\pm0.9$ points is confirmed at
-about $\pm1.5$ on the reserved realizations.
+\textbf{B vs A.} With the same actions, seeing the entry zone produced small effects in
+every regime tested. For the network the contrast lies between $-1.3$ and $+0.9$ points
+with intervals of $\pm0.6$ to $\pm1.7$. One cell favours the wider view by a modest but
+significant margin: the heavy load with bursts and a slow head ($-1.31\pm0.74$, the
+regime with the longest lane travel relative to the processing); the seven other
+intervals include zero. The network does use the upstream parts, since its inputs change
+with them and its level in A differs from its level in B by up to 1.5 points in either
+direction, but outside that regime the use does not translate into a better schedule.
+The pilot's bound of $\pm0.9$ points is confirmed at about $\pm1.5$ on the reserved
+realizations.
 
 \textbf{C vs B.} Acting on the same view is where the value is, whenever the head has
 idle time. At the nominal load the network gains $7.4\pm1.9$\,\% with the nominal head,
@@ -407,12 +417,13 @@ anticipation, against a head travel time of 2.4~s (nominal head) or 4.8~s (slow 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/coverage_curve.pdf}
-\caption{Coverage curve: reduction of the penalized flow time obtained by pre-positioning
-(\texttt{when\_idle} against \texttt{none} at the same visible length, paired, 95\,\% CI)
-against the anticipation $\tv=\lv/\vb$; the top axis gives $\lv$ in cm. The dashed line is
-the head's travel time across the conveyors, $\thead$. Top row: nominal load; bottom row:
-heavy load (note the scale).}
+\includegraphics[width=\linewidth]{figures/coverage_real.pdf}
+\caption{Coverage curve at the nominal load: reduction of the penalized flow time
+obtained by pre-positioning (\texttt{when\_idle} against \texttt{none} at the same
+visible length, paired; bands are 95\,\% CIs) against the visible length and the
+anticipation $\tv=\lv/\vb$. The dashed line is the head's travel time across the
+conveyors, $\thead$; the shaded area lies beyond the entry zone. The heavy load is in
+Figure~\ref{fig:coverageheavy}.}
 \label{fig:coverage}
 \end{figure}
 
@@ -431,9 +442,10 @@ belt speed of 3~cm/s.}
 almost linearly with the anticipation (24, 62 and 84\,\% of the whole-zone gain at 0.33,
 0.83 and 1.67~s) and is complete at 2.5~s (99\,\%), the first grid point beyond $\thead$;
 the last 0.83~s of the zone add nothing. The network's curve has the same shape with a
-later knee (9, 39, 64, 78\,\%); Section~\ref{sec:share} shows that most of the difference
-is the noise of the \texttt{none} baseline, and that the pooled shares of the network
-(16, 53, 81, 97\,\%) match the rule's. With bursts the total gain is smaller (2.7\,\%) and
+later knee (9, 39, 64, 78\,\%): at 7.5~cm it retains 78\,\% of the whole-zone gain
+where the rule retains 99\,\%. Section~\ref{sec:share} examines how much of this
+difference is the noise of the \texttt{none} baseline; the 78\,\% is the primary
+estimate. With bursts the total gain is smaller (2.7\,\%) and
 the curve is noisier, but it also reaches its plateau between 1.67 and 2.5~s (86--109\,\%).
 
 \textbf{Slow head ($\thead=4.8$~s).} The curve does not saturate inside the entry zone.
@@ -443,16 +455,19 @@ measured gain, and since $\tv<\thead$ at every point of the grid, a longer entry
 presumably add more. With bursts and the slow head the shape is the same (74--87\,\% at
 1.67--2.5~s).
 
-\textbf{Reading.} The required coverage is the head's travel time in seconds of belt
-travel. For the nominal head, $\thead=2.4$~s is 7.2~cm of belt at 3~cm/s: the 7.5~cm
-point captures the whole gain and the 5~cm point (half the zone, 1.67~s) only 64--84\,\%
-of it. The pilot's figure of 97\,\% at 5~cm, obtained with an earlier network on
-development realizations, is not confirmed; the confirmatory curve is the one to design
-with. A specification in centimetres transfers between cells only through $\vb$ and $v_y$:
+\textbf{Reading.} The head's travel time in seconds of belt travel is a useful reference
+for sizing the coverage. For the nominal head, $\thead=2.4$~s is 7.2~cm of belt at
+3~cm/s: the 7.5~cm point retains 99\,\% of the gain for the rule and 78\,\% for the
+network, and the 5~cm point (half the zone, 1.67~s) only 84 and 64\,\%. For the slow
+head the same reference gives 14.4~cm, beyond the entry zone: this is a prediction of
+the reference, not a measurement, since the grid stops at 10~cm; what the data show is
+that the curve has not saturated there. The pilot's figure of 97\,\% at 5~cm, obtained
+with an earlier network on development realizations, is not confirmed; the confirmatory
+curve is the one to design with. A specification in centimetres transfers between cells only through $\vb$ and $v_y$:
 the same camera on a belt at 5~cm/s covers 2~s, which is less than $\thead$ even for the
 nominal head.
 
-\subsubsection{A note on the share}\label{sec:share}
+\subsubsection{Sensitivity of the share to the baseline}\label{sec:share}
 The share in Table~\ref{tab:coverage} divides the gain at $\lv$ by the gain at 10~cm,
 each measured against the \texttt{none} configuration \emph{at the same length}. For the
 rule, \texttt{none} does not depend on $\lv$ (the rule never uses upstream parts) and the
@@ -461,8 +476,11 @@ one quantity (B vs A is null) but differ by up to 1.3 points from one length to 
 which moves the shares by the same amount. Table~\ref{tab:share} repeats the network's
 shares with the mean of the six \texttt{none} levels as the baseline: with Poisson
 arrivals and the nominal head they become 16, 53, 81 and 97\,\%, within a few points of
-the rule's 24, 62, 84 and 99\,\%. The design conclusion does not depend on the
-controller.
+the rule's 24, 62, 84 and 99\,\%. The choice of baseline therefore changes the answer to
+``how much is enough'' for the network by 15--20 points at 5 and 7.5~cm. We keep the
+same-length contrast of the frozen protocol as the primary estimate (78\,\% at 7.5~cm)
+and report the pooled figure as a sensitivity analysis; under either baseline the rule
+and the network agree on the shape of the curve and on where it levels off.
 
 \begin{table}[t]
 \centering\small
@@ -486,12 +504,21 @@ hidden queue is usually empty. The pilot's $-6.4\pm2.4$ on development realizati
 information, as opposed to more capability, has value, and it is the regime in which the
 camera's length cannot provide it: the heavy cell's entry zone is 2~s of belt against a
 head travel of 4.8~s, and the head is never idle, so the coverage curve is flat
-(Table~\ref{tab:coverageheavy}: no point is beyond 2.4 points of zero, and the only
+(Figure~\ref{fig:coverageheavy} and Table~\ref{tab:coverageheavy}: no point is beyond 2.4 points of zero, and the only
 significant gains are the network's 1.6 points at 7.5 and 10~cm with bursts and the
 nominal head). The
 network was trained with the \texttt{belts} level; its use of the queue under
 \texttt{full} is an indication of what a controller trained for it could obtain, not a
 measurement of it.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/coverage_heavy.pdf}
+\caption{Coverage curve at the heavy load (as Figure~\ref{fig:coverage}; belt speed
+5~cm/s, so the whole entry zone is 2~s of anticipation and $\thead$ lies beyond the
+axis). Note the scale.}
+\label{fig:coverageheavy}
+\end{figure}
 
 \begin{table}[t]
 \centering\small
@@ -506,9 +533,9 @@ whole-zone gain is itself within noise.}
 Table~\ref{tab:robust} repeats the three contrasts with the reference network, an
 independent training run of the same architecture. Every contrast is reproduced within
 $\pm1$ point of the frozen network's value (within $\pm0.5$ in 20 of the 24 cells), with
-the same sign and the same set of significant cells, and the pooled shares of the
-coverage curve at the nominal regime are 22, 53 and 97\,\% at 1, 2.5 and 5~cm, saturated
-from 5~cm on. The two networks are within $\pm0.8$ points of each other in~B in seven
+the same sign and the same set of significant cells, and its coverage curve at the
+nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~cm
+(same-length baseline; 97 and 112\,\% with the pooled one). The two networks are within $\pm0.8$ points of each other in~B in seven
 regimes, and the frozen one is 0.4--1.3 points better in~C in seven of the eight
 (significant in two), which is the difference the training of Paper~1 was meant to
 produce; it does not alter any contrast.
@@ -526,27 +553,31 @@ network is better).}
 \section{Discussion}\label{sec:discussion}
 %====================================================================
 
-\subsection{A design rule in seconds}
-The results support one rule for this class of cell: the camera must give the
-controller an anticipation of at least the head's travel time across the conveyors,
+\subsection{A reference in seconds}
+The results support the head's travel time across the conveyors as the reference for
+sizing the coverage: the camera should give the controller an anticipation of about
 \[
-\lv\ \ge\ \thead\,\vb,\qquad \thead=\frac{\max_k y_k-\min_k y_k}{v_y},
+\tv=\frac{\lv}{\vb}\ \approx\ \thead=\frac{\max_k y_k-\min_k y_k}{v_y},
 \]
-and the cell must let the idle head move to a visible part and wait. Below $\lv=\thead\vb$
-the gain of pre-positioning is roughly proportional to the anticipation; above it, the
-extra visibility is not used by the action and, in this cell, not by the dispatching
-either (B vs A). For the nominal cell the rule gives 7.2~cm, between the 5~cm point
-(64--84\,\% of the gain) and the 7.5~cm point (78--99\,\%); for a head twice as slow it
-gives 14.4~cm, more than the entry zone, and the curve indeed does not saturate. The rule
-has a second reading: if the entry stretch a camera can cover is fixed by the layout, the
+and the cell must let the idle head move to a visible part and wait. Below $\thead$ the
+gain of pre-positioning is roughly proportional to the anticipation; near it the curve
+levels off, and the visibility beyond it is not used by the action and, in this cell,
+little used by the dispatching (B vs A). For the nominal cell the reference gives 7.2~cm,
+between the 5~cm point (64--84\,\% of the gain) and the 7.5~cm point (78--99\,\%); for a
+head twice as slow it gives 14.4~cm, more than the entry zone, and the curve indeed does
+not saturate within it. The data support the reference at the nominal head and are
+consistent with it at the slow head; they do not show that $\thead\vb$ is a minimum in
+general (one geometry, two head speeds, a grid that stops at 10~cm), and the 14.4~cm
+figure is a prediction to be tested with a longer entry zone. The reference has a second
+reading: if the entry stretch a camera can cover is fixed by the layout, the
 head's speed across the lanes sets how much of the value of pre-positioning the cell can
 collect, and a faster $y$ axis is a substitute for a longer camera.
 
-\subsection{Why seeing alone is worth nothing here}
+\subsection{Why widening the view alone changes little here}
 Under treatment~B the controller can only choose among the parts already in the zone.
 Upstream visibility could help it in two ways: by waiting for a part about to enter a
 belt near the head, or by ordering the zone parts so that the head ends near the belt
-with the next arrival. In this cell neither pays: processing takes 2.5~s and the head
+with the next arrival. In this cell neither pays much: processing takes 2.5~s and the head
 crosses the lanes in 2.4~s, so a part that enters the zone during a processing is
 reachable soon after it ends whatever the order, and waiting for an announced part delays a
 reachable one. The learned policy, which was free to find such uses, did not improve on
@@ -557,7 +588,7 @@ and $-1.3\pm0.7$ for B vs A, the two largest values of the table).
 \subsection{Bursts and slow heads}
 The design's original hypothesis was that upstream visibility is worth more when parts
 arrive in bursts and the travel between lanes matters. The measurements say the opposite
-for the action, and nothing for the information. Bursts halve the value of
+for the action, and little for the information. Bursts halve the value of
 pre-positioning because the head serves the first part of a burst early and is busy for
 the rest of it; a slow head halves it because the zone's anticipation covers less of its
 travel. The two together ($4.3\,\%$) are not worse than each alone, since with a slow head
@@ -565,7 +596,7 @@ the off periods of a bursty source give the head the idle time it lacks otherwis
 
 \subsection{Limits}\label{sec:limits}
 The results are for one cell geometry (three belts 12~cm apart, a 10~cm entry zone, a
-35~cm laser zone) and two loads; the rule above is stated in the cell's physical
+35~cm laser zone) and two loads; the reference above is stated in the cell's physical
 quantities so that it can be transferred, but it has been tested only within the grid of
 Table~\ref{tab:regimes}. The penalty weights $\lambda_N,\lambda_T$ are placeholders in
 equivalent seconds; since the gain of pre-positioning is almost entirely flow time
@@ -585,18 +616,20 @@ reserved realizations.
 \section{Conclusions}
 %====================================================================
 For a shared-head cell over parallel conveyors, the value of a camera that sees upstream
-of the working zone is the value of the action it enables, not of the information it
-adds. Allowing the idle head to move towards a visible part reduces the penalized flow
+of the working zone is mostly the value of the action it enables, not of the information
+it adds. Allowing the idle head to move towards a visible part reduces the penalized flow
 time by 7.4\,\% at the nominal load (2.8--4.3\,\% with bursts or a slow head) for both a
-dispatching rule and a learned policy; widening the view without the action changes
-nothing within $\pm1.5$ points in eight regimes. The gain grows with the anticipation the
-camera gives and saturates at the head's travel time across the conveyors: the stretch to
-cover is $\thead$ seconds of belt travel, 7.5~cm here for a head that crosses the lanes
-in 2.4~s on a belt at 3~cm/s, and more than the entry zone for a head twice as slow. The
+dispatching rule and a learned policy; widening the view without the action produced
+small effects, within $\pm1.5$ points, in the eight regimes tested. The gain grows with
+the anticipation the camera gives and levels off near the head's travel time across the
+conveyors, which makes $\thead$ seconds of belt travel a reference for the stretch to
+cover: 7.5~cm here, for a head that crosses the lanes in 2.4~s on a belt at 3~cm/s,
+retains 78--99\,\% of the gain, and the 10~cm entry zone is not enough for a head twice
+as slow. The
 queue the camera cannot see matters only when the cell is overloaded, where no camera
 length helps. These are measurements on 30 reserved realizations per configuration,
 reproduced by two independently trained controllers, and they give the cell's designer a
-coverage specification in physical units.
+coverage reference in physical units.
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references}
