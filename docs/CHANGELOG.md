@@ -6,6 +6,20 @@ summarized from the git history.
 
 ---
 
+## 0.7.19 — 2026-11-23 — `models/rl2_gen_l.pt` versioned through Git LFS
+
+* **Why.** The size-L model (157 MB, final checkpoint of run `rl2_gen_l`, iteration 1,
+  `rl2.md` §8.4) exceeds GitHub's 100 MB blob limit and had stayed outside the
+  repository since 0.7.5. The owner decided (2026-11-23) to keep it in the repository
+  through Git LFS rather than an external store.
+* **What.** `git-lfs` 3.4.1 installed on the workstation; `.gitattributes` tracks
+  `models/rl2_gen_l.pt` with the LFS filter; the file is committed as an LFS pointer
+  (object sha256 `7bff321f5d2da66652380578e9ea0aacada673ef87604d259848ebc054c176e2`).
+  Per-iteration checkpoints stay ignored. The other models (≤ 27 MB) stay as ordinary
+  blobs. **Cloning:** install git-lfs, then `git lfs install` once and `git lfs pull`
+  in the clone to fetch the 157 MB object; without git-lfs the file is a 130-byte
+  pointer and `rl2.model.load` fails on it.
+
 ## 0.7.18 — 2026-11-23 — Geometry pilot: does the head's crossing time predict the camera coverage? (`experiments/geometry_pilot.py`)
 
 * **Why.** The owner's brief of 2026-11-23 proposes extending Paper 2 with a bench
@@ -736,7 +750,8 @@ no code; it adds the trained models and documents the runs and what was learned.
 * `models/rl2_gen_s_big.pt`, `models/rl2_gen_m.pt` and the `_training.json` logs of
   the three runs (seeds, arguments, machine, times, losses, validation).
   `models/rl2_gen_l.pt` (157 MB) exceeds GitHub's 100 MB file limit and is kept outside
-  the commit until the user decides (Git LFS or an external store).
+  the commit until the user decides (Git LFS or an external store) [added through Git
+  LFS in 0.7.19].
 * `docs/methods/rl2.md` §8.4, `docs/methods/remote_training.md` §3 and §4.
 ## 0.7.4 — 2026-11-20 — Results of the general pilot training (`rl2_gen_s`)
 
