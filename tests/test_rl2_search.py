@@ -374,3 +374,69 @@ def test_training_cells_draw_regimes_and_validation_cells_do_not():
     assert rb.arrivals.burst_on_fraction == (0.3,) * 3 and rb.arrivals.burst_on_mean == (20.0,) * 3
     assert (rb.laser.speed_x, rb.laser.prepositioning) == (real.laser.speed_x, real.laser.prepositioning)
     assert len(BURST_VAL) == 3
+
+
+# ---------------------------------------------------------- cell futures (0.7.12)
+def _burst_cfg(seed=7, on_fraction=0.3, on_mean=20.0, **extra):
+    return cfg(seed=seed, **{"arrivals.stochastic.distribution": "burst",
+                             "arrivals.stochastic.burst.on_fraction": on_fraction,
+                             "arrivals.stochastic.burst.on_mean": on_mean, **extra})
+
+
+def test_cell_futures_equal_poisson_futures_on_a_poisson_cell():
+    sim = FastSim(cfg(HEAVY, 4))
+    first_multi_decision(sim)
+    assert sample_scenarios(sim, 3, 40.0, "t", "cell") == sample_scenarios(sim, 3, 40.0, "t")
+    # an on/off source with on_fraction 1 is Poisson too
+    sim = FastSim(_burst_cfg(on_fraction=1.0))
+    first_multi_decision(sim)
+    assert sample_scenarios(sim, 2, 40.0, "t", "cell") == sample_scenarios(sim, 2, 40.0, "t", "poisson")
+    with pytest.raises(ValueError):
+        sample_scenarios(sim, 1, 40.0, "t", "gamma")
+    with pytest.raises(ValueError):
+        SearchTeacher(None, futures="gamma")
+
+
+def test_cell_futures_follow_the_burst_model():
+    """On a bursty cell the cell futures differ from the Poisson ones, keep the mean
+    rate, are over-dispersed, stay in (t, t + window], and are reproducible."""
+    sim = FastSim(_burst_cfg())
+    first_multi_decision(sim)
+    window, m = 400.0, 60
+    cell = sample_scenarios(sim, m, window, "t", "cell")
+    pois = sample_scenarios(sim, m, window, "t", "poisson")
+    assert cell != pois
+    assert cell == sample_scenarios(sim, m, window, "t", "cell")
+    assert cell != sample_scenarios(sim, m, window, "u", "cell")
+    rates = [1.0 / x for x in sim.cfg.arrivals.mean_interarrival]
+    for k, lam in enumerate(rates):
+        n_cell = [sum(1 for r in sc if r.conveyor_index == k) for sc in cell]
+        n_pois = [sum(1 for r in sc if r.conveyor_index == k) for sc in pois]
+        assert np.mean(n_cell) == pytest.approx(lam * window, rel=0.15)
+        assert np.mean(n_pois) == pytest.approx(lam * window, rel=0.15)
+        assert np.var(n_cell) / np.mean(n_cell) > 1.8 > 1.4 > np.var(n_pois) / np.mean(n_pois)
+    for sc in cell:                       # per conveyor in time order (the clone sorts)
+        for k in range(len(rates)):
+            ts = [r.time for r in sc if r.conveyor_index == k]
+            assert ts == sorted(ts) and all(sim.t < t <= sim.t + window for t in ts)
+        assert all(r.processing_time > 0 for r in sc)
+
+
+def test_teacher_with_cell_futures_runs_and_differs_on_a_bursty_cell():
+    net = _small_net()
+    sim = FastSim(_burst_cfg(seed=9, mode="when_idle"))
+    cands = first_multi_decision(sim)
+    kw = dict(k=6, horizon_s=math.inf, scenarios=2, window_s=30.0, w_pen=0.0,
+              scale=RunningScale())
+    tp = SearchTeacher(net, **kw)
+    tc = SearchTeacher(net, futures="cell", **kw)
+    a, b = tp.costs(sim, cands), tc.costs(sim, cands)
+    assert set(a) == set(b) and all(math.isfinite(v) for v in b.values())
+    assert b == tc.costs(sim, cands)                  # deterministic
+    assert a != b                                     # different futures, different costs
+    # the whole episode runs with the cell teacher and is reproducible
+    s1 = FastSim(_burst_cfg(seed=9, mode="when_idle"))
+    s1.run(SearchTeacher(net, futures="cell", **kw))
+    s2 = FastSim(_burst_cfg(seed=9, mode="when_idle"))
+    s2.run(SearchTeacher(net, futures="cell", **kw))
+    assert s1.order == s2.order and s1.n_completed == len(s1.pk)

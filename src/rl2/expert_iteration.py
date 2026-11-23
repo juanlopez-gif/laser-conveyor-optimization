@@ -274,9 +274,10 @@ def val_config(group: str, seed: int, mode: str = "design", extra: tuple = ()):
 
 
 def _extra(job: dict) -> tuple:
-    """Config overrides carried by a job (``horizon``: shorter episodes for quick runs)."""
+    """Config overrides carried by a job (``horizon``: shorter episodes for quick runs;
+    ``extra``: further ``key=value`` items, applied last)."""
     h = job.get("horizon")
-    return (f"simulation.arrival_horizon={h}",) if h else ()
+    return ((f"simulation.arrival_horizon={h}",) if h else ()) + tuple(job.get("extra", ()))
 
 
 # ---------------------------------------------------------------- workers
@@ -314,7 +315,8 @@ def _teacher(job: dict, net, key: str):
     la = tuple(job.get("la", ()))
     horizon, scen, cut, window = la + (0.0, 0, "time", 30.0)[len(la):]
     return SearchTeacher(net, k=job["k"], w_pen=job["w_pen"], key=key, horizon_s=horizon,
-                         scenarios=scen, scale=_scale(job["net"]), cut=cut, window_s=window)
+                         scenarios=scen, scale=_scale(job["net"]), cut=cut, window_s=window,
+                         futures=job.get("futures", "poisson"))
 
 
 def _init_worker():

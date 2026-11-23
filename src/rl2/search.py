@@ -6,7 +6,10 @@ At a decision the teacher scores each kept candidate c by a look-ahead:
    arrivals and every part the controller cannot observe are dropped (online
    information only; the real cell does not see parts waiting upstream, 0.7.3). With ``scenarios > 0`` they are
    replaced by arrivals sampled from the **known** rates in a window of
-   ``window_s`` seconds;
+   ``window_s`` seconds (``futures="poisson"``: Poisson at the mean rates, the
+   teacher of every run up to 0.7.11; ``futures="cell"``: the cell's own arrival
+   model, i.e. the on/off source of ``distribution: burst`` with its parameters as
+   statistical knowledge, 0.7.12);
 2. force c, then let the **base policy** drive the clone until every part known at the
    decision is processed;
 3. cost(c) = Σ completion times of the known parts (the online counterpart of the
@@ -66,15 +69,43 @@ from fastsim import FastSim
 from fastsim.policies import nearest_job
 from rl2.features import arrival_rates, encode
 from rl2.model import DispatchNet, collate
-from simulation.arrivals import ArrivalRecord, ProcessingTimeSampler
+from simulation.arrivals import ArrivalRecord, ProcessingTimeSampler, _burst_times
 
 _TIE = 1e-9
 
+#: how the teacher samples the unknown future: Poisson at the mean rates (the
+#: teacher of every run up to 0.7.11) or the cell's own arrival model (0.7.12)
+FUTURES = ("poisson", "cell")
 
-def sample_scenarios(sim: FastSim, m: int, window_s: float, key: str) -> list[list]:
-    """``m`` synthetic arrival lists in (t, t + window_s] from the known rates."""
+
+def _burst_params(cfg) -> list[tuple[float, float] | None]:
+    """Per conveyor ``(on_fraction, on_mean)`` of the on/off source, ``None`` where
+    the arrivals are Poisson (``on_fraction`` 1, or another distribution)."""
+    a = cfg.arrivals
+    if a.mode != "stochastic" or a.distribution != "burst":
+        return [None] * len(cfg.conveyors)
+    return [None if f >= 1.0 else (f, m) for f, m in zip(a.burst_on_fraction, a.burst_on_mean)]
+
+
+def sample_scenarios(sim: FastSim, m: int, window_s: float, key: str,
+                     futures: str = "poisson") -> list[list]:
+    """``m`` synthetic arrival lists in (t, t + window_s].
+
+    ``futures="poisson"``: Poisson at the known mean rates on every conveyor.
+    ``futures="cell"``: the cell's arrival model; on a conveyor with an on/off source
+    (``arrivals.stochastic.distribution: burst``) the future is an on/off Poisson
+    source with the cell's ``on_fraction`` and ``on_mean`` (statistical knowledge of
+    the process, not an observation of it), whose initial state is drawn from the
+    stationary distribution (on with probability ``on_fraction``: the controller does
+    not know whether the source is on right now). On a Poisson conveyor both choices
+    draw exactly the same arrivals. Common random numbers: the same ``key``, instant
+    and scenario index give the same future to every candidate.
+    """
+    if futures not in FUTURES:
+        raise ValueError(f"futures must be one of {FUTURES}, not {futures!r}")
     out = []
     rates = arrival_rates(sim.cfg)
+    bursts = _burst_params(sim.cfg) if futures == "cell" else [None] * len(rates)
     for s in range(m):
         rng = random.Random(f"rl2search/{key}/{sim.t:.6f}/{s}")
         sampler = ProcessingTimeSampler(sim.cfg, rng)
@@ -82,10 +113,16 @@ def sample_scenarios(sim: FastSim, m: int, window_s: float, key: str) -> list[li
         for k, lam in enumerate(rates):
             if lam <= 0:
                 continue
-            ta = sim.t + rng.expovariate(lam)
-            while ta <= sim.t + window_s:
-                recs.append(ArrivalRecord(ta, k, sampler.sample()))
-                ta += rng.expovariate(lam)
+            if bursts[k] is None:
+                ta = sim.t + rng.expovariate(lam)
+                while ta <= sim.t + window_s:
+                    recs.append(ArrivalRecord(ta, k, sampler.sample()))
+                    ta += rng.expovariate(lam)
+            else:
+                on_fraction, on_mean = bursts[k]
+                sw = random.Random(f"rl2search/{key}/{sim.t:.6f}/{s}/sw/{k}")
+                for t in _burst_times(1.0 / lam, on_fraction, on_mean, window_s, rng, sw):
+                    recs.append(ArrivalRecord(sim.t + t, k, sampler.sample()))
         out.append(recs)
     return out
 
@@ -152,10 +189,13 @@ class SearchTeacher:
 
     def __init__(self, net: DispatchNet | None = None, k: int = 6, scenarios: int = 0,
                  window_s: float = 30.0, w_pen: float = 0.0, key: str = "0",
-                 horizon_s: float = 0.0, scale=None, cut: str = "time"):
+                 horizon_s: float = 0.0, scale=None, cut: str = "time",
+                 futures: str = "poisson"):
         if cut not in ("time", "decision"):
             raise ValueError(f"cut must be 'time' or 'decision', not {cut!r}")
-        self.cut = cut
+        if futures not in FUTURES:
+            raise ValueError(f"futures must be one of {FUTURES}, not {futures!r}")
+        self.cut, self.futures = cut, futures
         self.net = None if net is None else net.eval()
         if net is None and horizon_s > 0:
             # value truncation needs the value head: with the rule base (iteration 0)
@@ -209,7 +249,8 @@ class SearchTeacher:
         trunc = self.truncated
         finite = trunc and math.isfinite(self.horizon)
         window = self.horizon + WINDOW_MARGIN_S if finite else self.window
-        scen = sample_scenarios(sim, self.m, window, self.key) if self.m > 0 else [[]]
+        scen = (sample_scenarios(sim, self.m, window, self.key, self.futures)
+                if self.m > 0 else [[]])
         t_stop = None
         if finite and self.cut == "decision":
             t_stop = sim.t + self.horizon

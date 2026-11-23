@@ -1,10 +1,13 @@
 """Compare search-teacher variants over a trained network on the validation cells
 (docs/methods/rl2.md §6.2 and §8.5).
 
-Each variant drives the fast simulator on the real cell and the heavy example (seeds
-2000+), and on general cells (seeds 2500+), all with ``none``; the table gives the
-paired Δ of penalized flow time vs ``nearest_job`` per group, the mean of the three,
-the Δ vs the network alone, and the time per episode.
+Each variant drives the fast simulator on the validation groups (``--groups``, default
+all of ``rl2.expert_iteration.VAL_GROUPS``: the real cell, the heavy example and the
+real cell with bursty arrivals on seeds 2000+, general cells on seeds 2500+), in the
+``--val-mode``; the table gives the paired Δ of penalized flow time vs ``nearest_job``
+per group, the mean over the groups, the Δ vs the network alone, and the time per
+episode. ``--extra key=value ...`` overrides the configuration of every cell (applied
+last), e.g. another burst setting.
 
     python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_big.pt --val 30 \\
         --variants known:k6 known:k0 trunc:h20:m2:p1 ...
@@ -13,8 +16,10 @@ Variant syntax (0.7.6, ``rl2.search``): ``known`` (look-ahead until the known pa
 are done), ``roll`` (sampled-future rollout to the end of the window, no value head),
 ``cut`` (value head at exactly t + H) or ``dcut`` (value head at the first decision
 after t + H); then ``:kK`` candidates (0 = all), ``:hH`` horizon [s], ``:wW`` window
-[s] of ``roll``, ``:mM`` scenarios, ``:pW`` penalty weight. Defaults: k6, h30, w30,
-m2, p1 (``known``: m0, p0, the 0.7.2 teacher).
+[s] of ``roll``, ``:mM`` scenarios, ``:pW`` penalty weight, ``:fF`` futures
+(``poisson`` = Poisson at the mean rates, ``cell`` = the cell's arrival model with
+its on/off source, 0.7.12). Defaults: k6, h30, w30, m2, p1, fpoisson (``known``: m0,
+p0, the 0.7.2 teacher).
 """
 
 from __future__ import annotations
@@ -41,7 +46,7 @@ def parse_variant(spec: str) -> dict:
     parts = spec.split(":")
     kind = parts[0]
     assert kind in ("known", "roll", "cut", "dcut"), spec
-    v = {"name": spec, "k": 6, "h": 30.0, "w": 30.0, "m": 2, "p": 1.0}
+    v = {"name": spec, "k": 6, "h": 30.0, "w": 30.0, "m": 2, "p": 1.0, "f": "poisson"}
     for p in parts[1:]:
         key, val = p[0], p[1:]
         v[key] = type(v[key])(val)
@@ -65,20 +70,24 @@ def main(argv=None) -> int:
     ap.add_argument("--tag", default="rl2_teacher_variants")
     ap.add_argument("--val-mode", default="design", choices=["design", "none"],
                     help="validation mode (rl2.expert_iteration.VAL_MODES, 0.7.7)")
+    ap.add_argument("--groups", nargs="+", default=list(VAL_GROUPS), choices=VAL_GROUPS)
+    ap.add_argument("--extra", nargs="*", default=[], metavar="KEY=VALUE",
+                    help="configuration overrides applied to every cell, last")
     args = ap.parse_args(argv)
-    seeds = {"real": VAL_SEED_BASE, "heavy": VAL_SEED_BASE, "general": VAL_GENERAL_SEED_BASE}
-    cells = [(g, seeds[g] + i) for g in VAL_GROUPS
-             for i in range(args.val * (2 if g == "general" else 1))]
+    groups = list(args.groups)
+    cells = [(g, (VAL_GENERAL_SEED_BASE if g == "general" else VAL_SEED_BASE) + i)
+             for g in groups for i in range(args.val * (2 if g == "general" else 1))]
     variants = [parse_variant(s) for s in args.variants]
     net = str(ROOT / args.net)
     m = args.val_mode
-    jobs = [{"load": g, "seed": sd, "who": "nearest_job", "net": None, "k": 6, "w_pen": 0.0,
-             "horizon": None, "mode": m} for g, sd in cells]
-    jobs += [{"load": g, "seed": sd, "who": "net", "net": net, "k": 6, "w_pen": 0.0,
-              "horizon": None, "mode": m} for g, sd in cells]
+    base = {"horizon": None, "mode": m, "extra": tuple(args.extra)}
+    jobs = [base | {"load": g, "seed": sd, "who": "nearest_job", "net": None, "k": 6,
+                    "w_pen": 0.0} for g, sd in cells]
+    jobs += [base | {"load": g, "seed": sd, "who": "net", "net": net, "k": 6, "w_pen": 0.0}
+             for g, sd in cells]
     for vi, v in enumerate(variants):
-        jobs += [{"load": g, "seed": sd, "who": "teacher", "net": net, "k": v["k"],
-                  "w_pen": v["p"], "horizon": None, "la": v["la"], "variant": vi, "mode": m}
+        jobs += [base | {"load": g, "seed": sd, "who": "teacher", "net": net, "k": v["k"],
+                         "w_pen": v["p"], "la": v["la"], "futures": v["f"], "variant": vi}
                  for g, sd in cells]
     t0 = time.perf_counter()
     with ProcessPoolExecutor(args.workers, initializer=_init_worker) as ex:
@@ -90,28 +99,34 @@ def main(argv=None) -> int:
         rs = [r["cost"] / base[(r["load"], r["seed"])] - 1 for r in rows]
         return (float(np.mean(rs)), 1.96 * float(np.std(rs, ddof=1)) / math.sqrt(len(rs)))
 
-    out = {"net": args.net, "val": args.val, "val_mode": m, "rows": []}
-    header = ("| variant | real | heavy | general | score | vs net alone (score) | "
-              "s / episode (real / heavy / general) |")
-    print(header); print("|---|---|---|---|---|---|---|")
+    out = {"net": args.net, "val": args.val, "val_mode": m, "groups": groups,
+           "extra": list(args.extra), "rows": []}
+    header = ("| variant | " + " | ".join(groups) + " | score | vs net alone (score) | "
+              "s / episode (" + " / ".join(groups) + ") |")
+    print(header); print("|---|" + "---|" * (len(groups) + 3))
     for name, rows_of in [("net alone", lambda: [r for r in res if r["who"] == "net"])] + [
             (v["name"], (lambda vi=vi: [r for r in res if r.get("variant") == vi]))
             for vi, v in enumerate(variants)]:
         rows = rows_of()
         line = {"variant": name}
         cols = []
-        for g in VAL_GROUPS:
+        for g in groups:
             gr = [r for r in rows if r["load"] == g]
             mu, ci = stats(gr, ref)
             line[g] = {"delta": mu, "ci": ci, "secs": float(np.mean([r["secs"] for r in gr]))}
             cols.append(f"{100 * mu:+.2f} ±{100 * ci:.2f}")
-        line["score"] = float(np.mean([line[g]["delta"] for g in VAL_GROUPS]))
-        vs = float(np.mean([stats([r for r in rows if r["load"] == g], netc)[0] for g in VAL_GROUPS]))
+        line["score"] = float(np.mean([line[g]["delta"] for g in groups]))
+        vs = float(np.mean([stats([r for r in rows if r["load"] == g], netc)[0] for g in groups]))
         line["vs_net"] = vs
         out["rows"].append(line)
-        secs = " / ".join(f"{line[g]['secs']:.2f}" for g in VAL_GROUPS)
+        secs = " / ".join(f"{line[g]['secs']:.2f}" for g in groups)
         print(f"| {name} | " + " | ".join(cols) + f" | {100 * line['score']:+.2f} | "
               f"{100 * vs:+.2f} | {secs} |")
+    # per-episode rows (0.7.12), so any pair of variants can be contrasted afterwards
+    names = {None: None} | {vi: v["name"] for vi, v in enumerate(variants)}
+    out["episodes"] = [{"load": r["load"], "seed": r["seed"], "who": r["who"],
+                        "variant": names[r.get("variant")], "cost": r["cost"],
+                        "secs": r["secs"]} for r in res]
     out["elapsed_s"] = time.perf_counter() - t0
     rdir = ROOT / "results" / "experiments" / args.tag
     rdir.mkdir(parents=True, exist_ok=True)

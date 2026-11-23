@@ -6,6 +6,47 @@ summarized from the git history.
 
 ---
 
+## 0.7.12 — 2026-11-22 — Teacher futures from the cell's arrival model; contrast Poisson vs burst-aware teacher
+
+* **Why.** The reading of 0.7.11 (the network trained on bursts cannot exceed a
+  teacher whose sampled futures are Poisson) was plausible, not shown. The owner
+  decided to measure it directly before any training from scratch: the Poisson
+  teacher against a teacher whose futures follow the burst model of the cell, on the
+  same realizations, over the same network (`rl2_gen_s_b`, frozen) and with the same
+  search budget (8 futures, 30 s window, w_pen 0).
+* **What** (`rl2.search`, `docs/methods/rl2.md` §6.4): `sample_scenarios(...,
+  futures)` and `SearchTeacher(futures=...)` with `"poisson"` (the teacher of every run
+  so far, default) or `"cell"`: on a conveyor with an on/off source the future is an
+  on/off Poisson source with the cell's `on_fraction` and `on_mean` as statistical
+  knowledge, started in the stationary state; on a Poisson conveyor both choices draw
+  the same arrivals from the same stream, so every earlier result is reproduced with
+  the default. Jobs carry `futures`; `_extra` also applies a job's `extra` overrides.
+  The tokens are unchanged: the network is still not told the burst parameters.
+* **`experiments/rl2_teacher_variants.py`:** variant option `:fcell`; `--groups`
+  (default the four validation groups; the script had failed since 0.7.11 because its
+  seed table did not know `real_burst`), `--extra key=value` applied to every cell
+  (used for a stronger burst setting), tables generic in the groups.
+* **Tests:** `tests/test_rl2_search.py` gains three tests (cell futures equal Poisson
+  futures on Poisson cells and with `on_fraction` 1; on a bursty cell they keep the
+  mean rate, are over-dispersed, reproducible and keyed; the teacher with cell futures
+  runs, is deterministic and differs from the Poisson one).
+* **Results (`rl2.md` §8.9; 50 seeds per group, design mode).** On Poisson cells
+  both teachers are the same policy end to end. On the validation bursty cell the
+  burst-aware teacher is **worse** than the Poisson one (paired +0.52 ±0.49 %); with
+  strong bursts (on-fraction 0.2, on-mean 40 s) the two are equal (−0.14 ±0.38 % on
+  the heavy cell, +0.07 ±0.57 % on the real cell) and neither beats the network
+  alone. The teacher-ceiling explanation of 0.7.11 is therefore **not supported**: the
+  limit on bursty cells is the problem (with strong bursts the head is idle or
+  saturated, and sequencing gains 1–2 % at most), not the teacher's arrival model.
+  The stationary start of the informed future adds variance that 8 futures do not
+  average out. Decision recorded in `docs/plans/papers.md`: Poisson futures remain
+  the teacher of record, `rl2_gen_s_b` stands, no training from scratch on this
+  ground.
+* **Not changed:** the frozen network, the training mix, the validation seeds, the
+  cell model, the tokens.
+
+---
+
 ## 0.7.11 — 2026-11-22 — Bursty arrivals and slow heads in the training mix; validation group `real_burst`; run `rl2_gen_s_b`
 
 * **Why.** After the information pilot (0.7.10) the owner decided that bursty

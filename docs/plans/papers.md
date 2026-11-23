@@ -344,7 +344,12 @@ makes that coverage useful.
    whose sampled futures follow the burst model of the cell, on the **same
    realizations** and with the **same search budget** (same number of futures, window
    and penalty weight), over the same network. Development seeds; never the
-   confirmatory ones.
+   confirmatory ones. **Done (0.7.12, `rl2.md` §8.9): not supported.** The
+   burst-aware teacher is half a point worse than the Poisson one on the validation
+   bursty cell (+0.52 ±0.49 %, paired) and equal with strong bursts, where no teacher
+   beats the network alone. The ceiling on bursty cells is the problem, not the
+   teacher's arrival model: Poisson futures stay the teacher of record, the frozen
+   network stands, and no training from scratch follows from this.
 3. *Paper 2, the retrained network.* The bench repeated with a network trained in the
    regimes reinforces the pilot's reading: the observed benefit comes mostly from being
    able to act earlier. The −6.4 ±2.4 % of the hidden queue at the heavy load with a
@@ -382,6 +387,6 @@ to be decided after the first.
 |---|---|
 | 1 Freeze the base problem | model, KPI, information levels and checks exist; the bursty generator and the visible-length parameter exist since 0.7.10; what remains is to freeze the *paper's* instance formats and the 36-configuration bench (the load grid should add 0.90, review note 4) |
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
-| 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable; network frozen (`rl2_gen_s_b`, it. 1) and protocol drafted above, pending the owner's confirmation; the teacher contrast (Poisson vs burst-aware futures) comes first, on development seeds |
+| 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable; network frozen (`rl2_gen_s_b`, it. 1) and protocol drafted above, pending the owner's confirmation; the teacher contrast (Poisson vs burst-aware futures) is done (0.7.12, `rl2.md` §8.9): no gain, teacher of record unchanged |
 | 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
 | 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4; the pilot across regimes with the 0.7.9 network is in `docs/methods/rl2.md` §8.7 and its repetition with the 0.7.11 network in §8.8 (robust to the network, pending the reserved seeds) |

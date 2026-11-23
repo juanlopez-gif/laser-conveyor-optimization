@@ -310,6 +310,17 @@ Other rows checked: all candidates instead of K = 6 changes nothing with 4 futur
 * **Cost.** The chosen teacher is about 10× the known-parts one per episode (the
   look-aheads are 8× more numerous and longer). On the workstation that is 40 min per
   iteration of 2 000 episodes, acceptable.
+* **What the futures know (0.7.12).** `SearchTeacher(futures=...)`,
+  `sample_scenarios(..., futures)`: with `"poisson"` (every run up to 0.7.11) the
+  futures are Poisson at the cell's mean rates on every conveyor; with `"cell"` they
+  follow the cell's arrival model, i.e. on a conveyor with an on/off source
+  (`arrivals.stochastic.distribution: burst`) the sampled future is an on/off Poisson
+  source with the cell's `on_fraction` and `on_mean`, started in the stationary state
+  (on with probability `on_fraction`: the controller knows the statistics of the
+  process, not whether the source is on now). On a Poisson conveyor both draw exactly
+  the same arrivals (same random stream), so the choice only matters on bursty cells.
+  Measured in §8.9. The network's tokens do not carry the burst parameters in either
+  case.
 
 ## 7. Fast simulator on general cells (check before training)
 
@@ -849,6 +860,64 @@ Findings:
   teacher with a burst-aware teacher on the same realizations and the same search
   budget (development seeds).
 
+### 8.9 Teacher futures: Poisson against the cell's arrival model (0.7.12)
+
+The reading of §8.8 (a network trained on bursts cannot exceed a teacher whose
+sampled futures are Poisson) was tested directly, as the owner asked, before any
+training from scratch: the same network (`rl2_gen_s_b`, frozen), the same
+realizations (validation seeds, design mode), the same search budget (8 futures, 30 s
+window, w_pen 0, K = 6), and two ways of sampling the unknown future (§6.4):
+`poisson` (the teacher of every run so far) and `cell` (an on/off source with the
+cell's `on_fraction` and `on_mean`, started in its stationary state). On Poisson cells
+the two are the same teacher by construction, which the first three columns confirm
+end to end. `experiments/rl2_teacher_variants.py`, 50 seeds per group (100 general);
+`results/experiments/teacher_futures_s_b{,_pairs,_strong}/variants.json`.
+
+Paired Δ of the penalized flow time vs `nearest_job` [%]:
+
+| policy | real | heavy | general | real_burst (0.3 / 20 s) | heavy, strong bursts (0.2 / 40 s) | real, strong bursts (0.2 / 40 s) |
+|---|---|---|---|---|---|---|
+| network alone | −6.19 ±1.48 | −2.86 ±1.09 | −2.73 ±1.05 | −3.51 ±1.00 | −1.06 ±0.61 | −1.85 ±0.75 |
+| teacher, Poisson futures | −6.44 ±1.30 | −2.35 ±1.46 | −3.51 ±1.27 | −4.07 ±0.96 | −1.13 ±0.58 | −1.60 ±0.71 |
+| teacher, cell futures | −6.44 ±1.30 | −2.35 ±1.46 | −3.51 ±1.27 | −3.60 ±0.89 | −1.27 ±0.61 | −1.56 ±0.69 |
+| s / episode (net / teachers) | 0.4 / 23 | 0.7 / 116 | 0.4 / 45 | 0.5 / 50 | 0.8 / 190 | 0.5 / 103 |
+
+Paired contrasts on the bursty cells (negative = the second is better; "better on"
+counts the seeds where it is):
+
+| cell | cell futures vs Poisson futures | Poisson teacher vs network | cell teacher vs network |
+|---|---|---|---|
+| real_burst (0.3 / 20 s) | **+0.52 ±0.49 %** (21/50) | −0.56 ±0.51 % (29/50) | −0.06 ±0.56 % (21/50) |
+| heavy, strong bursts | −0.14 ±0.38 % (19/50) | −0.06 ±0.40 % (20/50) | −0.20 ±0.38 % (21/50) |
+| real, strong bursts | +0.07 ±0.57 % (12/50) | +0.28 ±0.61 % (12/50) | +0.31 ±0.38 % (12/50) |
+
+Findings:
+
+* **The explanation is not supported.** Giving the teacher the cell's burst model does
+  not make it a better teacher: on the validation bursty cell it is half a point
+  *worse* than the Poisson teacher (paired +0.52 ±0.49 %, the interval barely
+  excludes zero), and with strong bursts the two are equal within ±0.4–0.6 points.
+  The ceiling the network reaches on bursty cells is therefore not an artefact of
+  Poisson futures; retraining with a burst-aware teacher would not move it.
+* **Why the informed future does not help at this budget.** The stationary start
+  (on with probability `on_fraction`) adds to every sampled future the uncertainty of
+  whether the source is emitting now, which 8 futures do not average out; the smoother
+  Poisson future at the mean rate ranks the candidates with less noise. A future that
+  knew the *current* on/off state would need to infer it from the recent arrivals
+  (an observation-based estimate, a different model than the statistical knowledge
+  tested here), and the pilot of §8.7 found no value of information on these cells.
+* **With strong bursts there is little to decide.** At `on_fraction` 0.2 the cell
+  alternates between an idle head and a saturated burst; the network gains
+  1–2 % over `nearest_job`, no teacher beats the network (paired contrasts within
+  ±0.6 points), and the known-parts order is close to the best achievable without
+  seeing the hidden queue. This matches the pilot (§8.7): bursts reduce, not raise,
+  the value of deciding better with the same information.
+* **Consequence for Paper 1.** The sampled-future teacher with Poisson futures stays
+  the teacher of record; the frozen network `rl2_gen_s_b` stands; no training from
+  scratch on this ground. The contrast itself is a result for the paper: the quality
+  of the amortized policy on bursty cells is bounded by the problem, not by the
+  teacher's arrival model.
+
 ## 9. Reproduce (phase 3)
 
 ```bash
@@ -865,4 +934,12 @@ python experiments/rl2_train.py --tag rl2_gen_s_sf --init models/rl2_gen_s_big.p
     --epochs 4 --replay 2 --val 50
 # 0.7.10: information treatments and visible-length curve across regimes (§8.7)
 python experiments/rl2_information_bench.py --net models/rl2_gen_s_d.pt --tag info_pilot_s_d --seeds 30
+# 0.7.12: teacher futures, Poisson vs the cell's arrival model, same seeds and budget (§8.9)
+python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_b.pt --val 50 \
+    --groups real heavy general real_burst --variants roll:m8:w30:p0 roll:m8:w30:p0:fcell \
+    --tag teacher_futures_s_b
+python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_b.pt --val 50 \
+    --groups heavy real_burst --variants roll:m8:w30:p0 roll:m8:w30:p0:fcell \
+    --extra arrivals.stochastic.distribution=burst arrivals.stochastic.burst.on_fraction=0.2 \
+            arrivals.stochastic.burst.on_mean=40 --tag teacher_futures_s_b_strong
 ```
