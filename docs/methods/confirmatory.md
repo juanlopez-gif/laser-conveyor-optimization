@@ -289,3 +289,152 @@ receives a zero buffer length.
   (−2.1 %); the plain `rollout` no longer is.
 * **Recommendation for the real cell:** `rollout@avg_flow_time` or `rl_rollout` with
   `none`. The two are equivalent; the plain rollout needs no trained model.
+
+## 9. Phase 4: confirmatory evaluation on the reserved seeds (0.7.13, 2026-11-22)
+
+Code: `experiments/rl2_eval.py` (one invocation; protocol frozen in
+`docs/plans/papers.md`, "Phase 4 protocol", confirmed by the owner). Outputs (not
+versioned): `results/experiments/phase4/bench.json`, `tables.md`; the full tables are
+copied to [phase4_tables.md](phase4_tables.md). Run of 2026-11-22, 23:03–23:41 on the
+workstation (38 min, 47 workers): 15 360 information runs, 1 440 search runs, 960
+engine runs.
+
+**Design (as frozen).** Network `models/rl2_gen_s_b.pt` (frozen, iteration 1),
+reference `models/rl2_gen_s_d.pt` (0.7.9); **seeds 7000–7029**, used here once; the
+exact event-driven simulator for every run; eight regimes: load real / heavy ×
+arrivals Poisson / burst (on-fraction 0.3, on-mean 20 s) × head nominal / slow (speeds
+× 0.5); treatments A (`zone`/`none`), B (`belts`/`none`), C (`belts`/`when_idle`), D
+(`full`/`none`) and the coverage grid `visible_length` ∈ {0, 1, 2.5, 5, 7.5, 10} cm with
+`none` and `when_idle` at each length; policies `nearest_job`, `nearest_head`, the two
+networks and, in B and C, the known-parts search over `nearest_job` (K = 6) and the
+sampled-future teacher over the frozen network (8 futures, 30 s, w_pen 0). Paired Δ of
+the penalized flow time with 95 % CI; "n/30" counts the seeds where the second policy
+is better. Latencies are measured on the decisions of the network's own episode, one
+thread per worker, with 47 workers busy (an upper bound of the single-process figures
+of `rl2.md` §5).
+
+### 9.1 Overview
+
+| regime | `nearest_job` B [s/part] | net B vs NJ | net C vs NJ | B vs A (net) | C vs B (net) | D vs B (net) | teacher vs net (B) |
+|---|---|---|---|---|---|---|---|
+| real / Poisson / nominal head | 21.8 | −7.22 ±1.95 | −14.11 ±2.21 | +0.85 ±1.14 | **−7.37 ±1.87** | −0.32 ±0.78 | −0.39 ±1.24 |
+| real / Poisson / slow head | 42.1 | −7.25 ±1.74 | −10.63 ±2.52 | −0.89 ±1.24 | **−3.56 ±2.48** | +0.03 ±0.99 | −0.53 ±1.12 |
+| real / burst / nominal head | 27.6 | −1.96 ±1.74 | −4.74 ±1.70 | +0.71 ±1.16 | **−2.75 ±1.50** | −0.74 ±1.05 | −0.65 ±1.12 |
+| real / burst / slow head | 41.3 | −6.24 ±2.00 | −10.35 ±2.24 | −0.03 ±1.06 | **−4.26 ±2.19** | +0.24 ±1.00 | −0.48 ±1.22 |
+| heavy / Poisson / nominal head | 73.5 | −2.78 ±1.85 | −4.14 ±1.28 | −0.63 ±1.08 | −1.27 ±1.34 | **−2.66 ±1.43** | −0.81 ±1.46 |
+| heavy / Poisson / slow head | 104.0 | −1.32 ±2.32 | −1.50 ±2.15 | −1.34 ±1.66 | −0.01 ±1.98 | **−3.74 ±1.87** | +0.05 ±2.24 |
+| heavy / burst / nominal head | 72.0 | −3.29 ±1.66 | −4.90 ±1.57 | −0.42 ±0.63 | **−1.60 ±1.14** | −0.42 ±0.77 | −0.27 ±0.55 |
+| heavy / burst / slow head | 93.6 | −4.15 ±1.74 | −3.56 ±1.94 | **−1.31 ±0.74** | +0.64 ±1.16 | +0.04 ±0.85 | +0.01 ±0.79 |
+
+### 9.2 Paper 2: value of upstream visibility
+
+* **B vs A (seeing the entry zone with the same actions) is a null result in every
+  regime**: for the network, between −1.3 and +0.9 points, with intervals of ±0.6 to
+  ±1.7; the only interval that excludes zero (heavy load, bursts, slow head, −1.31
+  ±0.74) is the smallest effect of the table. For `nearest_job` and `nearest_head`
+  the contrast is exactly zero by construction (they never use upstream parts). The
+  pilot's bound (±0.9 on development seeds) is confirmed at about ±1.5 points on the
+  reserved seeds.
+* **C vs B (acting on the same view) is where the value is, at the real load**: −7.4
+  (nominal head), −3.6 (slow head), −2.8 (bursts) and −4.3 (bursts and slow head)
+  points for the network, 22–27 of 30 seeds, and the same for `nearest_job` (−7.4,
+  −3.6, −2.7, −3.9). At the heavy load the head is rarely idle and the contrast is
+  within ±1.3 points (significant only with bursts and the nominal head, −1.6 ±1.1).
+  The secondary hypothesis holds: bursts and a slow head reduce the value of acting
+  early (from −7.4 to −2.8 / −3.6), they do not create a value of seeing early.
+* **D vs B (the hidden upstream queue) is worth something only at the heavy load**:
+  −2.7 ±1.4 (nominal head) and −3.7 ±1.9 (slow head) with Poisson arrivals, 20–23 of
+  30 seeds; within ±1 point in the six other regimes. The pilot's −6.35 ±2.42 on
+  development seeds (0.7.11) is confirmed in sign, with a smaller size.
+* **Coverage curve** (`when_idle` vs `none` at the same visible length; share of the
+  whole-zone gain; seconds = length at the belt speed, 3 cm/s at the real load):
+
+  | regime (real load) | policy | whole-zone gain | 1 cm (0.33 s) | 2.5 cm (0.83 s) | 5 cm (1.67 s) | 7.5 cm (2.5 s) |
+  |---|---|---|---|---|---|---|
+  | Poisson / nominal head (head span 2.4 s) | `nearest_job` | −7.37 ±2.49 | 24 % | 62 % | 84 % | 99 % |
+  | | network | −7.37 ±1.87 | 9 % | 39 % | 64 % | 78 % |
+  | Poisson / slow head (4.8 s) | `nearest_job` | −3.61 ±2.55 | −12 % | 3 % | 36 % | 85 % |
+  | | network | −3.56 ±2.48 | 19 % | 44 % | 58 % | 78 % |
+  | burst / nominal head (2.4 s) | `nearest_job` | −2.71 ±1.72 | 49 % | 41 % | 109 % | 99 % |
+  | | network | −2.75 ±1.50 | 27 % | 13 % | 86 % | 89 % |
+  | burst / slow head (4.8 s) | `nearest_job` | −3.88 ±2.26 | 8 % | 48 % | 74 % | 87 % |
+  | | network | −4.26 ±2.19 | −4 % | 39 % | 73 % | 104 % |
+
+  The required coverage is larger than the pilot suggested (97 % of the gain at 5 cm
+  for the 0.7.9 network on development seeds): on the reserved seeds half the entry
+  zone (1.7 s of belt travel) gives 84 % of the gain for `nearest_job` and 64 % for
+  the network with the nominal head, and 36 % / 58 % with a head twice as slow; the
+  curve saturates at 7.5 cm (2.5 s, the head's travel time across the conveyors at the
+  nominal speed) for the nominal head and needs the whole zone (3.3 s) for the slow
+  head. The coverage to specify is therefore the head's travel time across the
+  conveyors, in seconds of belt travel, not a fixed fraction of the entry zone. At
+  the heavy load every point of the curve is within ±1–2 points of zero (the full
+  table is in `phase4_tables.md`).
+* **Robustness to the network.** The reference network reproduces every contrast
+  (B vs A, C vs B, D vs B within ±0.5 points of the frozen network's values in every
+  regime, `phase4_tables.md`). In C the frozen network is 0.5–1.5 points better than
+  the reference in every regime (significant in three), in B the two are equal.
+
+### 9.3 Paper 1: search, teacher and network
+
+Treatment B (paired Δ vs `nearest_job` [%]; latency per decision [ms], p50 / p95):
+
+| regime | known-parts search | teacher (8 futures) | network | search vs network | teacher vs network | latency search | latency network | latency teacher [s] |
+|---|---|---|---|---|---|---|---|---|
+| real / Poisson / nominal | −4.16 ±1.98 | −7.60 ±2.17 | −7.22 ±1.95 | **+3.35 ±1.10** | −0.39 ±1.24 | 2.0 / 6.9 | 8.5 / 13.7 | 0.43 / 1.43 |
+| real / Poisson / slow | −3.73 ±2.17 | −7.72 ±2.14 | −7.25 ±1.74 | **+3.83 ±1.56** | −0.53 ±1.12 | 3.3 / 10.5 | 10.2 / 15.3 | 0.82 / 2.22 |
+| real / burst / nominal | −0.57 ±1.54 | −2.68 ±1.44 | −1.96 ±1.74 | +1.54 ±1.60 | −0.65 ±1.12 | 4.3 / 12.6 | 9.8 / 14.7 | 0.84 / 2.31 |
+| real / burst / slow | −4.25 ±1.91 | −6.72 ±2.12 | −6.24 ±2.00 | **+2.22 ±1.42** | −0.48 ±1.22 | 5.1 / 13.4 | 10.9 / 16.2 | 1.14 / 2.67 |
+| heavy / Poisson / nominal | +0.26 ±1.45 | −3.68 ±1.58 | −2.78 ±1.85 | **+3.31 ±1.87** | −0.81 ±1.46 | 5.0 / 14.9 | 11.3 / 17.5 | 1.37 / 3.33 |
+| heavy / Poisson / slow | +2.31 ±2.94 | −1.40 ±2.53 | −1.32 ±2.32 | **+3.86 ±2.86** | +0.05 ±2.24 | 5.6 / 16.0 | 11.7 / 18.0 | 1.47 / 3.54 |
+| heavy / burst / nominal | −1.02 ±1.33 | −3.56 ±1.74 | −3.29 ±1.66 | **+2.46 ±1.36** | −0.27 ±0.55 | 7.3 / 21.3 | 12.2 / 19.6 | 1.86 / 5.12 |
+| heavy / burst / slow | −1.89 ±1.87 | −4.15 ±1.82 | −4.15 ±1.74 | **+2.40 ±1.29** | +0.01 ±0.79 | 6.3 / 19.9 | 11.4 / 18.6 | 1.58 / 4.44 |
+
+("search vs network" is the search's cost relative to the network's, paired:
+positive = the network is better. Treatment C gives the same picture,
+`phase4_tables.md`.)
+
+* **The network alone beats `nearest_job` in 7 of 8 regimes** (−2.0 to −7.3 %; the
+  exception is the heavy load with a slow head, −1.3 ±2.3), and **beats the
+  known-parts search in every regime** (by 1.5 to 3.9 points, significant in 7 of 8),
+  at 2–3× the search's latency and 100× less than the teacher's. Pooled over the
+  regimes the network decides in 10.8 ms (p50), 17.5 ms (p95), 25.5 ms (p99), 106 ms
+  at most, on one thread with the machine fully loaded.
+* **The network equals its teacher**: the teacher over the network is within ±0.8
+  points of the network alone in every regime, never significantly better (13–18 of
+  30 seeds), at 0.4–1.9 s per decision (p50) and up to 12 s. This confirms on reserved
+  seeds what every training run showed on development seeds (`rl2.md` §8.4–§8.8):
+  the amortized policy recovers the sampled-future search at 1/100 of its latency.
+* **The known-parts search is no longer a competitive reference** at the heavy load
+  (+0.3 and +2.3 % vs `nearest_job` with Poisson arrivals): the look-ahead over the
+  parts in view, without the sampled future, ranks the candidates worse than the
+  rule when every belt is queueing.
+* **Against the plan's success criteria** (`strong_rl_plan.md` §5): the network alone
+  in the design mode is −14.1 % vs `nearest_job`/`none` at the real load (target
+  ≥ −10 %); the decision latency is 8.5 ms (p50) under full load against the 5 ms
+  target measured single-process in `rl2.md` §5 (4 ms), both three orders of
+  magnitude below the physical slack; the hindsight gap and the generalization grid
+  were deferred to a second phase-4 run (`papers.md`).
+
+### 9.4 Engine check
+
+The fixed-step engine at `dt = 0.001` with `nearest_job` and `nearest_head` in B and
+C on every regime (960 episodes): identical processing order in 464 / 480 (B) and
+461 / 480 (C) episodes, mean |Δ J| 0.03 % (B) and 0.06 % (C), 18 episodes with |Δ J|
+> 0.5 % (max 1.4 % in B, 5.2 % in C), all of them order flips at near-ties, as in the
+acceptance of `fastsim.md` §4 (95.8 % identical order at this `dt`). The fast
+simulator's numbers stand; the network has no engine adapter and is validated through
+the fast simulator only.
+
+### 9.5 Conclusions for the papers
+
+* Paper 1: the method to present is the sampled-future teacher plus the network that
+  amortizes it; its gain over `nearest_job` and over the known-parts search is
+  confirmed on reserved seeds in every regime but the saturated heavy cell with a slow
+  head, where no policy without the hidden queue does better than the rule.
+* Paper 2: the value of upstream visibility is the value of the action it enables
+  (C vs B), the pure-information contrast (B vs A) is a null result bounded at about
+  ±1.5 points, the hidden queue matters only at the heavy load (D vs B, 2.7–3.7
+  points), and the coverage to specify is the head's travel time across the
+  conveyors in seconds of belt travel: 7.5 cm (2.5 s) for the nominal head, the whole
+  10 cm zone (3.3 s) for a head twice as slow.

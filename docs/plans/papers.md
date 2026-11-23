@@ -381,12 +381,24 @@ bench with the 0.90 load, the sensitivity grid, the search-budget ablations of
 `strong_rl_plan.md` §5) are deferred to a second phase-4 run on other reserved seeds,
 to be decided after the first.
 
+**Phase 4 run (0.7.13, 2026-11-22; `docs/methods/confirmatory.md` §9).** Protocol
+confirmed by the owner and run once on seeds 7000–7029. Confirmed: B vs A null in
+every regime (bounded at about ±1.5 points); C vs B −7.4 / −3.6 / −2.8 / −4.3 % at the
+real load and ≈ 0 at the heavy load; D vs B −2.7 and −3.7 % at the heavy load with
+Poisson arrivals only; the network equals its teacher and beats the known-parts
+search in every regime at 11 ms per decision. Changed with respect to the pilot: the
+coverage curve saturates at 7.5 cm (2.5 s ≈ the head's travel time across the
+conveyors) with the nominal head and at the whole zone with the slow head, so the
+coverage to specify is the head's travel time in seconds of belt travel, not half the
+zone. The reserved seeds 7000–7029 are now used; a second phase-4 run (hindsight
+reference, 36-configuration bench, generalization grid) needs new reserved seeds.
+
 **Where the plan's steps already stand.**
 
 | step | status |
 |---|---|
 | 1 Freeze the base problem | model, KPI, information levels and checks exist; the bursty generator and the visible-length parameter exist since 0.7.10; what remains is to freeze the *paper's* instance formats and the 36-configuration bench (the load grid should add 0.90, review note 4) |
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
-| 3 Close the evaluation of Paper 1 | not started; phase 4 of `strong_rl_plan.md` (engine at `dt ≤ 0.001`, seeds 7000–7029, hindsight reference) is the same deliverable; network frozen (`rl2_gen_s_b`, it. 1) and protocol drafted above, pending the owner's confirmation; the teacher contrast (Poisson vs burst-aware futures) is done (0.7.12, `rl2.md` §8.9): no gain, teacher of record unchanged |
+| 3 Close the evaluation of Paper 1 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: network vs teacher vs known-parts search with latencies, on eight regimes; the hindsight reference, the 36-configuration bench and the budget ablations remain for a second run on new reserved seeds; the teacher contrast (Poisson vs burst-aware futures) is done (0.7.12, `rl2.md` §8.9): no gain, teacher of record unchanged |
 | 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
-| 5 Close the evaluation of Paper 2 | not started; a first A/B/C measurement on the nominal cell with the 0.7.6 network is in `docs/assumptions.md` C4; the pilot across regimes with the 0.7.9 network is in `docs/methods/rl2.md` §8.7 and its repetition with the 0.7.11 network in §8.8 (robust to the network, pending the reserved seeds) |
+| 5 Close the evaluation of Paper 2 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: A/B/C/D contrasts and the coverage curve on eight regimes, with both networks; what remains is the economic translation (scenario-based, no cell data) and, if wanted, other burst settings; pilots: `docs/assumptions.md` C4, `rl2.md` §8.7–§8.8 |

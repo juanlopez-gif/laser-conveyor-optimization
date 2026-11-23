@@ -918,6 +918,17 @@ Findings:
   of the amortized policy on bursty cells is bounded by the problem, not by the
   teacher's arrival model.
 
+### 8.10 Phase 4 on the reserved seeds (0.7.13)
+
+The confirmatory evaluation of the frozen network on seeds 7000–7029 (eight regimes,
+treatments, coverage curve, teacher and search with latencies, engine check) is
+reported in `docs/methods/confirmatory.md` §9. In short: the network equals its
+sampled-future teacher in every regime (within ±0.8 points) and beats the known-parts
+search by 1.5–3.9 points, at 10.8 ms per decision (p50, one thread, loaded machine);
+the information contrasts of §8.7–§8.8 are confirmed, with a coverage curve that
+saturates at the head's travel time across the conveyors (7.5 cm ≈ 2.5 s of belt
+travel at the nominal speed), later than the pilot suggested.
+
 ## 9. Reproduce (phase 3)
 
 ```bash
@@ -942,4 +953,6 @@ python experiments/rl2_teacher_variants.py --net models/rl2_gen_s_b.pt --val 50 
     --groups heavy real_burst --variants roll:m8:w30:p0 roll:m8:w30:p0:fcell \
     --extra arrivals.stochastic.distribution=burst arrivals.stochastic.burst.on_fraction=0.2 \
             arrivals.stochastic.burst.on_mean=40 --tag teacher_futures_s_b_strong
+# 0.7.13: phase 4 on the reserved seeds (docs/methods/confirmatory.md §9); used once
+python experiments/rl2_eval.py --tag phase4 --seed-base 7000 --seeds 30 --workers 47
 ```

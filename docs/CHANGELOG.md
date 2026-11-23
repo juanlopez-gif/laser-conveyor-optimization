@@ -6,6 +6,47 @@ summarized from the git history.
 
 ---
 
+## 0.7.13 — 2026-11-22 — Phase 4: confirmatory evaluation on the reserved seeds (`experiments/rl2_eval.py`)
+
+* **Why.** The owner confirmed the phase 4 protocol drafted in
+  `docs/plans/papers.md` (network `rl2_gen_s_b` frozen, the teacher contrast of
+  0.7.12 closed): one run on the reserved seeds 7000–7029, with the two priority
+  contrasts of the papers and the coverage curve, so that the results of the pilots
+  (0.7.9–0.7.12, all on development seeds) are confirmed on realizations never seen.
+* **What** (`experiments/rl2_eval.py`): one invocation runs, on the eight regimes of
+  the pilot (real / heavy × Poisson / burst × nominal / slow head) and 30 paired
+  realizations per configuration: (i) *Paper 2*, treatments A/B/C/D and the coverage
+  grid (`visible_length` 0, 1, 2.5, 5, 7.5, 10 cm with `none` and `when_idle` at each
+  length) for `nearest_job`, `nearest_head`, the frozen network and the 0.7.9
+  reference network; (ii) *Paper 1*, in B and in C, the known-parts search over
+  `nearest_job`, the sampled-future teacher over the network (8 futures, 30 s, w_pen
+  0) and the network alone, each driving its own episode, plus the per-decision
+  latency of every policy measured on the decisions of the network's episode (same
+  states, one thread); (iii) the fixed-step engine at `dt = 0.001` with the rules in
+  B and C on every regime against the fast simulator (the network has no engine
+  adapter; it is validated through the fast simulator, whose acceptance is
+  `docs/methods/fastsim.md` §4). Outputs `results/experiments/phase4/bench.json` and
+  `tables.md`; the script refuses to overwrite a run on the reserved seeds. Smoke
+  test on seeds 2000–2001 before the launch.
+* **Results** (`docs/methods/confirmatory.md` §9; full tables in
+  `docs/methods/phase4_tables.md`; run of 38 min on the workstation). *Paper 2:* B
+  vs A is a null result in every regime (network: −1.3 to +0.9 points, intervals
+  ±0.6–1.7); C vs B is −7.4 / −3.6 / −2.8 / −4.3 % at the real load (nominal, slow
+  head, bursts, both) and within ±1.3 points at the heavy load; D vs B is worth
+  −2.7 ±1.4 and −3.7 ±1.9 % at the heavy load with Poisson arrivals only; the
+  coverage curve saturates at 7.5 cm (2.5 s of belt travel, the head's travel time
+  across the conveyors) with the nominal head and needs the whole zone with a head
+  twice as slow, i.e. more coverage than the pilot suggested (half the zone gives
+  64–84 % of the gain, not 97 %). *Paper 1:* the network alone beats `nearest_job`
+  in 7 of 8 regimes (−2.0 to −7.3 %), beats the known-parts search in every regime
+  (1.5–3.9 points) and equals its sampled-future teacher everywhere (within ±0.8
+  points) at 10.8 ms per decision (p50, one thread, machine fully loaded) against
+  0.4–1.9 s for the teacher. *Engine check:* identical order in 96 % of the 960
+  episodes, mean |ΔJ| 0.03–0.06 %, the rest near-tie flips as in `fastsim.md` §4.
+  The reference network reproduces every contrast within ±0.5 points.
+
+---
+
 ## 0.7.12 — 2026-11-22 — Teacher futures from the cell's arrival model; contrast Poisson vs burst-aware teacher
 
 * **Why.** The reading of 0.7.11 (the network trained on bursts cannot exceed a
