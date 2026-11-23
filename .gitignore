@@ -15,3 +15,11 @@ docs/formulation/*.toc
 
 # rl2: per-iteration checkpoints stay local; only the accepted model is versioned
 models/*_it[0-9]*.pt
+docs/papers/**/*.aux
+docs/papers/**/*.log
+docs/papers/**/*.out
+docs/papers/**/*.toc
+docs/papers/**/*.bbl
+docs/papers/**/*.blg
+docs/papers/**/*.fls
+docs/papers/**/*.fdb_latexmk

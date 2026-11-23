@@ -393,6 +393,19 @@ coverage to specify is the head's travel time in seconds of belt travel, not hal
 zone. The reserved seeds 7000–7029 are now used; a second phase-4 run (hindsight
 reference, 36-configuration bench, generalization grid) needs new reserved seeds.
 
+**Paper 2 draft (0.7.14, 2026-11-23; `docs/papers/paper2/paper2.tex`).** Owner's
+decision: write Paper 2 first, in LaTeX inside the repository, from the confirmatory
+results, with the coverage in seconds of anticipation (and centimetres at the nominal
+belt speed) and the central result stating how far the camera must see and why; the
+economic translation is deferred. Draft 0.1 is written; its figures and tables are
+generated from the phase 4 data by `experiments/paper2_figures.py`. Title: *How far
+must the camera see? The value of upstream visibility and pre-positioning in a
+shared-head conveyor cell*. Design rule stated: ℓ_v ≥ τ_head · v_belt (the camera must
+give the idle head its travel time across the conveyors), with the whole value coming
+from the action (C vs B) and none from the view (B vs A). Open for the next draft: the
+economic translation (needs cost data or explicit scenarios), a related-work section
+beyond the four works cited, and the owner's reading of the text.
+
 **Where the plan's steps already stand.**
 
 | step | status |
@@ -401,4 +414,4 @@ reference, 36-configuration bench, generalization grid) needs new reserved seeds
 | 2 Build and test the search | not started as a pruned branch-and-bound; the sampled-future rollout and CP-SAT references exist |
 | 3 Close the evaluation of Paper 1 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: network vs teacher vs known-parts search with latencies, on eight regimes; the hindsight reference, the 36-configuration bench and the budget ablations remain for a second run on new reserved seeds; the teacher contrast (Poisson vs burst-aware futures) is done (0.7.12, `rl2.md` §8.9): no gain, teacher of record unchanged |
 | 4 Prepare Paper 2 | masks, modes, causality tests, the visible-length parameter (`simulation.visible_length`) and the bursty generator (`arrivals.stochastic.distribution: burst`) exist (0.7.10); `experiments/rl2_information_bench.py` runs the treatments and the visible-length curve across load, arrivals and travel regimes |
-| 5 Close the evaluation of Paper 2 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: A/B/C/D contrasts and the coverage curve on eight regimes, with both networks; what remains is the economic translation (scenario-based, no cell data) and, if wanted, other burst settings; pilots: `docs/assumptions.md` C4, `rl2.md` §8.7–§8.8 |
+| 5 Close the evaluation of Paper 2 | **phase 4 run on seeds 7000–7029 (0.7.13, `confirmatory.md` §9)**: A/B/C/D contrasts and the coverage curve on eight regimes, with both networks; **draft 0.1 of the paper written (0.7.14, `docs/papers/paper2/`)**; what remains is the economic translation (scenario-based, no cell data) and, if wanted, other burst settings; pilots: `docs/assumptions.md` C4, `rl2.md` §8.7–§8.8 |

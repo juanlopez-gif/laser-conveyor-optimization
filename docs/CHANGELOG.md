@@ -6,6 +6,50 @@ summarized from the git history.
 
 ---
 
+## 0.7.14 — 2026-11-23 — Paper 2 draft in LaTeX (`docs/papers/paper2/`)
+
+* **Why.** With phase 4 closed (0.7.13) the owner decided to write Paper 2 first, in
+  LaTeX inside the repository, starting from the confirmatory results (A/B/C/D, the
+  coverage curve, with and without pre-positioning at each visible length), with the
+  coverage expressed in **seconds of anticipation** at the belt speed and its
+  equivalent in centimetres for the nominal belt, and the central result stating how
+  far the camera must see and why. The economic translation is deferred.
+* **What.**
+  * `experiments/paper2_figures.py`: reads `results/experiments/phase4/bench.json`
+    and writes the paper's figures (`figures/coverage_curve.pdf`: gain of
+    pre-positioning against the anticipation ℓ_v / v_belt with the head's travel
+    time τ_head marked, one panel per regime; `figures/contrasts.pdf`: the network's
+    B vs A, C vs B, D vs B on the eight regimes) and tables (`tables/*.tex`: regimes
+    and physical scales, levels vs `nearest_job` in B, contrasts, coverage curve at
+    the real and the heavy load, share of the whole-zone gain with the same-length
+    and the pooled `none` baseline, robustness with the reference network), so that
+    every number in the paper comes from one computation on the versioned data of
+    phase 4. The generated files are versioned because `results/` is not.
+  * `docs/papers/paper2/paper2.tex` (+ `paper2.pdf`, built with `latexmk -pdf`;
+    bibliography `docs/literature/references.bib`): *How far must the camera see?
+    The value of upstream visibility and pre-positioning in a shared-head conveyor
+    cell*. Sections: the cell and its information model (observation levels,
+    pre-positioning `when_idle`, visible length, anticipation τ_v = ℓ_v / v_belt and
+    the head's travel time across the conveyors τ_head = 24 cm / v_y); the design
+    (two unrelated controllers, eight regimes, paired reserved realizations used
+    once, pilot vs confirmatory, causality and simulator checks); results (seeing is
+    worth nothing, acting 3–7 %; the coverage curve read against τ_head; the hidden
+    queue; robustness to the controller); discussion (design rule ℓ_v ≥ τ_head ·
+    v_belt, why seeing alone is worth nothing here, bursts and slow heads, limits,
+    economic translation deferred). Draft 0.1; every figure quoted in the text was
+    checked against `bench.json`.
+  * `.gitignore`: LaTeX build files under `docs/papers/`.
+* **Decisions recorded in the paper.** The share of the whole-zone gain is reported
+  as frozen in the protocol (`when_idle` vs `none` at the same length) and, for the
+  network, also with the mean `none` level over the six lengths as baseline, because
+  the network's `none` levels move by up to 1.3 points between lengths (the B vs A
+  null's noise); with the pooled baseline the network's shares (16/53/81/97 % at
+  1/2.5/5/7.5 cm, real load, nominal head) match the rule's (24/62/84/99 %). The
+  pilot's "97 % at 5 cm" is quoted as not confirmed. The heavy coverage table carries
+  no share (the whole-zone gain is within noise).
+
+---
+
 ## 0.7.13 — 2026-11-22 — Phase 4: confirmatory evaluation on the reserved seeds (`experiments/rl2_eval.py`)
 
 * **Why.** The owner confirmed the phase 4 protocol drafted in
