@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.1 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.36)}
+\date{November 2026 --- draft 1.2 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.37)}
 
 \begin{document}
 \maketitle
@@ -122,7 +122,8 @@ test that reference, and rejects it in favour of a measured quantity.
   and measures the gain of acting at six visible lengths, on eight regimes and 30
   reserved realizations, with a dispatching rule and a learned policy
   (Sections~\ref{sec:design} and \ref{sec:reference}). Widening the view alone changed
-  little; acting on it was worth 2.8--7.4\,\% of the penalized flow time.
+  little; acting on it was worth 2.8--7.4\,\% of the penalized flow time for the network
+  and 2.7--7.4\,\% for the rule in the four nominal-load regimes.
 \item A paired, pre-registered geometry bench of 72 regimes (56 distinct cells for the
   rule) on 60 reserved realizations, with a common grid of anticipation in seconds, the
   criteria for ``worth sizing'' and ``sufficient coverage'' frozen before the run
@@ -357,7 +358,7 @@ duration of those moves, $\tpp$, as predictors of the anticipation the camera ne
 \section{Experimental design}\label{sec:design}
 %====================================================================
 
-Three paired studies share the controllers and the checks of this section: the reference-cell study of Section~\ref{sec:reference}, and the geometry bench and the belt-speed bench of Section~\ref{sec:benchresults}. Each was fixed before its run, on realizations reserved for it and used once.
+Three paired studies share the checks of this section: the reference-cell study of Section~\ref{sec:reference}, and the geometry bench and the belt-speed bench of Section~\ref{sec:benchresults}. All three evaluate \nj; the reference and geometry studies also evaluate the frozen network. Each study's protocol was fixed before its run, on realizations reserved for it and used once; for the belt-speed bench the margin and the design were proposed in the protocol, and the final choices of seed range, margin and controller are recorded with the results.
 
 \subsection{Controllers}
 Two unrelated controllers run every configuration of the first two studies (the belt-speed
@@ -529,13 +530,16 @@ Five checks support the causal reading. (i) \emph{Masks are respected}: unit tes
 the parts that a treatment cannot see and verify that neither the network's inputs nor the
 look-ahead costs of the search policies change; in the bench every decision of every
 episode is additionally checked at run time (no candidate upstream of the visible stretch
-in 179\,520 episodes; these run-time assertions are recorded as totals and cannot be
-re-derived from the per-episode rows of (v), whereas the identity of (iv), the identity
-of the arrivals across treatments and the equality of the two modes at zero coverage
-can). (ii) \emph{Simulator}: every run uses an exact event-driven
-simulator of the cell; on the reference realizations the fixed-step reference engine at a
+in 179\,520 episodes; these run-time assertions are recorded as totals). The extracts of
+(v) support the cost comparisons by seed, including the equality of the two modes at
+zero coverage for the rule and the identity of (iv); exact arrival histories and the mask
+checks require the simulator's records, not the rows (a row carries the seed and the
+number of parts, in the belt-speed bench also the sum of the arrival instants).
+(ii) \emph{Simulator}: every run uses an exact event-driven
+simulator of the cell; on the reference realizations, for the two rules \nj\ and \nh\ in
+both modes, the fixed-step reference engine at a
 1~ms step gives the identical processing order in 96\,\% of the episodes and a mean
-absolute difference of $J$ of 0.03--0.06\,\%. (iii) \emph{Schedules} are checked against
+absolute difference of $J$ of 0.03--0.06\,\% (the network was not run on that engine). (iii) \emph{Schedules} are checked against
 the formal model's constraints. (iv) \emph{Structure}: with simultaneous axes the belts'
 $y$ coordinates enter the simulator only through the lane travel times $d/v_y$ and the
 head's home, so two cells with the same $\tcross$ and the same $x$ geometry must give
@@ -580,7 +584,7 @@ treatment; filled markers: the interval excludes zero).}
 \end{figure}
 
 \textbf{B vs A.} With the same actions, seeing the entry zone produced small effects in
-every regime tested. For the network the contrast lies between $-1.3$ and $+0.9$ points
+every regime tested. For the network the contrast lies between $-1.3$ and $+0.9$\,\%
 with intervals of $\pm0.6$ to $\pm1.7$. One cell favours the wider view by a modest but
 significant margin: the heavy load with bursts and a slow head ($-1.31\pm0.74$, the
 regime with the longest lane travel relative to the processing); the seven other
@@ -650,8 +654,8 @@ time, \%, 95\,\% CI) and, in parentheses, its share of the gain with the whole e
 
 With the nominal head and Poisson arrivals the rule's gain grows almost linearly with the
 anticipation (24, 62 and 84\,\% of the whole-zone gain at 0.33, 0.83 and 1.67~s) and is
-complete at 2.5~s (99\,\%), the first grid point beyond $\tcross$; the network's curve has
-the same shape with a later knee (9, 39, 64, 78\,\%; 16, 53, 81 and 97\,\% when its
+complete at 2.5~s (99\,\%), the first grid point beyond $\tcross$; the network's curve also
+rises with the anticipation, with lower shares and a later knee (9, 39, 64, 78\,\%; 16, 53, 81 and 97\,\% when its
 \texttt{none} baseline is pooled over the lengths, a sensitivity analysis that moves the
 share by 15--20 points because the network's \texttt{none} level varies with $\lv$ by up
 to 1.3 points). With a head twice as slow the curve does not saturate inside the entry
@@ -700,7 +704,10 @@ excludes zero in two cells, both C vs B, in which the frozen network obtains mor
 pre-positioning ($-0.92\pm0.87$ points at the nominal regime with Poisson arrivals and
 $-1.30\pm1.05$ at the heavy load with bursts and the nominal head). These are 24
 exploratory comparisons with individual 95\,\% intervals, close to the one or two
-exclusions of zero that chance alone would give. The pattern of the contrasts (no detected B-vs-A effect, the value of acting at the nominal load, the value of the hidden queue at the
+exclusions of zero that chance alone would give. Both checkpoints showed a small B-vs-A
+benefit in the heavy, bursty, slow-head regime ($-1.31\pm0.74$ and $-0.79\pm0.66$\,\%);
+the other B-vs-A intervals of the frozen network include zero. The pattern of the
+contrasts (B vs A, the value of acting at the nominal load, the value of the hidden queue at the
 heavy load, the sign of every significant cell) is conserved after the retraining, with
 differences of magnitude in some regimes; the reference network's coverage curve at the
 nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~cm.
@@ -926,7 +933,7 @@ change of dispatch, and the change of the penalty term. No difference in the gai
 between the two entry lengths: the paired differences are at most $\pm0.26$~s per part
 (nominal) and $\pm0.46$ (high), with intervals that include zero at every grid point
 (Table~\ref{tab:entry}). We read this, within the precision of those intervals, as the
-bench measuring the camera's reach rather than the installation; its percentages, where given, use as denominator the \texttt{none} level minus the free transit $\ell_{\mathrm{entry}}/\vb$ (8.33~s here).
+bench measuring the camera's reach rather than the installation; where a percentage is given it uses as denominator the configuration's own \texttt{none} level minus its free transit $\ell_{\mathrm{entry}}/\vb$ (10/3~s for the 10~cm entry, 35/3~s for the 35~cm entry at 3~cm/s); the 25/3 = 8.33~s above is the paired change of the transit, not a denominator.
 
 \begin{table}[t]
 \centering\small
@@ -947,11 +954,10 @@ load), but they are noisier and saturate more slowly: it passes the benefit crit
 1.01--1.68 in those), its point-estimate knees lie at 1--10~s, and its conservative knee is never
 reached before 10~s. No predictor works for it (Spearman correlations $\le0.14$). The
 value of widening the view with the network's mode input fixed,
-$J_{\mathrm{when\_idle}}(0)-J_{\mathrm{when\_idle}}(\tv)$, differs from $G$ by less than
-its uncertainty at the nominal load (e.g.\ $+1.03\pm0.49$ against $G=+1.13\pm0.58$ at
-$d=6$, $v_y=5$, $v_x=5$; a fixed-mode contrast and a mode-change contrast answer
-different questions), so no distortion of its curve by the \texttt{none} baseline was
-detected there. The value of seeing with
+$J_{\mathrm{when\_idle}}(0)-J_{\mathrm{when\_idle}}(\tv)$, is of the same size as $G$ at the
+nominal load (e.g.\ $+1.03\pm0.49$ against $G=+1.13\pm0.58$ at $d=6$, $v_y=5$, $v_x=5$;
+two estimates of different quantities, whose paired difference was not computed, and a
+fixed-mode contrast and a mode-change contrast answer different questions). The value of seeing with
 the same actions, $J_{\mathrm{none}}(0)-J_{\mathrm{none}}(\tv)$, is within $\pm0.3$~s per
 part at the nominal load and positive at the high load with bursts (up to $+1.6$~s per
 part, significant in 5 of 9 cells at each $v_x$; Table~\ref{tab:net}), consistent with
@@ -1103,8 +1109,10 @@ that reading at the nominal load; at the high load the queue count does not acco
 the size of the effect, and the mechanism there is open.
 
 \subsection{Limits}\label{sec:limits}
-The results are for one family of cells (three belts, a belt at 3~cm/s in the first two studies, a 35~cm laser
-zone, constant processing of 2.5~s) and two loads; the specification in seconds has been
+The results are for one family of cells (three belts, a 35~cm laser zone, constant
+processing of 2.5~s) and two loads. The geometry bench used a belt at 3~cm/s; the
+reference study used 3~cm/s at the nominal load and 5~cm/s at the heavy load; the third
+study compared both speeds at the nominal load. The specification in seconds has been
 tested within the grid of Section~\ref{sec:bench} and not beyond it, so the
 recommendation is for cells of this family at 3~cm/s, with the belt-speed bench of
 Section~\ref{sec:belt} as its only test at 5~cm/s: four cells, the nominal load, Poisson
@@ -1134,8 +1142,9 @@ For a shared-head cell over parallel conveyors, the value of a camera that sees 
 of the working zone is mostly the value of the action it enables, not of the information
 it adds: in the reference cell, widening the view without the action produced small
 effects, while allowing the idle head to move towards a visible part reduced the
-penalized flow time by 7.4\,\% at the nominal load (2.8--4.3\,\% with bursts or a slow
-head) for both a dispatching rule and a learned policy. Across 56 distinct cells with belt
+penalized flow time by 7.4\,\% at the nominal load for both a dispatching rule and a
+learned policy (2.8--4.3\,\% for the network and 2.7--3.9\,\% for the rule with bursts
+or a slow head). Across 56 distinct cells with belt
 spacings of 6--18~cm, transverse head speeds of 5--15~cm/s, along-belt speeds of 5 and
 10~cm/s, two loads and two arrival processes, pre-positioning passes the benefit criterion
 in 18, 13 of them with Poisson arrivals; in those, 3.33~s of anticipation cost a median
@@ -1151,10 +1160,12 @@ of 0.5~s per part fixed beforehand, against the full 50~cm view, in the two conf
 with the fast along-belt axis; neither slow-axis configuration met the benefit criterion
 with the full view, and the paired comparison between speeds detected a reduction in one
 of the two; and the comparison between centimetres and seconds remains open. These are
-measurements on reserved realizations used once, reproduced in their pattern by two
-controllers in the first two studies, and they give the designer of a cell of this
-family, at 3~cm/s, a coverage specification in seconds of anticipation with the cost of a
-shorter view measured, and at 5~cm/s the practical finding that 10~cm cost less than
+measurements on reserved realizations used once; the directional finding at the
+nominal load, that acting on the view is worth more than seeing alone, was shared by the
+two controllers of the first two studies, while the certified coverage of 2--7.5~s is
+the rule's (the network reached no conservative knee before 10~s). They give the
+designer of a cell of this family, at 3~cm/s, a coverage specification in seconds of
+anticipation with the cost of a shorter view measured, and at 5~cm/s the practical finding that 10~cm cost less than
 the margin where the full-view benefit passed the criterion.
 
 \bibliographystyle{plain}

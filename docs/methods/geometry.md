@@ -418,7 +418,7 @@ penalty contributes ≤ 0.44 s/part.
 
 ### 6.2 How much anticipation (rule, the 18 useful cells)
 
-* Knee (90 % of G(10 s)), point estimate: 0.5–5.0 s, median 2.5–3.3 s. Conservative
+* Knee (90 % of G(10 s)), point estimate: 0.5–5.0 s, median 2.5 s over the 18 (1.75 s at v_x = 10, 3.33 s at v_x = 5; corrected 0.7.37). Conservative
   (simultaneous 95 %): 2.0–7.5 s, undetermined in one cell (12 / 5 / v_x 5, high,
   Poisson, where no grid point is conservatively at 90 %).
 * Share of G(10 s) retained: at 2.5 s min 62 %, median 94 %; at 3.33 s min 71 %,
@@ -453,7 +453,7 @@ By the frozen criterion the answer is **the moves the head starts**: τ_pp
 predicts the knee with the lowest error (1.0 s), the transverse crossing time with the
 highest (1.5 s, and 1.75 s when rescaled), and a constant of 2.8 s lies in between
 (1.1 s). Two qualifications the data impose: (i) no predictor is precise, the errors
-are 2–3 grid steps on a 0.5 s grid and the knee / τ_pp ratios range 0.8–2.6 (two cells
+are 2–3 steps of the fine end of the grid (0.5 s steps up to 2.5 s; nonuniform beyond) and the knee / τ_pp ratios range 0.8–2.6 (two cells
 at 4.7–5.3); (ii) τ_pp beats the constant by 0.1 s only, so for a designer without
 traces "about 3 s of anticipation at these loads" is nearly as good as "about 1.7 times
 the mean move". τ_cross is the worst of the candidates because it ignores the x
@@ -480,7 +480,7 @@ WIP count sees.
 ### 6.5 The network (secondary)
 
 Useful in 17 of 72 regimes (14 nominal, 14 Poisson, 13 with v_x = 5; G(10 s) 1.01–1.68
-s/part in those; 0.13–1.68 over the 72 regimes, 0.38–1.68 at the nominal load), curves of the same shape as the rule's but noisier and with slower saturation:
+s/part in those; 0.13–1.68 over the 72 regimes, 0.38–1.68 at the nominal load), curves that rise and saturate like the rule's but noisier and with slower saturation:
 knee point 1–10 s, and the conservative knee is never reached before 10 s in any of the
 17 (shares at 3.33 s: min 34 %, median 90 %). No predictor works for it (Spearman
 ≤ 0.14, the constant of 2.7 s has the lowest error). The value of widening the view
@@ -509,11 +509,12 @@ within that precision the bench measures the camera's reach, not the installatio
 
 How much anticipation does the camera need when the head can pre-position? In the
 regimes where pre-positioning is worth at least 1 s per part (Poisson arrivals, or
-bursts with a slow x axis), 2.0–3.3 s with the head at 10 cm/s on both axes and
-3.3–5 s with the x axis at 5 cm/s, conservatively; 3.33 s (10 cm at 3 cm/s) cost at
+bursts with a slow x axis), 2.0–7.5 s conservatively in 17 of the 18 cells (one
+undetermined; the geometry bench's range, corrected 0.7.37 from an earlier 2.0–3.3 /
+3.3–5 s summary); 3.33 s (10 cm at 3 cm/s) cost at
 most 0.44 s/part (median 0.05; the largest value observed in the 18 cells) against the
-full 10 s of coverage. What predicts
-that coverage? The duration of the moves the head actually makes, with both axes,
+full 10 s of coverage. What predicts the point-estimate knee (not the conservative
+coverage)? The duration of the moves the head actually makes, with both axes,
 about 1.7 times its mean (an empirical fit on the 18 traces), and not the transverse
 crossing time, which was the worst
 of the candidates tested; with the caveat that a flat 3 s does nearly as well as

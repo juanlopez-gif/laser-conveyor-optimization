@@ -6,6 +6,58 @@ summarized from the git history.
 
 ---
 
+## 0.7.37 — 2026-11-24 — Pre-submission round: Paper 1 draft 0.9 and Paper 2 draft 1.2
+
+* **Why.** The third (pre-submission) referee report on 0.8 / 1.1: both papers "submit
+  after the listed edits"; the owner approved applying them all (the title-page author
+  field is the owner's at submission).
+* **Paper 1 (0.9).** The configured arrival horizon T_A is known to the controller (the
+  network receives the remaining time; `features.py`), the future instants are hidden:
+  §4.2 and the §6.2 sentence corrected ("samples the next 30 s without truncating the
+  synthetic process at the configured horizon"); the earlier "T_A not observed" wording
+  was wrong. (M9) now bounds the auxiliary travel variables above, 0 ≤ τ ≤ τ̄, and
+  convention (iii) explains why the bound on M_ij needs it; ε defined only as one lattice
+  unit (the "below any physical resolution" clause removed, also in the formal model).
+  §4.1: the return named as the whole-episode accounting identity (the stored return of
+  a learner starts at its first discretionary action); an episode with arrivals and no
+  decision has c(0,T) > 0, with no arrival the total is zero and the per-part objective
+  undefined. §5.4 and Appendix D call the one-ready-part case a dispatch event, since a
+  decision epoch needs two candidates. Overclaims removed: §8.3 "cannot exceed" → "had not
+  scored better"; §10.2 "the quality of the policy is the quality of the search" →
+  observations on one chain, not matched ablations; §11 "size does not matter beyond
+  0.88 M" → "with the tested expert and runs, larger networks did not score better";
+  §11 "needs the exact reference with the penalized objective" → "requires a reference
+  validated for that objective, which Appendix A does not yet provide"; Appendix D's
+  "structural part of every gap" limited to ready-only controllers under the theorem's
+  conditions; abstract: PPO shares architecture and evaluation protocol with its own
+  stage-wise training distribution; §3.4 throughput equivalent to the makespan at fixed
+  count. Table 2 caption names the decoder, the 0.01 s step and the 0.1 s pruning
+  allowance; Appendix C restricts the tail bound to non-empty tails with H = 0 for a
+  singleton and g_j = 0 for a single part. PDF rebuilt.
+* **Paper 2 (1.2).** §4 lead: nearest_job in all three studies, the frozen network in two;
+  the belt-speed bench's protocol proposal and its result-time choices distinguished.
+  §5.3: both checkpoints showed a small B-vs-A benefit in the heavy/bursts/slow-head
+  regime (−1.31 ±0.74, −0.79 ±0.66 %), the other frozen-network B-vs-A intervals include
+  zero (the "no detected B-vs-A effect" wording was wrong for that regime). §7.4: the
+  geometry bench at 3 cm/s, the reference study at 3 cm/s nominal and 5 cm/s heavy, the
+  third study both speeds at the nominal load (the 1.1 wording was wrong). §4.5: what the
+  extracts certify and what needs the simulator's records; the 1 ms engine comparison
+  named for the two rules, the network not run on it. §6.6: per-configuration
+  denominators (10/3 and 35/3 s), 25/3 s is the paired change. Contribution 1 and the
+  conclusions with controller-specific ranges (network 2.8–7.4 %, rule 2.7–7.4 % at the
+  nominal load; with bursts or a slow head 2.8–4.3 % and 2.7–3.9 %), the shared
+  directional finding, the certified coverage attributed to the rule. §5.1 "%" for a
+  cost ratio; §5.2 "rises with the anticipation, lower shares and a later knee" instead
+  of "the same shape"; §6.7 the two estimates given without a paired-difference claim.
+  PDF rebuilt. `docs/methods/geometry.md` synchronized (median 2.5 s with the two
+  subgroups, nonuniform grid, "rise and saturate like", the 2–7.5 s conservative range
+  in 17 of 18, the point knee as the predictor's target).
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf}`, `docs/papers/paper2/{paper2.tex,paper2.pdf}`,
+  `docs/formulation/{formal_formulation.tex,formal_formulation.pdf}`, `docs/methods/geometry.md`,
+  `docs/plans/papers.md`.
+
+---
+
 ## 0.7.36 — 2026-11-24 — Paper 1 draft 0.8 (M8, ε, §4.1, latency, arrival horizon) and Paper 2 draft 1.1 (section lead-ins)
 
 * **Why.** The owner's reading of 0.7 / 1.0: Paper 2 ready to circulate; three passages

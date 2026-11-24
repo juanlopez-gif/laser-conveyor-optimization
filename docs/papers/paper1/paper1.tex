@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.8 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35 and 0.7.36)}
+\date{November 2026 --- draft 0.9 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.37)}
 
 \begin{document}
 \maketitle
@@ -78,8 +78,8 @@ truncating the look-ahead with a learned value is far worse than not truncating;
 futures helped only in the tested variants in which the look-ahead scores every part; and larger networks (6.7~M and
 39~M parameters) did not score better than the 0.88~M one with the same teacher in the three runs made. Giving the teacher the cell's
 bursty arrival model does not improve it either. A policy-gradient (PPO) baseline on the
-same tokens, action mask, simulator and cell distribution, trained under a protocol fixed
-before the run, compares learning from the reward with learning from the search on
+same tokens, action mask, simulator and evaluation protocol (with its own stage-wise
+training distribution), trained under a protocol fixed before the run, compares learning from the reward with learning from the search on
 development realizations: from scratch, after a number of acting episodes comparable to
 the expert-iteration chain, PPO stayed 4--8\,\% above \nj\ and 8--12\,\% above the
 learned policy on three seeds, in 22 minutes per run against 12.7 hours for the whole
@@ -350,7 +350,7 @@ $\sum_j(C_j-r_j)$, the total waiting time $\sum_j(S_j-r_j)$, the maximum latenes
 $L_{\max}=\max_j(C_j-d_j)$ for due dates $d_j$, the head's travel distance, the conveyor
 downtime $\sum_k\bigl(T-D_k(T)/v_k\bigr)$ with $T$ the exit time of the last part, and the
 throughput $n/C_{\max}$ (the one quantity to be maximized; for a fixed number of parts
-it is the makespan). The penalty weights carry units: $\lambda_N$ is seconds per event
+maximizing it is equivalent to minimizing the makespan). The penalty weights carry units: $\lambda_N$ is seconds per event
 and $\lambda_T$ is dimensionless, since $T_B$ and the flow time are both in seconds. A part that reaches the end of the laser zone unprocessed stops
 its whole conveyor by (C4)--(C5); the delays it causes are inside the $C_j$, but a blocked
 conveyor has further costs in the cell (restart, accumulation upstream, risk for the
@@ -435,7 +435,9 @@ c(t,t')=\int_t^{t'}\bigl|\{j:\ r_j\le s<C_j\}\bigr|\,ds+\lambda_T\,T_B(t,t')+\la
 \end{equation}
 the work in progress integrated over the interval plus the blocking charged in it. Since
 $\int_0^\infty|\{j:r_j\le s<C_j\}|\,ds=\sum_j(C_j-r_j)$, the undiscounted return of an
-episode is $-n\,\Fpi$, i.e.\ minus the total cost of the episode: a learner that
+episode, taken as the whole-episode accounting identity (the return a learner stores
+from its first discretionary action is minus the final cost plus the cost already accrued
+at that decision, below), is $-n\,\Fpi$, i.e.\ minus the total cost of the episode: a learner that
 maximizes the undiscounted return minimizes the total cost, a discounted proxy would
 not, and because $n$ varies between episodes the return weights an episode by its
 number of parts, which is not the per-part cost $\Fpi$ of \eqref{eq:J}; the two
@@ -456,9 +458,10 @@ epoch, $t_m$ the last and $T$ the instant the last part leaves; the first term i
 cost of the forced initial segment (waiting for the first part, single-candidate
 dispatches), which no decision influences, and the last term, the draining after the
 last decision, still depends on the last action although no decision follows it; both
-are part of the episode's cost. An episode without a decision epoch (a single part, or
-forced dispatches only) has $n\Fpi=c(0,T)$, positive, with no $t_1$ or $t_m$ to
-introduce. The learners of Sections~\ref{sec:policy} and \ref{sec:ppo} attribute
+are part of the episode's cost. An episode with at least one arrival and no decision
+epoch (a single part, or forced dispatches only) has a total cost $c(0,T)>0$ and no $t_1$
+or $t_m$ to introduce; with no arrival the total cost is zero and the per-part objective
+$\Fpi$ is undefined. The learners of Sections~\ref{sec:policy} and \ref{sec:ppo} attribute
 to each decision the cost accrued until the next one and the terminal segment to the
 last decision, and score the forced initial segment in the episode cost. An episode
 with no arrival has zero total cost and an undefined per-part cost $\Fpi$: it is
@@ -495,9 +498,9 @@ information at a decision epoch is
 \bigl\{(k(j),x_j(t),o_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta,\ T_A\Bigr),
 \end{equation}
 where $\theta$ are the cell's parameters (Section~\ref{sec:general}) and $T_A$ the
-arrival horizon, known statistically and not observed: the controller knows the rates
-$\lambda_k$ but not the instants of the future arrivals, nor whether any part will still
-arrive before $T_A$. In the reference information model (\texttt{belts}, an overhead
+configured arrival horizon, which is known (the network receives the time remaining to
+it): the controller knows the rates $\lambda_k$ and $T_A$ but not the instants of the
+future arrivals, nor whether any part will actually arrive before $T_A$. In the reference information model (\texttt{belts}, an overhead
 camera over the belts) $O(t)$ is the set of parts on a belt, in the laser zone or in the
 entry zone, with their positions, and $o_j=e_j$; the arrival time $r_j$ itself is not
 observed, and a part that waited in the hidden upstream queue shows no trace of it. Two
@@ -637,9 +640,10 @@ solutions and would be the pruning of an exact search over the known parts.
 \caption{Quality of the lower bounds: mean gap $100\,(\mathrm{UB}-\mathrm{LB})/\mathrm{LB}$
 over three random instances of the reference cell per size (Poisson arrivals at the
 reference rates). The upper bound is the exact optimum over $\Phi$ (all $n!$ orders
-enumerated) for $n\le8$ only; for $n\ge10$ it is the best of four online rules, a
-heuristic, so those gaps mix the bounds' looseness with the rules' suboptimality. Last
-column: the time of one evaluation of all bounds.}
+enumerated and decoded by the fixed-sequence decoder $\Phi$ at a 0.01~s step, with
+pruning against the incumbent within a 0.1~s allowance) for $n\le8$ only; for $n\ge10$ it
+is the best of four online rules, a heuristic, so those gaps mix the bounds' looseness
+with the rules' suboptimality. Last column: the time of one evaluation of all bounds.}
 \label{tab:bounds}
 \begin{tabular}{@{}cccc@{}}
 \toprule
@@ -664,8 +668,8 @@ the longest interception a ready part can need (2.69~s in the reference cell).
 Assume simultaneous axes, $\sigma=I$, $a\ge\delta$, $v_k\le v_x$ and $v_kI^\ast\le b-a$ for
 all $k$. If consecutive parts $h,i$ of the same conveyor satisfy
 $r_i\ge r_h+a/v_k+I^\ast+p_h$ and, in $e^0$-order, $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$
-and $e^0_{(1)}\ge\tau(P_0,(a,y_{(1)}))$, then at every decision epoch exactly one part is
-ready, every non-idling policy that dispatches among the parts ready in the zone with the
+and $e^0_{(1)}\ge\tau(P_0,(a,y_{(1)}))$, then at every dispatch event exactly one part is
+ready (there is no decision epoch in the sense of Section~\ref{sec:online}), every non-idling policy that dispatches among the parts ready in the zone with the
 earliest interception (the mode \texttt{none} of Section~\ref{sec:online}; not a policy
 that pre-positions the idle head) produces the same schedule, and that schedule satisfies
 $e^0_j\le S_j\le e^0_j+I^\ast$; its makespan and mean flow time exceed the optimum of $\Pb$
@@ -766,7 +770,7 @@ look-ahead rewards starving the new parts. With the all-parts score, four future
 beat the known-parts rollout in every group, and eight gain another half point. (ii)
 \emph{One or two futures are worse than none}: the sampled future is noise until it is
 averaged. (iii) \emph{Window.} 20--30~s is best; 45--60~s add noise faster than
-information. At each decision time $t$ the teacher samples arrivals over $(t,t+30\,\mathrm{s}]$, including instants beyond the episode's arrival horizon $T_A$, which the controller does not observe (Section~\ref{sec:info}). (iv) \emph{Truncating the look-ahead with a learned value is far worse than
+information. At each decision time $t$ the selected teacher samples the next 30~s of arrivals, $(t,t+30\,\mathrm{s}]$, without truncating the synthetic process at the configured horizon $T_A$ (Section~\ref{sec:info}): the horizon is known, the future instants are hidden. (iv) \emph{Truncating the look-ahead with a learned value is far worse than
 not truncating.} Cutting each rollout at $t+20$~s and adding the value head's estimate of
 the cost-to-go gives $+18$ to $+54$\,\% against \nj: the cost-to-go depends mostly on the
 random future arrivals, so its scale (hundreds of part-seconds) and the value head's
@@ -942,8 +946,8 @@ fourth group added in the last. Legacy tie-break.}
 \end{table}
 
 \subsection{A burst-aware expert does not help}\label{sec:futures}
-A network trained on bursty cells cannot exceed an expert whose futures are Poisson, so
-the natural next lever was an expert that samples the cell's on/off arrival model
+A network trained on bursty cells had not scored better than its expert, whose futures
+are Poisson, so the natural next lever was an expert that samples the cell's on/off arrival model
 (statistical knowledge of the process, started in its stationary state, not an
 observation of the source's current state). Table~\ref{tab:futures} tests it on the
 frozen network, the same realizations and the same budget. On Poisson cells the two
@@ -1291,9 +1295,10 @@ Three facts of Section~\ref{sec:dev} point the same way. Networks of 0.88, 6.7 a
 million parameters scored $-2.79$, $-2.88$ and $-2.44$\,\% with the same expert in one
 run each, no difference detected; for every network no difference from its expert's score is detected after one or two iterations and then trades one validation group against
 another; and changing the expert moved the score by two points where changing the size
-moved it by none. The quality of the amortized policy is the quality of the search that
-labels its data, and the search's quality is set by what it scores (every part, not the
-known ones), by how many futures it averages, and by not truncating. The learned value
+moved it by none. In the runs made, the amortized policy scored no better than the search
+that labels its data, and the search scored better in the tested variants that score
+every part, average more futures and do not truncate; these are observations on one
+chain, not matched ablations of each component. The learned value
 head, which would make deeper or cheaper search possible, is the part that failed: its
 error is set by the randomness of the future, which no decision changes, and that error
 swamps the differences between candidates. A value that predicted the \emph{difference}
@@ -1341,12 +1346,13 @@ nearest-part rule by 3--8\,\% of the penalized flow time in the seven significan
 of the basic mode (1.4--7.7\,\% over the eight) and than a look-ahead over the
 known parts by 2--4\,\% of the cost in that mode, and a permutation-equivariant pointer policy trained by expert
 iteration with that search as expert, on randomized cells, shows no detected difference
-from it at a hundredth of its latency, 10~ms per decision on a loaded machine. The size of the
-network does not matter beyond 0.88~M parameters; the expert does. On reserved
+from it at a hundredth of its latency, 10~ms per decision on a loaded machine. With the
+tested expert and training runs, the larger networks did not score better than the
+0.88~M one; changing the expert did move the score. On reserved
 realizations of eight regimes the policy beats the rule in seven, and no difference
 from its expert was detected in any. What remains open is how far all of this is
-from the optimum, which needs the exact
-reference of Appendix~\ref{app:milp} with the penalized objective on the realized
+from the optimum: measuring a penalized optimality gap requires a reference validated
+for that objective, which Appendix~\ref{app:milp} does not yet provide, on the realized
 instances and a new set of reserved realizations; what learning from the reward
 alone gives on the same representation was measured under one protocol, on development
 realizations: PPO from scratch stayed 8--12\,\% behind the chain trained with the search
@@ -1381,7 +1387,8 @@ and $C_j:=S_j+p_j$ are linear.
 &w_{ij}+w_{ji}=1 && \forall i<j \tag{M7}\\
 &S_j\ge S_i+p_i+\tau_{ij}-M_{ij}(1-w_{ij})\quad\forall i\neq j,\qquad S_j\ge\tau_{0j}\quad\forall j \tag{M8}\\
 &\tau_{ij}\ge\pm\frac{X_j-X_i}{v_x},\quad \tau_{ij}\ge\frac{|y_{k(i)}-y_{k(j)}|}{v_y},\quad
- \tau_{0j}\ge\pm\frac{X_j-x_0}{v_x},\quad \tau_{0j}\ge\frac{|y_{k(j)}-y_0|}{v_y} \tag{M9}
+ \tau_{0j}\ge\pm\frac{X_j-x_0}{v_x},\quad \tau_{0j}\ge\frac{|y_{k(j)}-y_0|}{v_y} \tag{M9}\\
+&0\le\tau_{ij}\le\overline\tau_{ij},\qquad 0\le\tau_{0j}\le\overline\tau_{0j} && \forall i\neq j,\ \forall j \tag{M9b}
 \end{align}
 (M5) encodes (C1) and (C4); (M6) encodes (C3). Only lower bounds on the travel times are
 needed: a larger $\tau$ only tightens (M8), so any feasible solution remains feasible when
@@ -1396,8 +1403,7 @@ non-idling constraint (C5), omitted for the relaxed model, is
 \end{align}
 (M11) allows the blocking witness only for parts not yet started and \emph{strictly}
 inside the last step of the zone, $x_j>b-v_k\Delta$ (with $\varepsilon$ one unit of the
-position lattice of convention (iv) below, which lies below any physical position
-resolution), i.e.\ parts that cannot advance a full step without
+position lattice of convention (iv) below), i.e.\ parts that cannot advance a full step without
 overshooting $b$, which is where the belt must stop; (M12) forces it there: such a part
 \emph{is} blocking, whatever the reason the belt is stopped, so that
 $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with $\gamma_j\ge\beta_{jt}$
@@ -1452,9 +1458,13 @@ and instance-specific: $M\ge\max_kv_kH\Delta+L$ for the odometer differences of
 (M3)--(M4) and (M11)--(M12); for the precedence of (M8), deactivating it at $w_{ij}=0$
 needs $M_{ij}\ge\overline C_i+\overline\tau_{ij}-\underline S_j$, with $\overline C_i$ the
 latest completion and $\underline S_j$ the earliest start admitted by the windows of
-(ii) and $\overline\tau_{ij}$ an explicit upper bound on the travel time (the longest move
-inside the workspace), since $C_i$ can reach the horizon and the travel still adds to
-it, so $H\Delta$ alone would not do; the implementation uses indicator constraints and an
+(ii) and $\overline\tau_{ij}$ the upper bound on the auxiliary travel variable imposed in
+(M9b), a valid bound on the physical travel inside the workspace (for simultaneous axes
+the maximum of the two maximal axis times, for sequential axes their sum, rounded on the
+same grid), since $C_i$ can reach the horizon and the travel still adds to it, so
+$H\Delta$ alone would not do; without that upper domain an arbitrarily large auxiliary
+$\tau_{ij}$ would be admissible and no finite $M_{ij}$ would deactivate the precedence,
+although lowering $\tau$ to the physical travel preserves every projected schedule; the implementation uses indicator constraints and an
 exact maximum instead, so no big-$M$ is instantiated.
 (iv) \emph{Position lattice and $\varepsilon$.} Positions are integers in a unit chosen
 as the inverse least common multiple of the denominators of $v_k\Delta$, $a$, $b$,
@@ -1595,8 +1605,9 @@ $y$-length is $\ge Y$. Minimizing over the unknown $T$ gives $H$.
 \end{proof}
 
 \begin{proposition}[Jackson tail bound with travel]\label{prop:L3}
-For every $t$, with $U_t=\{j:\underline s_j\ge t\}$:
-$C_{\max}\ge t+\sum_{j\in U_t}p_j+H(U_t)$.
+For every $t$ with $U_t=\{j:\underline s_j\ge t\}$ non-empty (for $t$ beyond the last
+earliest start the tail is empty and the bound is void):
+$C_{\max}\ge t+\sum_{j\in U_t}p_j+H(U_t)$, with $H(U_t)=0$ when $|U_t|=1$.
 \end{proposition}
 \begin{proof}
 List $U_t$ in processing order $u_1,\dots,u_m$. Then
@@ -1628,7 +1639,7 @@ at least $l-h+1$ members of $Q$ have index $\ge h$.
 \begin{proposition}[Preemptive SRPT bound]\label{prop:L5}
 $\sum_jC_j\ge\mathrm{OPT}\bigl(1\mid r_j{=}\underline s_j,\ \mathrm{pmtn}\mid\sum C_j\bigr)$,
 computed exactly by SRPT \cite{Schrage1968,Baker1974}. Moreover, with
-$g_j=\min_{i\ne j}s_{ij}$, also
+$g_j=\min_{i\ne j}s_{ij}$ ($g_j=0$ for a single part), also
 $\sum_jC_j\ge\mathrm{OPT}\bigl(1\mid r_j{=}\underline s_j-g_j,\ p_j{+}g_j,\ \mathrm{pmtn}\mid\sum C_j\bigr)$.
 \end{proposition}
 \begin{proof}
@@ -1711,7 +1722,8 @@ for processing. Optimality: every feasible schedule has $S_j\ge\underline s_j\ge
 Simultaneous axes, $\sigma=I$, $P_0\in W$, $v_k\le v_x$ for all $k$, $v_kI^\ast\le b-a$. If
 $a\ge\delta$ and the conditions of Theorem~\ref{thm:LTP} are strengthened to
 $r_i\ge r_h+a/v_k+I^\ast+p_h$ and $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$, then at every
-decision epoch of the cell exactly one part is ready, so all non-idling policies that
+dispatch event of the cell exactly one part is ready (no decision epoch with two
+candidates occurs), so all non-idling policies that
 dispatch among the ready parts with the earliest interception (mode \texttt{none}) produce
 the same schedule, and it satisfies $e^0_j\le S_j\le e^0_j+I^\ast$; hence its makespan and
 mean flow and waiting times exceed the optimum of $\Pb$ by at most $I^\ast$.
@@ -1754,10 +1766,11 @@ $P_0=(27.5,12)$ at $t=0$, reaches $(10,0)$ after $\max(17.5,12)/10=1.75$~s, and 
 $S=a/v=3.33$~s when the part arrives there: $C=5.83$~s, equal to the lower bound, hence
 optimal. A controller that dispatches only parts already in the zone keeps the head at
 $P_0$ until $t=3.33$ and intercepts the moving part 1.35~s later: $C=7.19$~s for every
-policy and for $\Phi$ ($+23$\,\%). In general, whenever a part enters the zone while the
-head is idle away from $(a,y_k)$, the non-anticipating cell loses up to $I^\ast$ against
-$\Pb$ (about 1.2--1.4~s per part in light traffic): a structural part of every gap between
-the bounds and the rules, not looseness of the bounds.
+policy and for $\Phi$ ($+23$\,\%). For ready-only controllers under the separated
+conditions of Theorem~\ref{thm:light}, whenever a part enters the zone while the head is
+idle away from $(a,y_k)$, the non-anticipating cell loses up to $I^\ast$ against $\Pb$
+(about 1.2--1.4~s per part in that regime); outside those conditions the size of this
+loss, and its share of the gaps of Table~\ref{tab:bounds}, is not quantified.
 \end{counterexample}
 
 \begin{proposition}[Delays cannot pay through travel alone]\label{prop:delay}

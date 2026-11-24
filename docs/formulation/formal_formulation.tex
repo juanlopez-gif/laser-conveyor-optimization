@@ -420,8 +420,9 @@ equivalent to imposing it only between consecutive parts.
 &D_{k(j),t}-E_j\ge b-v_{k(j)}\Delta+\varepsilon-M(1-\beta_{jt}) && \forall j,t \tag{M14}
 \end{align}
 (M13) allows the blocking witness only for parts not yet started and (M14) only when the
-part is \emph{strictly} inside the last step of the zone, $x_j>b-v_k\Delta$ ($\varepsilon>0$
-below the position resolution): the parts that cannot advance a full step without
+part is \emph{strictly} inside the last step of the zone, $x_j>b-v_k\Delta$ ($\varepsilon$
+one unit of the integer position lattice of the implementation, 1~mm for the reference
+cell): the parts that cannot advance a full step without
 overshooting $b$, where the belt must stop. The slack $v_k\Delta$ is the discretization
 tolerance: a conveyor may stop one step early instead of overshooting $b$ (the simulator
 stops exactly at $b$ with a partial step). The threshold is strict since version 0.7.26
