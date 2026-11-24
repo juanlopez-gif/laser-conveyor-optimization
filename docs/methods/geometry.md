@@ -1,7 +1,7 @@
 # Geometry bench: does the head's crossing time predict the camera coverage?
 
-Status: **pilot** (0.7.18, 2026-11-23). Sections 1–3 were written before the pilot
-ran; section 4 reports it. The confirmatory bench (owner's brief of 2026-11-23: 36
+Status: **confirmatory bench run** (0.7.21, 2026-11-23); **belt-speed bench designed, not
+run** (0.7.27, section 7). Sections 1–3 were written before the pilot ran; section 4 reports it. The confirmatory bench (owner's brief of 2026-11-23: 36
 regimes, seven coverages, two modes, two controllers) is not designed here; its
 protocol will be fixed after the pilot and will need a new reserved seed range from
 the owner (7000–7029 are used).
@@ -523,3 +523,189 @@ the same crossing time give the same coverage?" is answered yes for the rule and
 trivially so; the informative comparison is across different τ_cross and v_x. Every cell runs its
 belts at 3 cm/s, so seconds and centimetres are one unit inside the bench; which scale
 transfers to another belt speed is untested (next experiment: 3 vs 5 cm/s).
+
+## 7. Belt-speed bench: protocol (frozen 2026-11-23, before the run; NOT yet run)
+
+Section 6.7 and the external audit of Paper 2 (draft 0.7) leave one question open:
+every cell of the geometry bench runs its belts at 3 cm/s, so seconds of anticipation
+and centimetres of visible belt are one variable (ℓ_v = 3 τ_vis) and the data cannot
+say which scale carries over to another belt speed. This section fixes the bench that
+answers it, in the style of §5: hypotheses, margin, design and criteria written before
+any result. Script: `experiments/belt_speed_bench.py` (constants at the top of the
+file, the same `Bench` / `tables` / `figures` structure as `geometry_bench.py`, the
+analysis of the extract without PyTorch). The confirmatory run waits for three owner
+decisions, listed in §7.6; nothing in this section was changed after the smoke test.
+
+### 7.1 Question and hypotheses (written before any result)
+
+At 3 cm/s, 10 cm of visible belt give 3.33 s of anticipation, and §6.2 found that
+those 3.33 s cost at most 0.44 s/part (median 0.05) against 10 s in the 18 useful
+cells. If the belt runs at 5 cm/s, the same 10 cm give 2.00 s, and 3.33 s need
+16.7 cm (exactly 50/3 cm, so that the two anticipations coincide). Does keeping 10 cm
+keep the benefit of pre-positioning, must the view grow to 16.7 cm to keep the 3.33 s,
+or does neither reproduce the 3 cm/s result because the interception changes? Three
+hypotheses, mutually exclusive once the margin δ of §7.2 is fixed, decided **per cell**
+by the paired cost C_v(ℓ) = J_when_idle,v(ℓ) − J_when_idle,v(50 cm) at v = 5 cm/s:
+
+* **H_cm (the distance transfers).** C_5(10 cm) ≤ δ. Reading: what the camera must
+  cover is a stretch of belt; the specification "10 cm" survives the speed change.
+* **H_s (the seconds transfer).** C_5(10 cm) > δ and C_5(16.7 cm) ≤ δ. Reading: the
+  anticipation must cover the head's move, whose duration does not depend on v_belt,
+  so the curve G(τ_vis) in seconds is the same at both speeds and the specification
+  "3.33 s" survives, not "10 cm". This is the reading Paper 2 calls the physical
+  argument; it is the hypothesis the author expects, and it is written here so that
+  the data, not the expectation, decide.
+* **H_neither (the interception changes).** C_5(16.7 cm) > δ. Reading: at 5 cm/s a
+  part travels 1.67 times further during the head's move and crosses the 35 cm laser
+  zone in 7 s instead of 11.7 s, so the meeting point moves downstream, more parts
+  reach the end of the zone, and the anticipation needed in seconds grows (or the
+  benefit changes size); neither specification reproduces the 3 cm/s result.
+* **Design result, not a hypothesis.** A cell that passes the benefit criterion at
+  3 cm/s (all four do) and fails it at 5 cm/s (G_5(50 cm) < 1 s/part or lower bound <
+  0.5) is reported as "benefit lost at this speed": pre-positioning is then not worth
+  sizing the camera for at 5 cm/s, and the question is moot for that cell.
+
+**Predictions written beforehand, from the 3 cm/s curves of §6** (versioned extract,
+35 cm entry, nominal load, Poisson, `nearest_job`; paired costs against 10 s). Under
+H_s the cost of 10 cm at 5 cm/s should equal the cost of 2.00 s at 3 cm/s, which was
++0.68 ±0.41, +0.21 ±0.20, +0.54 ±0.53 and +0.03 ±0.03 s/part in the cells 12 / 10 /
+v_x 5, 12 / 10 / v_x 10, 6 / 15 / v_x 5 and 6 / 15 / v_x 10, and the cost of 16.7 cm
+should equal that of 3.33 s, +0.06, +0.01, −0.05 and +0.00. Under H_cm the cost of
+10 cm at 5 cm/s should stay at the 3.33 s values, ≈ 0. Two consequences, stated now so
+that they are not discovered after the run: (i) the two cells with v_x = 10 cm/s
+answer "10 cm keeps the benefit" under H_cm *and* under H_s (their knee at 3 cm/s is
+≤ 2 s), so they cannot separate the two; the discriminating cells are the two with
+v_x = 5 cm/s. (ii) In those two cells the costs predicted under H_s lie 0.04–0.18
+s/part above the margin of 0.5, and with 60 realizations the half-widths of C are
+≈ 0.4–0.5 s/part, so the conservative verdict there is expected to be *undetermined*
+between H_cm and H_s whatever the truth; the point verdict and the alignment reading of
+§7.4 carry the direction, and the conservative verdict can only establish H_cm (upper
+bound ≤ δ) or H_neither (lower bound > δ) cleanly. No affordable number of
+realizations removes (ii), because it is the margin, not the noise, that the predicted
+costs sit close to.
+
+The 3 cm/s predictions above come from the geometry bench, run before the observable
+tie-break key of 0.7.26 (`docs/methods/tiebreak_audit.md`: `nearest_job` paired cost
+changed by at most ±0.6 % on the reference cell); the belt-speed bench runs on the
+current key, so the C_3(10 cm) column of §7.4 is also the check that the 3 cm/s costs
+did not move with it.
+
+### 7.2 The margin δ: "keeps the benefit" (owner's decision)
+
+A shorter view *keeps the benefit* when its paired cost against the full view is at
+most δ s/part. Proposed: **δ = 0.5 s/part**. Justification from the coverage results of
+§6.2: the largest cost of 3.33 s against 10 s observed in the 18 useful cells was
+0.44 s/part (median 0.05), the figure Paper 2 reports as the practical price of the
+10 cm camera; and 0.5 s/part is the lower-bound threshold of the benefit criterion
+itself (half the minimum useful benefit). "Keeps" therefore means "no worse than the
+worst loss already accepted at 3 cm/s". Alternatives the owner may prefer: 0.44 (the
+exact largest value) or 0.25 (half of it, stricter). The constant is `MARGIN` in the
+script; **the owner fixes it before the run** and it is not changed afterwards. Two
+readings are reported for every cost: *conservative* (keeps if the upper 95 % bound
+≤ δ, does not keep if the lower bound > δ, otherwise undetermined; the headline) and
+*point* (the estimate against δ).
+
+### 7.3 Design (`experiments/belt_speed_bench.py`)
+
+* **Belt speed:** 3 and 5 cm/s (`conveyors.speed`), the factor of the bench.
+* **Cells (4):** spacing 12 cm / v_y 10 cm/s (τ_cross 2.4 s) and spacing 6 cm /
+  v_y 15 cm/s (τ_cross 0.8 s), each with v_x = 5 and 10 cm/s: a slow and a fast
+  longitudinal axis, all four useful at 3 cm/s in §6.1. Nominal load (mean
+  inter-arrivals 10 / 12 / 14 s, ρ_p 0.64), Poisson arrivals; processing 2.5 s,
+  penalties and geometry fixed.
+* **Common physical entry zone of 50 cm** (10 s at 5 cm/s, 16.7 s at 3 cm/s).
+  Checked by loading the configuration: `geometry.entry_length = 50` moves the laser
+  zone to x ∈ [50, 85], the derived workspace to the same x interval and the head's
+  home to x = 67.5 (the centre of the workspace), exactly as the 35 cm entry did in
+  §5; `simulation.visible_length` is accepted up to the entry length, so 50 cm is a
+  valid grid point. Levels of `none` are reported net of the free transit
+  (entry / v_belt); paired differences within one speed are unaffected by it. The
+  assumption that a longer entry does not change the gain at a given visible length is
+  H3 of §4.2 and §6.6 (10 vs 35 cm: ΔG within ±0.26 s/part at the nominal load).
+* **The same arrival realizations at both speeds.** `generate_arrivals` draws the
+  arrival instants per belt from `random.Random(f"{seed}/arrivals/{k}")` with the mean
+  inter-arrival only, and the processing times from `"{seed}/processing/{k}"`; the belt
+  speed enters neither. Checked for seed 3100: 80 parts with identical instants at 3
+  and at 5 cm/s. The run records the number of parts and the sum of the arrival
+  instants of every episode and the tables check that they agree across speeds,
+  lengths, modes and controllers for every (cell, seed). Because the realizations are
+  common, differences *between speeds* are paired per seed as well.
+* **Grid of visible lengths, common in centimetres (12 points):** ℓ_v ∈ {0, 1.5, 3,
+  4.5, 6, 7.5, 10, 15, 16.7, 25, 30, 50} cm. In seconds this is {0, 0.5, 1, 1.5, 2,
+  2.5, 3.33, 5, 5.56, 8.33, 10, 16.67} at 3 cm/s and {0, 0.3, 0.6, 0.9, 1.2, 1.5, 2,
+  3, 3.33, 5, 6, 10} at 5 cm/s. Five pairs give the same anticipation at both speeds:
+  4.5 / 7.5 cm (1.5 s), 6 / 10 cm (2 s), 10 / 16.7 cm (3.33 s), 15 / 25 cm (5 s) and
+  30 / 50 cm (10 s). The reference of every cost is the full view, 50 cm.
+* **Modes:** `none` and `when_idle` at every length; **controllers:** `nearest_job`
+  (primary) and the frozen network `rl2_gen_s_b` (secondary; a 5 cm/s belt lies inside
+  its training range of 1.5–6 cm/s, the 50 cm entry far outside 5–15 cm).
+* **Realizations:** 60 per configuration proposed (as in §5; §7.1 (ii) explains why
+  more would not change the conservative verdict in the discriminating cells). 2 speeds
+  × 4 cells × 12 lengths × 2 modes × 60 = 11 520 episodes per controller; from the
+  smoke test, ≈ 0.012 CPU-s per episode for the rule and ≈ 0.5 for the network, i.e.
+  ≈ 1.7 CPU-hours, ≈ 3 min on 40 workers.
+* **Seeds:** a new reserved range, fixed by the owner and used once (`RESERVED_BASE`
+  in the script, None until then; `RESERVED_N = 60`). The script refuses
+  `--confirmatory` while the range is unset, refuses to overwrite the `bench.json` of a
+  confirmatory run, and refuses the used ranges 7000–7029 and 9000–9059 (and the
+  reserved one) without the flag. Development pilots use 3100+.
+* **Traces per episode:** as in §5 (moves, revocations, t_x, t_y, max, y-dominated
+  share, WIP at the move, idle and waiting time, effective anticipation).
+
+### 7.4 Measures and criteria (frozen)
+
+* **Primary:** G_v(ℓ) = J_none,v(ℓ) − J_when_idle,v(ℓ) in seconds of penalized flow
+  time per part, paired, 95 % CI, at every length and speed; the paired costs C_v(10 cm)
+  and C_v(16.7 cm) against 50 cm at each speed; the benefit criterion of §5.3 applied to
+  G_v(50 cm) at each speed (G ≥ 1 s/part, lower bound ≥ 0.5); and the verdict of §7.1
+  per cell at 5 cm/s, conservative (headline) and point. C_3(10 cm) is reported next to
+  it as the check that the 3 cm/s result of §6 is reproduced with the 50 cm entry.
+* **Equal distance and equal anticipation:** G_3(ℓ) − G_5(ℓ) at every grid length,
+  and G_3(ℓ₃) − G_5(ℓ₅) at the five pairs with ℓ₃ / 3 = ℓ₅ / 5, both paired per
+  realization; and G_3(50 cm) − G_5(50 cm), the level of the full-view benefit across
+  speeds. Alignment reading: for each scale, the mean absolute difference between the
+  shares of G_v(50 cm) retained at the matched points (the 11 non-zero lengths for the
+  distance scale, the 5 pairs for the time scale); the scale with the smaller value is
+  reported as the better-aligned one. Descriptive, no test; it is the reading that
+  carries the direction when the verdict of §7.1 is undetermined.
+* **Knee** (sufficient coverage) at each speed, in cm and converted to s: the first
+  grid length whose paired contrast G_v(ℓ) − 0.9 G_v(50 cm) is ≥ 0 (point) and whose
+  lower simultaneous 95 % bound is ≥ 0 (conservative, Bonferroni over the 11 non-zero
+  lengths, z = 2.838; the geometry bench used 2.773 for its 9). Both are reported; the
+  knee is secondary here.
+* **Network:** the same tables, secondary; no verdict of the network overrides the
+  rule's.
+* **Checks:** visible stretch respected (0 candidate violations), common arrivals
+  (above), `when_idle` = `none` at ℓ = 0 for the rule (exact) and the network (mode
+  token, reported).
+* **Interpretation rules kept from §6:** "largest value observed", never "bounded"; a
+  cost that is undetermined stays undetermined; the mechanism (traces) is reported apart
+  from the verdict.
+
+### 7.5 Outputs and smoke test
+
+`results/experiments/belt_speed_bench/{bench.json, tables.md, extract.csv.gz}` (the
+extract, copied to `docs/papers/paper2/data/belt_speed_bench.csv.gz` after the run, is
+the versioned data; `--from-extract` regenerates the tables without PyTorch), figures
+`docs/methods/figures/belt_speed_bench_{nearest_job,net}_curves.pdf` (every cell drawn
+twice, x in cm and x in s, both speeds overlaid, dotted lines at 10 and 16.7 cm and at
+3.33 s) and `_cost.pdf` (the two costs at each speed against δ), and section 8 of this
+document.
+
+Smoke test (2026-11-23, development seeds, one cell): `--tag _belt_smoke --seed-base
+3100 --seeds 2 --cells 0` ran end to end in 12 s (192 episodes, 0.01 CPU-hours, both
+controllers), with 0 candidate violations of the visible stretch, identical arrivals at
+both speeds in every (cell, seed), and `when_idle` = `none` at ℓ = 0 exactly for the
+rule; `--analyse-only` and `--from-extract` regenerate identical tables (the latter
+without PyTorch), and the figures render. With two realizations its numbers are noise
+and were not read as results; they live under `results/experiments/_belt_smoke/`
+(git-ignored, figures included). The guards were exercised: seed bases 9010 and 7020
+are refused, and `--confirmatory` is refused while the range is unset.
+
+### 7.6 Pending owner decisions before the run
+
+1. The reserved seed range (60 seeds proposed; `RESERVED_BASE`), checked unused as in
+   §5.1.
+2. The margin δ (0.5 s/part proposed, §7.2; `MARGIN`).
+3. Whether the network runs (≈ 1.5 of the 1.7 CPU-hours) or `--who nearest_job` only.
+4. The explicit go. Once run, the seeds are used once, like 7000–7029 and 9000–9059.
