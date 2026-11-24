@@ -6,6 +6,38 @@ summarized from the git history.
 
 ---
 
+## 0.7.27 — 2026-11-23 — Belt-speed bench (3 vs 5 cm/s): frozen protocol and script, not run
+
+* **Why.** Every cell of the geometry bench runs its belts at 3 cm/s, so seconds of
+  anticipation and centimetres of visible belt are one variable (`ℓ_v = 3 τ_v`); the
+  audit of Paper 2 draft 0.6 and the paper's Limits section (0.7.25) name a bench that
+  varies the belt speed as the next experiment: at 5 cm/s, does keeping 10 cm keep the
+  benefit of pre-positioning, must the view grow to 16.7 cm to keep 3.33 s, or neither,
+  because the interception changes?
+* **What.** `docs/methods/geometry.md` §7, written before any run: three exclusive
+  hypotheses (H_cm, H_s, H_neither) decided per cell on the paired cost of the shorter
+  view against the full 50 cm view, a margin δ = 0.5 s/part proposed as the owner's
+  decision (the largest cost of 3.33 s observed in §6.2 was 0.44), numerical predictions
+  under each hypothesis from the 3 cm/s extract, the design (3 and 5 cm/s × four cells,
+  spacing 12 / v_y 10 and 6 / 15 with v_x 5 and 10, nominal load, Poisson, common 50 cm
+  entry, 12-point grid in cm including 10, 15 and 16.7 cm, the same arrival realizations
+  at both speeds), frozen measures (equal-distance and equal-anticipation paired
+  comparisons, knees in cm and s, Bonferroni z = 2.838 for 11 non-zero lengths) and the
+  pending owner decisions. `experiments/belt_speed_bench.py`: structure of
+  `geometry_bench.py` (jobs / run / Bench / tables / figures, `--confirmatory`,
+  `--from-extract`, `--analyse-only`), `RESERVED_BASE = None` until the owner fixes the
+  range, guards against the used ranges 7000–7029 and 9000–9059, curves drawn in cm and
+  in s with both speeds overlaid; the analysis of the extract runs without PyTorch.
+* **Checks.** Arrivals are seeded per belt from the mean inter-arrival only, so they are
+  identical at both speeds (80 equal instants on seed 3100); `geometry.entry_length=50`
+  moves the laser zone, the workspace and the head's home together. Smoke test on
+  development seeds 3100–3101, one cell (`--tag _belt_smoke`): 192 episodes, 0 visible-
+  stretch violations, exact identity at ℓ = 0. The confirmatory design was NOT run.
+* **Note.** The predictions in §7.1 come from the extract written before 0.7.26
+  (observable tie-break); the C_3(10 cm) column of the bench is the check.
+* **Pending (owner, §7.6).** Reserved seed range, margin δ, whether the network runs,
+  and the go.
+
 ## 0.7.26 — 2026-11-23 — Observable tie-break, MILP blocking witness re-scoped, Paper 1 draft 0.3
 
 * **Why.** The owner's review of Paper 1 draft 0.2 (2026-11-23) found two technical
