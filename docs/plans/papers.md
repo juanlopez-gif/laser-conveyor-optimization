@@ -447,8 +447,13 @@ conservative, 3.33 s costs ≤ 0.44 s/part against 10 s; v_x is a first-order fa
 (halving it doubles the gain and moves the knee from 1.5–3.3 to 3.3–5 s); the moves the
 head makes (b τ_pp, b = 1.74, error 1.0 s) predict the knee better than τ_cross (1.5 s,
 the worst candidate), a constant 3 s nearly as well; the queue mechanism holds at the
-nominal load only. Next: rewrite Paper 2 around the bench (the original study becomes
-the reference cell), with the owner's reading of §6 first.
+nominal load only. **Draft 0.5 (0.7.22)** rewritten around the bench on the owner's
+decisions 1(a), 2(b), 3(a): the phase-4 study is the reference cell (seeing against
+acting), the bench the central result, the headline is the practical cost of 3.33 s of
+anticipation, 1.7 × the mean move is reported as the best predictor with its small margin
+over a constant, the threshold is kept and 38 cells stay undetermined. Open: the owner's
+reading of draft 0.5 and decisions 4–6 (network's role, high-load mechanism, high-load
+precision); economic translation deferred.
 
 **Where the plan's steps already stand.**
 

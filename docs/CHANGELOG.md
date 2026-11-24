@@ -6,6 +6,34 @@ summarized from the git history.
 
 ---
 
+## 0.7.22 — 2026-11-23 — Paper 2 draft 0.5: rewritten around the geometry bench
+
+* **Why.** Owner's decisions on the bench results (2026-11-23): 1(a) rewrite Paper 2
+  around the geometry bench, with the phase-4 study as the reference cell where
+  seeing and acting are separated; 2(b) headline the practical consequence of 3.33 s
+  of anticipation (median 0.05, max 0.44 s/part against 10 s in the 18 cells worth
+  sizing), report 1.7 × the mean move as the best predictor among those tested
+  (1.02 s against 1.13 s for a constant, too small a margin for the headline), and
+  the conservative 90 % range apart; 3(a) keep the pre-specified threshold (G ≥ 1 s/part,
+  lower bound ≥ 0.5) and leave the other 38 of 56 cells undetermined with their
+  estimated effect. Decisions 4–6 (network's role, high-load mechanism, high-load
+  precision) wait for the next reading; the economic translation stays deferred.
+* **What.** `docs/papers/paper2/paper2.tex` draft 0.5 (20 pages): new abstract,
+  introduction and contributions; cell section generalized (spacing d, v_x, v_y,
+  τ_cross = 2d/v_y, τ_head renamed τ_cross throughout, also in the generated
+  reference-cell tables); design split into the reference-cell study and the geometry
+  bench with its frozen measures and criteria; checks extended (run-time mask check,
+  H0 exact, both extracts); §5 the reference cell (contrasts, coverage curve, direct
+  7.5 vs 10 cm, paired robustness; levels, pooled-share and heavy coverage tables
+  dropped from the paper, their numbers kept in the text); §6 the geometry bench
+  (where sizing is worth it, how much anticipation with the practical and the
+  conservative answers, what predicts it, the x axis, mechanism, entry length, the
+  network); discussion and conclusions rewritten. New generator
+  `experiments/paper2_bench_figures.py` (tables `bench_gains`, `bench_sufficient`,
+  `bench_predictors`, `bench_entry`, `bench_net`; figures `bench_curves_poisson`,
+  `bench_curves_burst`, `bench_normalized`, `bench_knee`) from the versioned extract.
+  PDF rebuilt, every page checked visually.
+
 ## 0.7.21 — 2026-11-23 — Geometry bench run on the reserved seeds 9000–9059 (`geometry.md` §6)
 
 * **Why.** Owner's go (2026-11-23) on the frozen protocol of 0.7.20.

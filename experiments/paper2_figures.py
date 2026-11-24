@@ -149,7 +149,7 @@ class Bench:
 # ------------------------------------------------------------------ tables
 def t_regimes(b: Bench):
     L = [r"\begin{tabular}{@{}lccccrrrr@{}}", r"\toprule",
-         r"regime & belt [cm/s] & head [cm/s] & $\tau_{\mathrm{head}}$ [s] & entry zone [s] & "
+         r"regime & belt [cm/s] & head [cm/s] & $\tau_{\mathrm{cross}}$ [s] & entry zone [s] & "
          r"parts & \textsc{nj} in B [s/part] & blocking events & blocked [conv.\,s] \\", r"\midrule"]
     for reg in REGIMES:
         v, th = b.meta[reg]
@@ -199,7 +199,7 @@ def t_coverage(b: Bench, load: str):
     v = b.meta[regs[0]][0]
     lens = LENGTHS[1:]
     L = [r"\begin{tabular}{@{}llc" + "c" * len(lens) + "@{}}", r"\toprule",
-         r"regime & policy & $\tau_{\mathrm{head}}$ & " +
+         r"regime & policy & $\tau_{\mathrm{cross}}$ & " +
          " & ".join(f"{l:g} cm" for l in lens) + r" \\",
          r" & & [s] & " + " & ".join(f"{l / v:.2f} s" for l in lens) + r" \\", r"\midrule"]
     for reg in regs:
