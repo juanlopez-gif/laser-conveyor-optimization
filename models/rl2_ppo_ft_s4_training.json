@@ -1,0 +1,1385 @@
+{
+  "tag": "rl2_ppo_ft_s4",
+  "args": {
+    "tag": "rl2_ppo_ft_s4",
+    "seed": 4,
+    "size": "S",
+    "episodes": 12000,
+    "batch_episodes": 1000,
+    "val_every": 4000,
+    "val": 50,
+    "val_mode": "design",
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "init": "models/rl2_gen_s_b.pt",
+    "workers": 40,
+    "threads": 8,
+    "device": "auto",
+    "horizon": null
+  },
+  "ppo": {
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "gamma": 1.0
+  },
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "started": "2026-11-23 22:59:15",
+  "machine": {
+    "host": "isecapstone",
+    "cpus": 48,
+    "workers": 40,
+    "device": "cuda",
+    "cuda": "NVIDIA GeForce RTX 3080"
+  },
+  "seed_base": 600000,
+  "updates": [
+    {
+      "update": 1,
+      "episodes": 1000,
+      "episodes_total": 1000,
+      "decisions": 51368,
+      "seeds": [
+        600000,
+        600999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 80,
+        "general/none/belts/burst+slow": 23,
+        "general/none/belts/regular": 84,
+        "general/none/belts/slow": 36,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 11,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 25,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 19,
+        "general/when_idle/belts/burst": 74,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 85,
+        "general/when_idle/belts/slow": 44,
+        "general/when_idle/full/burst": 14,
+        "general/when_idle/full/burst+slow": 9,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 12,
+        "heavy/none/belts/regular": 20,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 1,
+        "heavy/none/zone/burst": 16,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 24,
+        "real/when_idle/belts/burst": 45,
+        "real/when_idle/belts/regular": 52,
+        "real/when_idle/full/burst": 6,
+        "real/when_idle/full/regular": 4
+      },
+      "cost_mean": 39.43681078159373,
+      "empty_episodes": 95,
+      "mc_cost_to_go_mean": 2753.378610307673,
+      "all_decisions": 77504,
+      "gen_s": 7.86148055177182,
+      "gen_cpu_s": 274.60035552317277,
+      "train_s": 17.837703883182257,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.02063123588597472,
+            "value": 0.043120336396136105,
+            "entropy": 0.39932314252541495,
+            "kl": 0.05279892465696601,
+            "clipfrac": 0.18684784303599292
+          },
+          {
+            "policy": 0.006493528698291238,
+            "value": 0.029228159334244264,
+            "entropy": 0.42078085239292623,
+            "kl": 0.06408841916448582,
+            "clipfrac": 0.19932642890979635
+          },
+          {
+            "policy": -0.001064366039792022,
+            "value": 0.026262348549104874,
+            "entropy": 0.44799571009629835,
+            "kl": 0.06872064096766402,
+            "clipfrac": 0.217216944405825
+          },
+          {
+            "policy": -0.01002370608830411,
+            "value": 0.022226713691182346,
+            "entropy": 0.4794049370634168,
+            "kl": 0.0727225831122232,
+            "clipfrac": 0.23771608786695453
+          }
+        ],
+        "device": "cuda",
+        "samples": 51368
+      },
+      "scale": [
+        155853,
+        2761.6803408529177,
+        3730.4360228478236
+      ]
+    },
+    {
+      "update": 2,
+      "episodes": 1000,
+      "episodes_total": 2000,
+      "decisions": 52133,
+      "seeds": [
+        601000,
+        601999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 69,
+        "general/none/belts/burst+slow": 32,
+        "general/none/belts/regular": 91,
+        "general/none/belts/slow": 40,
+        "general/none/full/burst": 11,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 12,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 36,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 27,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 90,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 9,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 24,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 10,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 47,
+        "real/none/full/burst": 19,
+        "real/none/full/regular": 6,
+        "real/none/zone/burst": 23,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 52,
+        "real/when_idle/belts/regular": 52,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 40.24321672930166,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 2802.7605560267916,
+      "all_decisions": 77624,
+      "gen_s": 8.205106121953577,
+      "gen_cpu_s": 278.16241202969104,
+      "train_s": 18.238394185900688,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.04008760497344427,
+            "value": 0.04226211503691441,
+            "entropy": 0.522717168896266,
+            "kl": 0.10071022507473157,
+            "clipfrac": 0.23691327948295215
+          },
+          {
+            "policy": 0.04878445620198971,
+            "value": 0.028863004155656673,
+            "entropy": 0.588129000233595,
+            "kl": 0.0876259532308047,
+            "clipfrac": 0.2540041816227043
+          },
+          {
+            "policy": 0.012398669665354098,
+            "value": 0.026760080927159414,
+            "entropy": 0.5591405273476227,
+            "kl": 0.10307282150701227,
+            "clipfrac": 0.25768706954182036
+          },
+          {
+            "policy": 0.0009768040359810267,
+            "value": 0.024091084566964655,
+            "entropy": 0.5815604080768891,
+            "kl": 0.10196556207171675,
+            "clipfrac": 0.25484817674375265
+          }
+        ],
+        "device": "cuda",
+        "samples": 52133
+      },
+      "scale": [
+        207986,
+        2771.977355352274,
+        3916.0902036043303
+      ]
+    },
+    {
+      "update": 3,
+      "episodes": 1000,
+      "episodes_total": 3000,
+      "decisions": 53123,
+      "seeds": [
+        602000,
+        602999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 74,
+        "general/none/belts/burst+slow": 41,
+        "general/none/belts/regular": 96,
+        "general/none/belts/slow": 29,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 11,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 27,
+        "general/none/zone/burst+slow": 23,
+        "general/none/zone/regular": 51,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 77,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 82,
+        "general/when_idle/belts/slow": 29,
+        "general/when_idle/full/burst": 16,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 19,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 22,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 4,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 7,
+        "real/none/belts/burst": 44,
+        "real/none/belts/regular": 43,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 38,
+        "real/when_idle/belts/regular": 36,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 15
+      },
+      "cost_mean": 48.73942829980742,
+      "empty_episodes": 92,
+      "mc_cost_to_go_mean": 4016.483186993836,
+      "all_decisions": 78134,
+      "gen_s": 8.368545302655548,
+      "gen_cpu_s": 301.81802614219487,
+      "train_s": 18.370463788043708,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.04980037784424047,
+            "value": 0.07270757929075487,
+            "entropy": 0.6406569822918922,
+            "kl": 0.08711741748132341,
+            "clipfrac": 0.24000903562923365
+          },
+          {
+            "policy": 0.029843363511827814,
+            "value": 0.04942226105503235,
+            "entropy": 0.6372477055984999,
+            "kl": 0.08881953875392845,
+            "clipfrac": 0.24998588183826345
+          },
+          {
+            "policy": 0.007416977513992241,
+            "value": 0.038416219354988596,
+            "entropy": 0.6229262394637423,
+            "kl": 0.11264363077337491,
+            "clipfrac": 0.25480488680306324
+          },
+          {
+            "policy": 0.0035143980704403772,
+            "value": 0.03578784523796414,
+            "entropy": 0.6206080634992996,
+            "kl": 0.1259722827357628,
+            "clipfrac": 0.25011765147346987
+          }
+        ],
+        "device": "cuda",
+        "samples": 53123
+      },
+      "scale": [
+        261109,
+        3025.173849131842,
+        4879.726097600871
+      ]
+    },
+    {
+      "update": 4,
+      "episodes": 1000,
+      "episodes_total": 4000,
+      "decisions": 52069,
+      "seeds": [
+        603000,
+        603999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 68,
+        "general/none/belts/burst+slow": 45,
+        "general/none/belts/regular": 74,
+        "general/none/belts/slow": 38,
+        "general/none/full/burst": 17,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 11,
+        "general/none/zone/burst": 43,
+        "general/none/zone/burst+slow": 7,
+        "general/none/zone/regular": 24,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 74,
+        "general/when_idle/belts/burst+slow": 37,
+        "general/when_idle/belts/regular": 86,
+        "general/when_idle/belts/slow": 30,
+        "general/when_idle/full/burst": 16,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 17,
+        "general/when_idle/full/slow": 13,
+        "heavy/none/belts/burst": 8,
+        "heavy/none/belts/regular": 21,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 1,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 13,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 49,
+        "real/none/belts/regular": 45,
+        "real/none/full/burst": 14,
+        "real/none/full/regular": 5,
+        "real/none/zone/burst": 23,
+        "real/none/zone/regular": 28,
+        "real/when_idle/belts/burst": 39,
+        "real/when_idle/belts/regular": 52,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 45.63179180899352,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 3358.0506072503686,
+      "all_decisions": 77692,
+      "gen_s": 8.277139862067997,
+      "gen_cpu_s": 296.111212793272,
+      "train_s": 19.628456253092736,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.035121353115651,
+            "value": 0.0437493229515938,
+            "entropy": 0.5973812064254704,
+            "kl": 0.06657358053327321,
+            "clipfrac": 0.21219919720934452
+          },
+          {
+            "policy": 0.021508708000686785,
+            "value": 0.03011672987873754,
+            "entropy": 0.5956043524247971,
+            "kl": 0.06702195239608762,
+            "clipfrac": 0.23290249476799066
+          },
+          {
+            "policy": 0.009608673152686351,
+            "value": 0.0244793320135956,
+            "entropy": 0.601151088093225,
+            "kl": 0.05854758193580507,
+            "clipfrac": 0.22716011444718803
+          },
+          {
+            "policy": 0.000366176244200344,
+            "value": 0.022690167328340543,
+            "entropy": 0.6092154612546968,
+            "kl": 0.0545516784308918,
+            "clipfrac": 0.22124488658821143
+          }
+        ],
+        "device": "cuda",
+        "samples": 52069
+      },
+      "scale": [
+        313178,
+        3080.5179662743617,
+        5049.8824917473075
+      ]
+    },
+    {
+      "update": 5,
+      "episodes": 1000,
+      "episodes_total": 5000,
+      "decisions": 55031,
+      "seeds": [
+        604000,
+        604999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 83,
+        "general/none/belts/burst+slow": 31,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 28,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 10,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 26,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 79,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 82,
+        "general/when_idle/belts/slow": 36,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 24,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 14,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 12,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 25,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 43,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 52,
+        "real/when_idle/belts/regular": 39,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 6
+      },
+      "cost_mean": 43.62323944431225,
+      "empty_episodes": 82,
+      "mc_cost_to_go_mean": 3252.348782209289,
+      "all_decisions": 79793,
+      "gen_s": 8.574824126902968,
+      "gen_cpu_s": 296.73494284413755,
+      "train_s": 20.919667357113212,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.020827121678092968,
+            "value": 0.04038580368259743,
+            "entropy": 0.579067129393536,
+            "kl": 0.030515229980248224,
+            "clipfrac": 0.17517399284554383
+          },
+          {
+            "policy": 0.00623959992207177,
+            "value": 0.03101969451974434,
+            "entropy": 0.582905345900744,
+            "kl": 0.031113243362256262,
+            "clipfrac": 0.18416892300372412
+          },
+          {
+            "policy": -0.004054590269725001,
+            "value": 0.02675280517819416,
+            "entropy": 0.5851177120626387,
+            "kl": 0.03035565070133427,
+            "clipfrac": 0.18351474628376394
+          },
+          {
+            "policy": -0.009170874939798774,
+            "value": 0.025445080469471342,
+            "entropy": 0.5906661650485534,
+            "kl": 0.03471865859786724,
+            "clipfrac": 0.19716159984748585
+          }
+        ],
+        "device": "cuda",
+        "samples": 55031
+      },
+      "scale": [
+        368209,
+        3106.199092025476,
+        5032.0383342625
+      ]
+    },
+    {
+      "update": 6,
+      "episodes": 1000,
+      "episodes_total": 6000,
+      "decisions": 52947,
+      "seeds": [
+        605000,
+        605999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 87,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 87,
+        "general/none/belts/slow": 26,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 20,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 26,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 91,
+        "general/when_idle/belts/burst+slow": 40,
+        "general/when_idle/belts/regular": 79,
+        "general/when_idle/belts/slow": 33,
+        "general/when_idle/full/burst": 18,
+        "general/when_idle/full/burst+slow": 3,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 13,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 6,
+        "heavy/when_idle/belts/burst": 20,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 48,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 44,
+        "real/when_idle/belts/regular": 44,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 6
+      },
+      "cost_mean": 43.71488602522813,
+      "empty_episodes": 91,
+      "mc_cost_to_go_mean": 3199.754697191084,
+      "all_decisions": 78715,
+      "gen_s": 8.478286209050566,
+      "gen_cpu_s": 288.3940104213543,
+      "train_s": 21.887981969863176,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.015790802852184163,
+            "value": 0.036329676920843344,
+            "entropy": 0.6177178861153895,
+            "kl": 0.030131160430742654,
+            "clipfrac": 0.18499631706953729
+          },
+          {
+            "policy": 0.0011794204639033546,
+            "value": 0.026736828120873565,
+            "entropy": 0.6301847312426408,
+            "kl": 0.028187156071179702,
+            "clipfrac": 0.18830150908436957
+          },
+          {
+            "policy": -0.006862780226418702,
+            "value": 0.024256876175570756,
+            "entropy": 0.6268377267749464,
+            "kl": 0.030180562366757938,
+            "clipfrac": 0.19239994712030548
+          },
+          {
+            "policy": -0.01455948898958854,
+            "value": 0.021787863203144627,
+            "entropy": 0.6264936303393096,
+            "kl": 0.03230151328428608,
+            "clipfrac": 0.20116342763143177
+          }
+        ],
+        "device": "cuda",
+        "samples": 52947
+      },
+      "scale": [
+        421156,
+        3117.960740029263,
+        5028.906326078724
+      ]
+    },
+    {
+      "update": 7,
+      "episodes": 1000,
+      "episodes_total": 7000,
+      "decisions": 52456,
+      "seeds": [
+        606000,
+        606999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 81,
+        "general/none/belts/burst+slow": 34,
+        "general/none/belts/regular": 76,
+        "general/none/belts/slow": 25,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 12,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 28,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 30,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 77,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 76,
+        "general/when_idle/belts/slow": 56,
+        "general/when_idle/full/burst": 12,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 12,
+        "heavy/when_idle/belts/burst": 21,
+        "heavy/when_idle/belts/regular": 22,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 43,
+        "real/none/full/burst": 4,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 24,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 5,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 44.34967106542699,
+      "empty_episodes": 86,
+      "mc_cost_to_go_mean": 3047.2135564954783,
+      "all_decisions": 78517,
+      "gen_s": 8.136378650087863,
+      "gen_cpu_s": 279.87765885517,
+      "train_s": 17.512166103813797,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.01825976519690892,
+            "value": 0.03557837275489631,
+            "entropy": 0.5890857962931513,
+            "kl": 0.028926912620459985,
+            "clipfrac": 0.17202989172104638
+          },
+          {
+            "policy": 0.0012925337873364033,
+            "value": 0.026365173920086832,
+            "entropy": 0.6188781109182723,
+            "kl": 0.03083318972155345,
+            "clipfrac": 0.19271389351706325
+          },
+          {
+            "policy": -0.007329680974246127,
+            "value": 0.023720051220889334,
+            "entropy": 0.6264109702140833,
+            "kl": 0.034071573420315956,
+            "clipfrac": 0.2004537136067118
+          },
+          {
+            "policy": -0.015918556117322433,
+            "value": 0.02149742418968025,
+            "entropy": 0.6333813772016824,
+            "kl": 0.033661217849593125,
+            "clipfrac": 0.20079685828299243
+          }
+        ],
+        "device": "cuda",
+        "samples": 52456
+      },
+      "scale": [
+        473612,
+        3110.124970962031,
+        4994.3669635030665
+      ]
+    },
+    {
+      "update": 8,
+      "episodes": 1000,
+      "episodes_total": 8000,
+      "decisions": 52750,
+      "seeds": [
+        607000,
+        607999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 85,
+        "general/none/belts/burst+slow": 28,
+        "general/none/belts/regular": 84,
+        "general/none/belts/slow": 38,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 11,
+        "general/none/full/regular": 19,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 31,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 27,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 83,
+        "general/when_idle/belts/burst+slow": 29,
+        "general/when_idle/belts/regular": 89,
+        "general/when_idle/belts/slow": 35,
+        "general/when_idle/full/burst": 11,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 6,
+        "heavy/none/belts/burst": 15,
+        "heavy/none/belts/regular": 15,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 11,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 17,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 6,
+        "real/none/belts/burst": 46,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 9,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 19
+      },
+      "cost_mean": 43.54061607872328,
+      "empty_episodes": 74,
+      "mc_cost_to_go_mean": 3127.6421908456136,
+      "all_decisions": 77750,
+      "gen_s": 8.41046201530844,
+      "gen_cpu_s": 290.13090867502615,
+      "train_s": 19.28159916214645,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.01889882667934725,
+            "value": 0.03212861541344374,
+            "entropy": 0.6253525344952587,
+            "kl": 0.03013362115678127,
+            "clipfrac": 0.18733649289325516
+          },
+          {
+            "policy": 0.004149303389104056,
+            "value": 0.023238582711084196,
+            "entropy": 0.627311817010997,
+            "kl": 0.03158641223418769,
+            "clipfrac": 0.19590521327353203
+          },
+          {
+            "policy": -0.008035632178116748,
+            "value": 0.021373590580827745,
+            "entropy": 0.6355890145539107,
+            "kl": 0.030681533401187563,
+            "clipfrac": 0.19876777251354327
+          },
+          {
+            "policy": -0.013816590058860056,
+            "value": 0.01963915175870414,
+            "entropy": 0.6342243905722812,
+            "kl": 0.03413159738272711,
+            "clipfrac": 0.21323222749267146
+          }
+        ],
+        "device": "cuda",
+        "samples": 52750
+      },
+      "scale": [
+        526362,
+        3111.8804801911583,
+        4965.2701401429285
+      ]
+    },
+    {
+      "update": 9,
+      "episodes": 1000,
+      "episodes_total": 9000,
+      "decisions": 54556,
+      "seeds": [
+        608000,
+        608999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 70,
+        "general/none/belts/burst+slow": 40,
+        "general/none/belts/regular": 71,
+        "general/none/belts/slow": 33,
+        "general/none/full/burst": 26,
+        "general/none/full/burst+slow": 15,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 26,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 38,
+        "general/when_idle/belts/regular": 82,
+        "general/when_idle/belts/slow": 29,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 9,
+        "heavy/none/belts/burst": 13,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 1,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 28,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 58,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 20,
+        "real/when_idle/belts/burst": 33,
+        "real/when_idle/belts/regular": 42,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 46.5442571181783,
+      "empty_episodes": 78,
+      "mc_cost_to_go_mean": 3376.3079567078858,
+      "all_decisions": 78643,
+      "gen_s": 8.764604262076318,
+      "gen_cpu_s": 295.8777967412025,
+      "train_s": 19.037342960946262,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.018817482560827145,
+            "value": 0.04005753911924582,
+            "entropy": 0.6312496948560335,
+            "kl": 0.030628598380712472,
+            "clipfrac": 0.18353618301117436
+          },
+          {
+            "policy": 0.005562159858479581,
+            "value": 0.028519381776580983,
+            "entropy": 0.6441805476019726,
+            "kl": 0.031408738693155074,
+            "clipfrac": 0.19561551434263577
+          },
+          {
+            "policy": -0.004624210193723744,
+            "value": 0.02476224823431436,
+            "entropy": 0.6496751287420681,
+            "kl": 0.03224835079047231,
+            "clipfrac": 0.2010594618390169
+          },
+          {
+            "policy": -0.011173144895158665,
+            "value": 0.022662626607809933,
+            "entropy": 0.6416425329646509,
+            "kl": 0.0357517241953381,
+            "clipfrac": 0.2129921548522474
+          }
+        ],
+        "device": "cuda",
+        "samples": 54556
+      },
+      "scale": [
+        580918,
+        3136.7137706191593,
+        5034.050040703685
+      ]
+    },
+    {
+      "update": 10,
+      "episodes": 1000,
+      "episodes_total": 10000,
+      "decisions": 53601,
+      "seeds": [
+        609000,
+        609999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 74,
+        "general/none/belts/burst+slow": 29,
+        "general/none/belts/regular": 69,
+        "general/none/belts/slow": 33,
+        "general/none/full/burst": 10,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 32,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 23,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 32,
+        "general/when_idle/belts/regular": 90,
+        "general/when_idle/belts/slow": 36,
+        "general/when_idle/full/burst": 26,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 23,
+        "general/when_idle/full/slow": 12,
+        "heavy/none/belts/burst": 23,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 3,
+        "heavy/when_idle/belts/burst": 11,
+        "heavy/when_idle/belts/regular": 21,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 54,
+        "real/none/belts/regular": 45,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 39,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 46.92654075726274,
+      "empty_episodes": 80,
+      "mc_cost_to_go_mean": 3656.993566101138,
+      "all_decisions": 79005,
+      "gen_s": 8.323462630156428,
+      "gen_cpu_s": 292.540900665801,
+      "train_s": 24.65640684403479,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.02558343808070303,
+            "value": 0.04252287359216938,
+            "entropy": 0.6220150110368015,
+            "kl": 0.030291099715098444,
+            "clipfrac": 0.17966082721419865
+          },
+          {
+            "policy": 0.009729916630826582,
+            "value": 0.030499806836688355,
+            "entropy": 0.6205845946364988,
+            "kl": 0.03429630693473651,
+            "clipfrac": 0.19885823024772414
+          },
+          {
+            "policy": 0.0014387428506435146,
+            "value": 0.02718458235884046,
+            "entropy": 0.6202619927594142,
+            "kl": 0.03229676422554387,
+            "clipfrac": 0.1972910953095479
+          },
+          {
+            "policy": -0.011343750389611947,
+            "value": 0.02476168538420757,
+            "entropy": 0.6240283713169777,
+            "kl": 0.03333801395037553,
+            "clipfrac": 0.2030372567617596
+          }
+        ],
+        "device": "cuda",
+        "samples": 53601
+      },
+      "scale": [
+        634519,
+        3180.6644124717027,
+        5301.8159302355125
+      ]
+    },
+    {
+      "update": 11,
+      "episodes": 1000,
+      "episodes_total": 11000,
+      "decisions": 53492,
+      "seeds": [
+        610000,
+        610999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 83,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 102,
+        "general/none/belts/slow": 29,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 9,
+        "general/none/full/regular": 14,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 35,
+        "general/none/zone/burst+slow": 9,
+        "general/none/zone/regular": 28,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 83,
+        "general/when_idle/belts/slow": 23,
+        "general/when_idle/full/burst": 20,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 16,
+        "general/when_idle/full/slow": 10,
+        "heavy/none/belts/burst": 14,
+        "heavy/none/belts/regular": 15,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 24,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 39,
+        "real/none/belts/regular": 37,
+        "real/none/full/burst": 8,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 44,
+        "real/when_idle/full/burst": 15,
+        "real/when_idle/full/regular": 13
+      },
+      "cost_mean": 48.121574139378616,
+      "empty_episodes": 94,
+      "mc_cost_to_go_mean": 3829.6639306368243,
+      "all_decisions": 80157,
+      "gen_s": 8.537584851961583,
+      "gen_cpu_s": 301.76817210018635,
+      "train_s": 22.096679324284196,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.016875640585197343,
+            "value": 0.04298299692745547,
+            "entropy": 0.6442315826586811,
+            "kl": 0.02835980255973336,
+            "clipfrac": 0.18045689067647674
+          },
+          {
+            "policy": -0.00011777241613944591,
+            "value": 0.02979061782113823,
+            "entropy": 0.6558981607750628,
+            "kl": 0.028771228443282146,
+            "clipfrac": 0.1887198085416489
+          },
+          {
+            "policy": -0.009569892957137328,
+            "value": 0.026196072143968786,
+            "entropy": 0.6491583889266864,
+            "kl": 0.030228475046064907,
+            "clipfrac": 0.19171091001699495
+          },
+          {
+            "policy": -0.016683774708961662,
+            "value": 0.023101678283021978,
+            "entropy": 0.6519131956813241,
+            "kl": 0.0311789607028448,
+            "clipfrac": 0.19821655571433983
+          }
+        ],
+        "device": "cuda",
+        "samples": 53492
+      },
+      "scale": [
+        688011,
+        3231.123318253306,
+        5407.989186153872
+      ]
+    },
+    {
+      "update": 12,
+      "episodes": 1000,
+      "episodes_total": 12000,
+      "decisions": 53479,
+      "seeds": [
+        611000,
+        611999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 89,
+        "general/none/belts/burst+slow": 31,
+        "general/none/belts/regular": 83,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 25,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 32,
+        "general/none/zone/burst+slow": 12,
+        "general/none/zone/regular": 35,
+        "general/none/zone/slow": 17,
+        "general/when_idle/belts/burst": 78,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 89,
+        "general/when_idle/belts/slow": 39,
+        "general/when_idle/full/burst": 22,
+        "general/when_idle/full/burst+slow": 11,
+        "general/when_idle/full/regular": 17,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 18,
+        "heavy/none/belts/regular": 20,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 13,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 1,
+        "real/none/belts/burst": 36,
+        "real/none/belts/regular": 42,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 24,
+        "real/when_idle/belts/burst": 36,
+        "real/when_idle/belts/regular": 43,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 46.4593877010299,
+      "empty_episodes": 81,
+      "mc_cost_to_go_mean": 3361.361350316827,
+      "all_decisions": 80552,
+      "gen_s": 8.486706047784537,
+      "gen_cpu_s": 298.8884602095932,
+      "train_s": 17.907019016798586,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.013685192743058171,
+            "value": 0.03536997758877875,
+            "entropy": 0.5836396451634274,
+            "kl": 0.02478753226599106,
+            "clipfrac": 0.1580994409254417
+          },
+          {
+            "policy": 0.0008337021418199054,
+            "value": 0.025938423885538502,
+            "entropy": 0.5941889371638162,
+            "kl": 0.02642405501721174,
+            "clipfrac": 0.17352605695610046
+          },
+          {
+            "policy": -0.008899861789795247,
+            "value": 0.022524791204731966,
+            "entropy": 0.5970252125518534,
+            "kl": 0.027787943067153705,
+            "clipfrac": 0.1777333158762632
+          },
+          {
+            "policy": -0.016128822477666522,
+            "value": 0.020465402986780686,
+            "entropy": 0.6072655534817377,
+            "kl": 0.03173563996254567,
+            "clipfrac": 0.1893453505105798
+          }
+        ],
+        "device": "cuda",
+        "samples": 53479
+      },
+      "scale": [
+        741490,
+        3240.5165666001494,
+        5441.674171540616
+      ]
+    }
+  ],
+  "validations": [
+    {
+      "update": 0,
+      "episodes": 0,
+      "model": "results/experiments/rl2_ppo_ft_s4/act_u0.pt",
+      "val": {
+        "real": {
+          "delta": -0.061855568814955235,
+          "ci": 0.01483705886415248,
+          "n": 50,
+          "wins": 46
+        },
+        "heavy": {
+          "delta": -0.0285574828832187,
+          "ci": 0.010942723038886552,
+          "n": 50,
+          "wins": 38
+        },
+        "general": {
+          "delta": -0.027283834978074305,
+          "ci": 0.010549768156179097,
+          "n": 100,
+          "wins": 49
+        },
+        "real_burst": {
+          "delta": -0.035053904529606994,
+          "ci": 0.009985000045319568,
+          "n": 50,
+          "wins": 42
+        },
+        "score": -0.038187697801463805
+      },
+      "val_s": 2.100821567699313,
+      "val_cpu_s": 73.67154971230775,
+      "candidate": false,
+      "accepted": false
+    },
+    {
+      "update": 4,
+      "episodes": 4000,
+      "model": "models/rl2_ppo_ft_s4_it4.pt",
+      "val": {
+        "real": {
+          "delta": -0.055913274401932514,
+          "ci": 0.016375164986892583,
+          "n": 50,
+          "wins": 43
+        },
+        "heavy": {
+          "delta": -0.02026999304424166,
+          "ci": 0.01145892905338645,
+          "n": 50,
+          "wins": 34
+        },
+        "general": {
+          "delta": -0.024377836095583957,
+          "ci": 0.01080667404786156,
+          "n": 100,
+          "wins": 50
+        },
+        "real_burst": {
+          "delta": -0.028094037265213076,
+          "ci": 0.009439030542867257,
+          "n": 50,
+          "wins": 40
+        },
+        "score": -0.0321637852017428
+      },
+      "val_s": 2.13137375889346,
+      "val_cpu_s": 74.40153554826975,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 8,
+      "episodes": 8000,
+      "model": "models/rl2_ppo_ft_s4_it8.pt",
+      "val": {
+        "real": {
+          "delta": -0.03799797563573834,
+          "ci": 0.01432294251495719,
+          "n": 50,
+          "wins": 35
+        },
+        "heavy": {
+          "delta": -0.00817535432658766,
+          "ci": 0.011443754270079723,
+          "n": 50,
+          "wins": 32
+        },
+        "general": {
+          "delta": -0.016597098547604314,
+          "ci": 0.009920892797439811,
+          "n": 100,
+          "wins": 42
+        },
+        "real_burst": {
+          "delta": -0.024463481378814114,
+          "ci": 0.00922243040162477,
+          "n": 50,
+          "wins": 38
+        },
+        "score": -0.021808477472186106
+      },
+      "val_s": 2.1271463758312166,
+      "val_cpu_s": 75.1654695305042,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 12,
+      "episodes": 12000,
+      "model": "models/rl2_ppo_ft_s4_it12.pt",
+      "val": {
+        "real": {
+          "delta": -0.02371524031159776,
+          "ci": 0.014172014036426402,
+          "n": 50,
+          "wins": 33
+        },
+        "heavy": {
+          "delta": -0.007220601353682623,
+          "ci": 0.014411187724987406,
+          "n": 50,
+          "wins": 29
+        },
+        "general": {
+          "delta": -0.015058101884877696,
+          "ci": 0.009775027682748091,
+          "n": 100,
+          "wins": 39
+        },
+        "real_burst": {
+          "delta": -0.021514133440734558,
+          "ci": 0.00993306814653319,
+          "n": 50,
+          "wins": 38
+        },
+        "score": -0.01687701924772316
+      },
+      "val_s": 2.21812231419608,
+      "val_cpu_s": 78.21052842820063,
+      "candidate": true,
+      "accepted": false
+    }
+  ],
+  "reference": {
+    "who": "nearest_job",
+    "cpu_s": 2.1386936116032302,
+    "wall_s": 0.721576820127666
+  },
+  "best": {
+    "model": "models/rl2_ppo_ft_s4.pt",
+    "score": -0.0321637852017428,
+    "update": 4,
+    "checkpoint": "models/rl2_ppo_ft_s4_it4.pt"
+  },
+  "finished": "2026-11-23 23:05:05",
+  "wall_s": 349.4791311500594
+}
