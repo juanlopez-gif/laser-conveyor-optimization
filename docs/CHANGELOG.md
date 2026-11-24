@@ -6,6 +6,40 @@ summarized from the git history.
 
 ---
 
+## 0.7.38 — 2026-11-24 — Owner's check of 0.7.37: Paper 2 draft 1.3 and Paper 1 draft 1.0
+
+* **Why.** The owner's reading of commit 3667649: the main corrections are in; several
+  points of the previous report survived, mostly in Paper 2 (three old numbers, the
+  certified-vs-margin distinction at 5 cm/s, B/A vs D/B, scopes), plus two short
+  clarifications in Paper 1. All verified against the extracts before editing: high-load
+  G(10 s) range −0.08 to +2.02 s/part; the largest nominal ΔG of Table 9 is 0.23; the
+  network's value of seeing with the same actions at the nominal load spans −0.37 to
+  +0.71 s/part with 7 of 36 combinations outside ±0.3.
+* **Paper 2 (1.3).** Abstract and §6.2: the conservative result fixed by the protocol
+  first (17 of 18 cells certified at 2–7.5 s), the practical result (3.33 s: median loss
+  0.05, largest 0.44 s/part) second; "the first answer is the one that matters" removed.
+  §6.8 and §7.1: at 5 cm/s the 90 % retention criterion is not certified at 10 cm in
+  either fast cell (first certified at 25 and 50 cm), the margin and the certification
+  being different questions; the visible label of the slow cells in Table 11 is now
+  "full-view benefit criterion not met at 5 cm/s" (the protocol's name "benefit lost at
+  this speed" kept in the methods). §6.1: high-load gains −0.1 to 2.0 s/part; "bursts
+  halve the gain" scoped to the corresponding geometries. §6.6: ±0.23. §6.7 and §7.2:
+  the value of seeing with the same actions −0.37 to +0.71 s/part (7 of 36 outside ±0.3);
+  the 71-of-72 comparison with the rule stated without the extrapolation inference.
+  §5.1: seeing the hidden queue (D vs B) distinguished from seeing more belt (B vs A),
+  which had a small detected value in one regime. §6.3: the 7–57 % y-dominated share with
+  its weighting (about 6–53 % per move, computed after the run). Limits: the rule's
+  tie-break per study. §4 lead: the shared phase-4 realizations named. "Pre-registered"
+  replaced by "with its protocol frozen in the repository before the run". PDF rebuilt.
+* **Paper 1 (1.0).** §8.5: the 4.1 ms median was measured on a different machine. §9.1:
+  the companion paper analyzes the same phase-4 realizations for different research
+  questions. Contribution list: "pre-registered" replaced as above. PDF rebuilt.
+* **Where.** `docs/papers/paper2/{paper2.tex,paper2.pdf,tables/bench_belt.tex}`,
+  `experiments/paper2_bench_figures.py`, `docs/papers/paper1/{paper1.tex,paper1.pdf}`,
+  `docs/plans/papers.md`.
+
+---
+
 ## 0.7.37 — 2026-11-24 — Pre-submission round: Paper 1 draft 0.9 and Paper 2 draft 1.2
 
 * **Why.** The third (pre-submission) referee report on 0.8 / 1.1: both papers "submit

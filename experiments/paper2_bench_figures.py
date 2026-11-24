@@ -74,7 +74,7 @@ def t_belt():
     L = [r"\begin{tabular}{@{}lcccccccl@{}}", r"\toprule",
          r"cell & $G_3(50\,\mathrm{cm})$ & useful at 3 & $G_5(50\,\mathrm{cm})$ & useful at 5 & $C_5(10\,\mathrm{cm})$ & $C_5(16.7\,\mathrm{cm})$ & $C_3(10\,\mathrm{cm})$ & verdict at 5~cm/s \\",
          r" & [s/part] & & [s/part] & & $=2.00$~s & $=3.33$~s & $=3.33$~s (check) & (conservative) \\", r"\midrule"]
-    names = {"benefit lost at this speed": "benefit lost at this speed", "H_cm": "10~cm keep the benefit ($H_{\\mathrm{cm}}$)",
+    names = {"benefit lost at this speed": "full-view benefit criterion not met at 5~cm/s", "H_cm": "10~cm keep the benefit ($H_{\\mathrm{cm}}$)",
              "H_s": "16.7~cm needed ($H_{\\mathrm{s}}$)", "H_neither": "neither ($H_{\\mathrm{neither}}$)", "undetermined": "undetermined"}
     for c in b.cells:
         g3, g5 = b.gain(c, 3.0, bs.L_REF, who), b.gain(c, 5.0, bs.L_REF, who)

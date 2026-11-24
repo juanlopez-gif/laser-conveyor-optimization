@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.9 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.37)}
+\date{November 2026 --- draft 1.0 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.38)}
 
 \begin{document}
 \maketitle
@@ -130,7 +130,7 @@ measure on reserved realizations. Its contributions are:
 \item A learned dispatching policy (Section~\ref{sec:policy}) that reads the state as a
   set of tokens, points to any candidate part, and is trained by expert iteration with
   the scenario search as the expert, on a distribution of cells with one to six
-  conveyors; and its pre-registered confirmatory evaluation on reserved realizations
+  conveyors; and its confirmatory evaluation on reserved realizations, with the protocol frozen in the repository before the run,
   (Section~\ref{sec:confirm}).
 \end{enumerate}
 A companion paper (Paper~2) uses the policy and the nearest-part rule as controllers to
@@ -1100,7 +1100,7 @@ computed as wall-clock times workers, not measured consumption, and are given to
 the scope of the comparison, not as a ratio. The V2 runs take 6~minutes each. The PPO checkpoint has the latency of the network it is (same
 architecture, 884\,994 parameters): 1.06~ms per decision for a single state on one
 thread, against 1.06~ms for an untrained network of the same size on the same machine,
-so the comparison with expert iteration is at equal inference cost.
+so the comparison with expert iteration is at equal inference cost. The 4.1~ms median of Section~\ref{sec:policy} was measured on a different machine.
 
 \begin{table}[t]
 \centering
@@ -1141,7 +1141,8 @@ This section reports the one evaluation on realizations reserved for it and used
 \subsection{Protocol}
 The frozen network, the known-parts search over \nj, the scenario search over the
 network (its expert), \nj\ and \nh\ were run on 30 realizations reserved for this
-evaluation (seeds 7000--7029), never seen by any design decision and used once, on eight
+evaluation (seeds 7000--7029; the companion paper analyzes the same phase-4 realizations
+for different research questions), never seen by any design decision and used once, on eight
 regimes: the reference cell and its heavy variant, Poisson and bursty arrivals, nominal
 head and a head twice as slow (Table~\ref{tab:regimes}), in the basic mode (B) and in the
 design mode (C). Every policy runs on the same realizations (common random numbers), so

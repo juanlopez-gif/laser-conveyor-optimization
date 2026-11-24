@@ -473,7 +473,7 @@ J, the benefit screen's sensitivity to the penalty weights (15 vs 18), the predi
 weighting and scope, the thresholds as design decisions. **Draft 1.0 (0.7.35)** after
 the second round (minor revision): conclusions with 17/18 and the point-knee predictor as
 separate sentences, the entry-length residual not attributed, controller scope, figure
-captions. **Draft 1.1 (0.7.36):** section lead-ins only. **Draft 1.2 (0.7.37):** the pre-submission edits (B-vs-A regime, speeds per study, controller scope, denominators, wording). Referee: submit after these edits, as a manufacturing-systems simulation and sensor-sizing study. Submission order: Paper 2 first; the author field is the owner's.
+captions. **Draft 1.1 (0.7.36):** section lead-ins only. **Draft 1.2 (0.7.37):** the pre-submission edits (B-vs-A regime, speeds per study, controller scope, denominators, wording). Referee: submit after these edits, as a manufacturing-systems simulation and sensor-sizing study. **Draft 1.3 (0.7.38):** the owner's remaining points (certified vs margin at 5 cm/s, three surviving numbers, B/A vs D/B, scopes, tie-break per study in Limits). Submission order: Paper 2 first; the author field and the abstract length are the owner's at submission.
 
 **Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
 at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel
@@ -500,7 +500,7 @@ budgets, and the wording list ("no difference detected", no "points", no ceiling
 **Draft 0.7 (0.7.35)** after the second referee round: conventions of the discrete
 model in Appendix A, state/observation and the whole-episode cost identity in §4.1,
 §5.4 and Appendix D aligned (ready-only, sufficient conditions), both blocking
-guarantees withdrawn, the 5 ms budget as exceedances. **Draft 0.8 (0.7.36):** M8 quantifiers and $M_{ij}$, ε unified, §4.1 exception and terminal segment, the rules' exceedances corrected, arrival horizon of the futures, section lead-ins. **Draft 0.9 (0.7.37)** after the pre-submission round: T_A known (the earlier wording was wrong), τ bounded above in M9, ε one lattice unit, n > 0 qualifications, dispatch events in the theorem, overclaims in §§8.3, 10.2, 11 and App. D removed, Table 2 and App. C qualified. Referee: submit after these edits. Open: the co-authors' reading and the author field at submission;
+guarantees withdrawn, the 5 ms budget as exceedances. **Draft 0.8 (0.7.36):** M8 quantifiers and $M_{ij}$, ε unified, §4.1 exception and terminal segment, the rules' exceedances corrected, arrival horizon of the futures, section lead-ins. **Draft 0.9 (0.7.37)** after the pre-submission round: T_A known (the earlier wording was wrong), τ bounded above in M9, ε one lattice unit, n > 0 qualifications, dispatch events in the theorem, overclaims in §§8.3, 10.2, 11 and App. D removed, Table 2 and App. C qualified. Referee: submit after these edits. **Draft 1.0 (0.7.38):** two clarifications (different machine for the 4.1 ms median; shared phase-4 realizations named). Open: the co-authors' reading and the author field at submission;
 the hindsight reference and the generalization bench on new reserved seeds.
 **Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
 properties) with the MILP, the proofs, the lower bounds and the special cases in
