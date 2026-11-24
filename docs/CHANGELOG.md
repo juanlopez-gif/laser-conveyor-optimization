@@ -6,6 +6,31 @@ summarized from the git history.
 
 ---
 
+## 0.7.36 — 2026-11-24 — Paper 1 draft 0.8 (M8, ε, §4.1, latency, arrival horizon) and Paper 2 draft 1.1 (section lead-ins)
+
+* **Why.** The owner's reading of 0.7 / 1.0: Paper 2 ready to circulate; three passages
+  of Paper 1 to correct before submission, plus the open minor on the arrival horizon;
+  and the owner's request to give every section that opened directly with a subsection
+  a short lead-in paragraph.
+* **Paper 1 (0.8).** Appendix A: (M8) with its own quantifiers ($\forall i\neq j$ for the
+  precedence, $\forall j$ for $S_j\ge\tau_{0j}$) and $M_{ij}\ge\overline C_i+\overline\tau_{ij}-\underline S_j$
+  in convention (iii) (HΔ alone does not deactivate the precedence when $C_i$ reaches the
+  horizon); ε defined once, as one unit of the position lattice of convention (iv). §4.1:
+  the audited exception (legacy comparators' tie-break on $r_j$) stated in the sentence
+  "every policy is a function of I_t"; the terminal segment depends on the last action;
+  an episode without decision epochs has $n\bar F=c(0,T)$ with no $t_1$, $t_m$. §9.2: the 5 ms
+  exceedances of the rules corrected (`nearest_head` none; `nearest_job` one decision of C,
+  9.9 ms, 1 of 17 147, none in B). §6.2: "at each decision time t the teacher samples
+  arrivals over (t, t+30 s], including instants beyond the episode's arrival horizon T_A"
+  (as `sample_scenarios` does). Lead-in paragraphs for §3, §4, §6, §7, §9 and §10. PDF
+  rebuilt (33 pages).
+* **Paper 2 (1.1).** Lead-in paragraphs for §3, §4, §5, §6 and §7 (the sections that
+  opened with a subsection). No change of content; PDF rebuilt (24 pages).
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf}`, `docs/papers/paper2/{paper2.tex,paper2.pdf}`,
+  `docs/plans/papers.md`.
+
+---
+
 ## 0.7.35 — 2026-11-24 — Second referee round: Paper 1 draft 0.7 (model conventions, state and cost identity, theorem alignment, latency exceedances) and Paper 2 draft 1.0
 
 * **Why.** The second-round referee report on drafts 0.6 / 0.9 (Paper 1: major revision

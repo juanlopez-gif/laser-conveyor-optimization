@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.7 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; second referee round, 0.7.35)}
+\date{November 2026 --- draft 0.8 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35 and 0.7.36)}
 
 \begin{document}
 \maketitle
@@ -186,6 +186,8 @@ and a baseline on the present one is reported in Section~\ref{sec:ppo}.
 %====================================================================
 \section{The problem}\label{sec:problem}
 %====================================================================
+
+This section states the cell as a continuous-time scheduling problem: the system and its notation, the odometer description of each belt and the entry coordinate of each part, the decisions and the constraints that couple them, the objectives, the restricted model that the cell's controller realizes and, last, the problem statement used in the rest of the paper.
 
 \subsection{System and notation}
 Figure~\ref{fig:cell} shows the cell. $K=\{1,\dots,N\}$ are the conveyors; $J$ the parts of
@@ -420,6 +422,8 @@ exact, because the odometers depend on the whole history.
 \section{The online problem}\label{sec:online}
 %====================================================================
 
+The cell does not know the arrivals in advance. This section defines the online problem the controller faces: the policies and their decision epochs, the information model that says what a policy may observe, and the general stochastic problem over a family of cells that the learned policy targets.
+
 \subsection{Policies and decision epochs}
 In the cell, $r_j$ is revealed only when the part arrives. A \emph{policy} maps the
 information available at a decision epoch to the next part. The online problem is a
@@ -444,14 +448,17 @@ including those waiting in the hidden queue upstream of the feed point, and, und
 bursty arrivals, the phase of the source; between epochs it evolves under the action and
 the arrival process. A policy acts on the observation $\I_t$ of Section~\ref{sec:info},
 which omits the hidden queue and the source's phase, so $\I_t$ need not be a Markov
-state of the process; every policy of this paper is a function of $\I_t$ and nothing
-below assumes more. The identity between return and cost covers the whole episode:
+state of the process; every policy of this paper is a function of $\I_t$, with the
+audited exception of the legacy comparators of Section~\ref{sec:confirm}, whose
+tie-break used $r_j$ (below), and nothing below assumes more. The identity between return and cost covers the whole episode:
 $n\Fpi=c(0,t_1)+\sum_{i=1}^{m-1}c(t_i,t_{i+1})+c(t_m,T)$, with $t_1$ the first decision
-epoch, $t_m$ the last and $T$ the instant the last part leaves; the first and last
-terms are the cost of the forced segments (waiting for the first part, single-candidate
-dispatches, draining after the last decision), which no decision influences but which
-the episode's cost contains. An episode with a single part has a positive cost and no
-decision epoch. The learners of Sections~\ref{sec:policy} and \ref{sec:ppo} attribute
+epoch, $t_m$ the last and $T$ the instant the last part leaves; the first term is the
+cost of the forced initial segment (waiting for the first part, single-candidate
+dispatches), which no decision influences, and the last term, the draining after the
+last decision, still depends on the last action although no decision follows it; both
+are part of the episode's cost. An episode without a decision epoch (a single part, or
+forced dispatches only) has $n\Fpi=c(0,T)$, positive, with no $t_1$ or $t_m$ to
+introduce. The learners of Sections~\ref{sec:policy} and \ref{sec:ppo} attribute
 to each decision the cost accrued until the next one and the terminal segment to the
 last decision, and score the forced initial segment in the episode cost. An episode
 with no arrival has zero total cost and an undefined per-part cost $\Fpi$: it is
@@ -707,6 +714,8 @@ optimal, which is the room the online method of the next sections works in.
 \section{The look-ahead search}\label{sec:search}
 %====================================================================
 
+Two searches decide by simulating: a rollout over the parts already known, and a scenario search that adds sampled futures and scores every part. Both serve as experts for the policy of Section~\ref{sec:policy}; this section defines them.
+
 \subsection{Rollout over the known parts}
 The first search is a fortified rollout \cite{M02_Bertsekas1997} on the cell's exact
 event-driven simulator. At a decision epoch with candidate set $\mathcal C$ and base policy
@@ -757,7 +766,7 @@ look-ahead rewards starving the new parts. With the all-parts score, four future
 beat the known-parts rollout in every group, and eight gain another half point. (ii)
 \emph{One or two futures are worse than none}: the sampled future is noise until it is
 averaged. (iii) \emph{Window.} 20--30~s is best; 45--60~s add noise faster than
-information. (iv) \emph{Truncating the look-ahead with a learned value is far worse than
+information. At each decision time $t$ the teacher samples arrivals over $(t,t+30\,\mathrm{s}]$, including instants beyond the episode's arrival horizon $T_A$, which the controller does not observe (Section~\ref{sec:info}). (iv) \emph{Truncating the look-ahead with a learned value is far worse than
 not truncating.} Cutting each rollout at $t+20$~s and adding the value head's estimate of
 the cost-to-go gives $+18$ to $+54$\,\% against \nj: the cost-to-go depends mostly on the
 random future arrivals, so its scale (hundreds of part-seconds) and the value head's
@@ -776,6 +785,8 @@ episode: 22~s on the reference cell and 112~s on the heavy variant on one worker
 %====================================================================
 \section{The learned policy}\label{sec:policy}
 %====================================================================
+
+The policy that amortizes the search is a network over a set of tokens, trained by expert iteration with the scenario search as expert on a distribution of randomized cells. This section gives the state representation, the network, the training loop and the training distribution; the development results are in Section~\ref{sec:dev}.
 
 \subsection{State as a set of tokens}
 The policy reads $\I_t$ as an unordered set of tokens: one per unfinished part on a belt
@@ -1121,6 +1132,8 @@ shaping, a penalty towards the initialization in V2, and longer budgets.
 \section{Confirmatory evaluation}\label{sec:confirm}
 %====================================================================
 
+This section reports the one evaluation on realizations reserved for it and used once: the protocol fixed before the run, then the results in both dispatch modes, with the latencies measured on the same decisions.
+
 \subsection{Protocol}
 The frozen network, the known-parts search over \nj, the scenario search over the
 network (its expert), \nj\ and \nh\ were run on 30 realizations reserved for this
@@ -1226,7 +1239,8 @@ machine fully loaded by 47 other workers (Figure~\ref{fig:latency}); the 4~ms of
 Section~\ref{sec:policy} is the same model on an unloaded machine. Against the design's
 5~ms budget, on the loaded machine the network exceeded it in 98.07\,\% of the 16\,215
 decisions of B and in 97.62\,\% of the 17\,147 of C, the known-parts search in 48.25 and
-45.72\,\%, the scenario search in every decision and the rules in none; on the unloaded
+45.72\,\%, the scenario search in every decision, \nh\ in none, and \nj\ in one decision
+of C (9.9~ms; 1 of 17\,147, 0.006\,\%) and none of B; on the unloaded
 machine the only figure available is the 4.1~ms median, which does not establish a
 per-decision guarantee. The physical slack of
 the cell, the time until the next part reaches $b$, is seconds, three orders of magnitude
@@ -1255,6 +1269,8 @@ plan's original target, is $-14.1$\,\% on the reference cell with Poisson arriva
 %====================================================================
 \section{Discussion}\label{sec:discussion}
 %====================================================================
+
+Four readings of the results follow: what the formulation buys, what sets the quality of the policy, what the policy cannot do, and the limits of the study.
 
 \subsection{What the formulation buys}
 The odometer formulation makes the endogenous part of the problem explicit and cheap: a
@@ -1363,7 +1379,7 @@ and $C_j:=S_j+p_j$ are linear.
 &a\le X_j\le b && \forall j \tag{M5}\\
 &u_{kt}+\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}\le 1 && \forall k,t \tag{M6}\\
 &w_{ij}+w_{ji}=1 && \forall i<j \tag{M7}\\
-&S_j\ge S_i+p_i+\tau_{ij}-M(1-w_{ij}),\qquad S_j\ge\tau_{0j} && \forall i\neq j \tag{M8}\\
+&S_j\ge S_i+p_i+\tau_{ij}-M_{ij}(1-w_{ij})\quad\forall i\neq j,\qquad S_j\ge\tau_{0j}\quad\forall j \tag{M8}\\
 &\tau_{ij}\ge\pm\frac{X_j-X_i}{v_x},\quad \tau_{ij}\ge\frac{|y_{k(i)}-y_{k(j)}|}{v_y},\quad
  \tau_{0j}\ge\pm\frac{X_j-x_0}{v_x},\quad \tau_{0j}\ge\frac{|y_{k(j)}-y_0|}{v_y} \tag{M9}
 \end{align}
@@ -1379,8 +1395,9 @@ non-idling constraint (C5), omitted for the relaxed model, is
 &D_{k(j),t}-E_j\le b-v_{k(j)}\Delta+M\Bigl(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Bigr) && \forall j,t \tag{M12}
 \end{align}
 (M11) allows the blocking witness only for parts not yet started and \emph{strictly}
-inside the last step of the zone, $x_j>b-v_k\Delta$ (with $\varepsilon>0$ smaller than
-the position resolution), i.e.\ parts that cannot advance a full step without
+inside the last step of the zone, $x_j>b-v_k\Delta$ (with $\varepsilon$ one unit of the
+position lattice of convention (iv) below, which lies below any physical position
+resolution), i.e.\ parts that cannot advance a full step without
 overshooting $b$, which is where the belt must stop; (M12) forces it there: such a part
 \emph{is} blocking, whatever the reason the belt is stopped, so that
 $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with $\gamma_j\ge\beta_{jt}$
@@ -1432,8 +1449,13 @@ $[\mathrm{est}_j,\mathrm{lst}_j]$ derived from the incumbent's objective value, 
 solution at least as good as the incumbent is cut off, and sets
 $H=\max_j(\mathrm{lst}_j+\bar p_j)$. (iii) \emph{Big-$M$ constants.} Every $M$ is finite
 and instance-specific: $M\ge\max_kv_kH\Delta+L$ for the odometer differences of
-(M3)--(M4) and (M11)--(M12), $M\ge H\Delta$ for the starts of (M8); the implementation
-uses indicator constraints and an exact maximum instead, so no big-$M$ is instantiated.
+(M3)--(M4) and (M11)--(M12); for the precedence of (M8), deactivating it at $w_{ij}=0$
+needs $M_{ij}\ge\overline C_i+\overline\tau_{ij}-\underline S_j$, with $\overline C_i$ the
+latest completion and $\underline S_j$ the earliest start admitted by the windows of
+(ii) and $\overline\tau_{ij}$ an explicit upper bound on the travel time (the longest move
+inside the workspace), since $C_i$ can reach the horizon and the travel still adds to
+it, so $H\Delta$ alone would not do; the implementation uses indicator constraints and an
+exact maximum instead, so no big-$M$ is instantiated.
 (iv) \emph{Position lattice and $\varepsilon$.} Positions are integers in a unit chosen
 as the inverse least common multiple of the denominators of $v_k\Delta$, $a$, $b$,
 $\delta$ and $x_0$ (1~mm for the reference cell), so that every odometer value and every

@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.0 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34 and 0.7.35)}
+\date{November 2026 --- draft 1.1 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.36)}
 
 \begin{document}
 \maketitle
@@ -206,6 +206,8 @@ geometry and the load of the cell, on paired realizations.
 \section{The cell and its information model}\label{sec:cell}
 %====================================================================
 
+This section describes the cell studied, its objective, the information model with the two things a camera enables, seeing a part earlier and acting on the view, and the quantities the coverage is measured against: the anticipation, the crossing time and the moves the head makes.
+
 \subsection{Geometry and dynamics}
 Figure~\ref{fig:cell} shows the cell. Parts travel in the $+x$ direction on $N=3$
 conveyors at $y_k=(k-1)\,d$, $d$ the belt spacing, at a common belt speed $\vb$. The belt
@@ -354,6 +356,8 @@ duration of those moves, $\tpp$, as predictors of the anticipation the camera ne
 %====================================================================
 \section{Experimental design}\label{sec:design}
 %====================================================================
+
+Three paired studies share the controllers and the checks of this section: the reference-cell study of Section~\ref{sec:reference}, and the geometry bench and the belt-speed bench of Section~\ref{sec:benchresults}. Each was fixed before its run, on realizations reserved for it and used once.
 
 \subsection{Controllers}
 Two unrelated controllers run every configuration of the first two studies (the belt-speed
@@ -550,6 +554,8 @@ bench extracts needs only NumPy and Matplotlib.
 \section{The reference cell: seeing against acting}\label{sec:reference}
 %====================================================================
 
+The reference-cell study separates seeing from acting on the eight regimes of one cell, then measures the coverage curve of that cell and checks the robustness of the contrasts to the controller.
+
 \subsection{Widening the view alone changes little; acting on it is worth 3--7\,\%}\label{sec:seeing}
 Table~\ref{tab:contrasts} and Figure~\ref{fig:contrasts} give the contrasts between
 treatments.
@@ -712,6 +718,8 @@ reference network's contrasts (frozen minus reference, per realization, points; 
 %====================================================================
 \section{The geometry bench: how far must the camera see when the cell changes?}\label{sec:benchresults}
 %====================================================================
+
+The geometry bench asks, across 56 distinct cells, where sizing the coverage is worth it, how much anticipation is needed there and what predicts it; the remaining subsections report what the along-belt axis, the traces, the entry length, the network and, in the third study, the belt speed change about the answer.
 
 \subsection{Where sizing the coverage is worth it}\label{sec:worth}
 Table~\ref{tab:gains} gives the whole-grid gain $G(10\,\mathrm{s})$ of the rule in the 56
@@ -1042,6 +1050,8 @@ realizations at both speeds, four cells. Dotted lines at 10 and 16.7~cm; the sam
 %====================================================================
 \section{Discussion}\label{sec:discussion}
 %====================================================================
+
+The discussion turns the results into a specification in seconds, explains why widening the view alone changed little, reads the effect of load, bursts and idle time, and states the limits.
 
 \subsection{A specification in seconds}
 The results give the numbers for a specification of the camera's reach in seconds of
