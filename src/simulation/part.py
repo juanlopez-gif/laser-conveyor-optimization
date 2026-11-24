@@ -46,6 +46,7 @@ class Part:
     status: PartStatus = PartStatus.WAITING
     assigned: bool = False                 # the laser is currently heading to it
     entry_time: float | None = None        # entered the belt (x = 0)
+    observed_time: float | None = None     # first instant observable at the cell's level (0.7.26)
     ready_time: float | None = None        # entered the laser zone
     start_processing_time: float | None = None
     completion_time: float | None = None

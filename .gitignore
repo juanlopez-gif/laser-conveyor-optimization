@@ -23,3 +23,5 @@ docs/papers/**/*.bbl
 docs/papers/**/*.blg
 docs/papers/**/*.fls
 docs/papers/**/*.fdb_latexmk
+docs/formulation/*.fdb_latexmk
+docs/formulation/*.fls

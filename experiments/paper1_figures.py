@@ -369,11 +369,17 @@ def fig_confirm(b: Bench, path: Path):
         ax.axvline(0, color="k", lw=0.5)
         ax.set_title(title)
         ax.set_xlabel("paired $\\Delta$ of $J$ [%]")
-        ax.legend(frameon=False, fontsize=6, loc="lower left")
         ax.axhline(3.5, color="grey", lw=0.5, ls=":")
     axes[0].set_yticks(y)
     axes[0].set_yticklabels(names, fontsize=7)
-    fig.tight_layout()
+    handles, labels = [], []
+    for ax in axes:
+        h, l = ax.get_legend_handles_labels()
+        for hh, ll in zip(h, l):
+            if ll not in labels:
+                handles.append(hh); labels.append(ll)
+    fig.legend(handles, labels, loc="lower center", ncol=5, frameon=False, fontsize=6.5, bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout(rect=(0, 0.07, 1, 1))
     fig.savefig(path)
     plt.close(fig)
 

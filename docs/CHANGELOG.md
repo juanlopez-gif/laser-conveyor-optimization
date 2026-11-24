@@ -6,6 +6,57 @@ summarized from the git history.
 
 ---
 
+## 0.7.26 — 2026-11-23 — Observable tie-break, MILP blocking witness re-scoped, Paper 1 draft 0.3
+
+* **Why.** The owner's review of Paper 1 draft 0.2 (2026-11-23) found two technical
+  problems: (1) `nearest_job`, `nearest_head` and the candidate ranking of the
+  known-parts search broke exact ties by the real arrival time `r_j`, which the `belts`
+  and `zone` information models do not observe (a part that waited in the hidden queue
+  shows no trace of it); (2) the time-indexed MILP's blocking witness (M14/M15 of the
+  formulation, M11/M12 of the paper) used a non-strict threshold `x ≥ b − vΔ`, which
+  charges a full blocking event one step early when a part at exactly `b − vΔ`
+  advances and starts on reaching `b` (S_j = B_j, zero cost in the continuous model),
+  an error that does not vanish with Δ. Plus several claims to align with the tables.
+* **What, tie-break.** `FastSim.observed_since(j)` (the instant a part became
+  observable at the cell's level; `rl2.features.observed_since` delegates to it);
+  `fastsim/policies.py` keys `KEY_OBSERVED` (default) and `KEY_ARRIVAL` (legacy, for
+  the audit), `nearest_job`/`nearest_head` take a `key`; `SearchTeacher(tie_key=...)`
+  uses the same key for its candidate ranking; engine: `Part.observed_time` recorded by
+  `Simulation._record_observation` after admission (level `full`: also the queue), and
+  `DecisionContext.observed_key`, used by `policies/nearest_job.py`, `nearest_head.py`
+  and the rollout's ranking. `fifo` and `weighted_score` (not used in the papers) still
+  use `r_j`. Tests: `tests/test_tiebreak.py` (shifting the candidates' arrival times
+  changes no decision on the fast simulator or the engine; the legacy key does; the
+  observation instant matches the level). Engine/fast-simulator agreement tests pass.
+* **Audit** (`experiments/tiebreak_audit.py`, `docs/methods/tiebreak_audit.md`;
+  seeds 2000–2029, eight regimes, B and C): the observable key changes 0.1–2.5 % of the
+  rules' decisions and 0–0.5 % of the search's; paired cost new vs legacy, pooled:
+  `nearest_job` +0.24 ±0.23 % (B), +0.29 ±0.25 % (C); `nearest_head` +0.35 ±0.16 /
+  +0.18 ±0.20; search +0.04 ±0.07 / −0.01 ±0.05; by regime within ±0.6 points at the
+  real load and up to +1.5 at the heavy load with Poisson arrivals (the legacy key,
+  informed by `r_j`, was slightly better). **The phase-4 confirmatory run (0.7.13) used
+  the legacy key** for the rules and the known-parts search; its comparators were
+  therefore slightly favoured, the network's margins are conservative by those amounts,
+  and the reserved seeds were not rerun. Papers 1 and 2 state this.
+* **What, MILP.** `docs/formulation/formal_formulation.tex`: (M14) and (M15) now use the
+  strict threshold `x_j > b − v_kΔ` (the CP-SAT decoder already did); the tie-break
+  paragraph updated; note that (M15) and the penalized objective are specified, not
+  implemented, so for the blocking penalty the model is an approximate discretization
+  not validated against the continuous definition. Paper 1 no longer calls it an exact
+  reference for that objective.
+* **Paper 1 draft 0.3** (`docs/papers/paper1/`): abstract, contributions, §3.4 (the
+  "85–95 % flow, insensitive to the weights" claim removed), §3.6, §4.1 (return to be
+  maximized, weighting by n, observable tie-break and the audit), §4.3 (the selection
+  criterion is the mean paired ratio, not a ratio of means; expert scores unpenalized
+  flow, PPO maximizes the return, both evaluated by the criterion), §5.3 and Table 2
+  (enumeration only for n ≤ 8, heuristic upper bound from n = 10), §5.4/§10/§11
+  (light traffic: the rules coincide and are within I* of the offline optimum, not
+  optimal), §7.2 and Figure 4 (the 5 ms budget is met unloaded and exceeded under
+  load), §9.2 ("no difference from its expert was detected", with the +2.0 ±2.8 cell
+  in C), Appendix A (strict witness, the review's case, implementation status),
+  Figure 3 legend moved below the panels, `extra.bib` DAgger authors as in PMLR, a
+  footnote flagging the Lenstra theorem numbers as pending. PDF rebuilt.
+
 ## 0.7.25 — 2026-11-23 — Paper 1 draft 0.2: the formulation in the body, proofs and MILP in appendices
 
 * **Why.** The owner's reading of draft 0.1 (2026-11-23): the paper left the formal

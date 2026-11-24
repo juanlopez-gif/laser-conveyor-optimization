@@ -37,4 +37,4 @@ def conveyor_heads(candidates):
 class NearestHeadPolicy(BasePolicy):
     def select(self, candidates, ctx):
         heads = conveyor_heads(candidates)
-        return min(heads, key=lambda p: (ctx.travel_key(p), p.arrival_time, p.number))
+        return min(heads, key=lambda p: (ctx.travel_key(p), ctx.observed_key(p), p.number))

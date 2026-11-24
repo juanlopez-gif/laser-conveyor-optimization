@@ -468,3 +468,28 @@ the fast simulator only.
   points), and the coverage to specify is the head's travel time across the
   conveyors in seconds of belt travel: 7.5 cm (2.5 s) for the nominal head, the whole
   10 cm zone (3.3 s) for a head twice as slow.
+
+### 9.6 Tie-break audit (0.7.26, after the review of Paper 1 draft 0.2)
+
+Up to 0.7.25 `nearest_job`, `nearest_head` and the candidate ranking of the known-parts
+search broke exact ties on the interception time by the real arrival time `r_j`, which
+the `belts` and `zone` information models do not observe. **The phase-4 run of §9 used
+that legacy key for the rules and the search** (the network does not use `r_j`). The
+key is now the observation instant (`FastSim.observed_since`, `Part.observed_time`);
+the effect was measured on development seeds 2000–2029, eight regimes, B and C
+(`experiments/tiebreak_audit.py`, full tables in `tiebreak_audit.md`):
+
+| t | policy | decisions changed | Δ new vs legacy, pooled [%] | max |Δ| by regime [%] |
+|---|---|---|---|---|
+| B | `nearest_job` | 0.2–1.7 % | +0.24 ±0.23 | 1.27 (heavy / Poisson / slow) |
+| B | `nearest_head` | 0.4–2.4 % | +0.35 ±0.16 | 1.51 (heavy / Poisson / slow) |
+| B | search | 0–0.5 % | +0.04 ±0.07 | 0.21 |
+| C | `nearest_job` | 0.3–2.2 % | +0.29 ±0.25 | 1.41 (heavy / Poisson / nominal) |
+| C | `nearest_head` | 0.3–2.5 % | +0.18 ±0.20 | 0.82 |
+| C | search | 0–0.4 % | −0.01 ±0.05 | 0.20 |
+
+Reading: the legacy key, informed by an unobservable quantity, made the rules slightly
+*better* (0.2–0.4 points pooled, up to 1.5 at the heavy load with Poisson arrivals), and
+left the search unchanged. The published comparators of §9.3 were therefore slightly
+favoured; the network's margins over them are conservative by those amounts. The
+reserved seeds were not rerun (used once); the papers state the audit instead.

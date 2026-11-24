@@ -417,12 +417,18 @@ equivalent to imposing it only between consecutive parts.
 \begin{align}
 &u_{kt}\ge 1-\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}-\sum_{j\in J_k}\beta_{jt} && \forall k,t \tag{M12}\\
 &\beta_{jt}\le 1-\textstyle\sum_{t'\le t}s_{jt'} && \forall j,t \tag{M13}\\
-&D_{k(j),t}-E_j\ge b-v_{k(j)}\Delta-M(1-\beta_{jt}) && \forall j,t \tag{M14}
+&D_{k(j),t}-E_j\ge b-v_{k(j)}\Delta+\varepsilon-M(1-\beta_{jt}) && \forall j,t \tag{M14}
 \end{align}
 (M13) allows the blocking witness only for parts not yet started and (M14) only when the
-part is at the end of the zone. The slack $v_k\Delta$ is the discretization tolerance: a
-conveyor may stop one step early instead of overshooting $b$ (the simulator stops
-exactly at $b$ with a partial step).
+part is \emph{strictly} inside the last step of the zone, $x_j>b-v_k\Delta$ ($\varepsilon>0$
+below the position resolution): the parts that cannot advance a full step without
+overshooting $b$, where the belt must stop. The slack $v_k\Delta$ is the discretization
+tolerance: a conveyor may stop one step early instead of overshooting $b$ (the simulator
+stops exactly at $b$ with a partial step). The threshold is strict since version 0.7.26
+(an external review of Paper~1 found that with $x_j\ge b-v_k\Delta$ a part at exactly
+$b-v_k\Delta$ that advances one step and starts on reaching $b$, i.e.\ $S_j=B_j$ with no
+cost in the continuous model, would be charged a full event one step early); the CP-SAT
+decoder already used the strict comparison.
 
 \paragraph{Blocking witness tied to the physical state (version 0.6.0).} (M13)--(M14)
 only \emph{allow} $\beta_{jt}=1$. When the belt is already stopped by a processing
@@ -431,13 +437,16 @@ $\beta_{jt}=0$ although $j$ sits at the zone end (external audit, 2026-11-19), w
 the simulator and the continuous definition $(S_j-B_j)^+$ count that interval as
 blocked. When $\Pi$ is in the objective we therefore add
 \begin{equation}
-D_{k(j),t}-E_j\le b-v_{k(j)}\Delta-\varepsilon+M\Big(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Big)
+D_{k(j),t}-E_j\le b-v_{k(j)}\Delta+M\Big(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Big)
 \qquad\forall j,t \tag{M15}
 \end{equation}
-with a small $\varepsilon>0$: an unstarted part inside the last step of the zone
-\emph{is} blocking. With (M13)--(M15), $\beta_{jt}=1$ exactly when $j$ has not started
-and lies within $v_k\Delta$ of $b$, whatever the reason the belt is stopped, so $T_B$ and
-$N_B$ match the simulator up to the $O(\Delta)$ tolerance of (M14).
+an unstarted part strictly inside the last step of the zone \emph{is} blocking. With
+(M13)--(M15), $\beta_{jt}=1$ exactly when $j$ has not started and lies strictly within
+$v_k\Delta$ of $b$, whatever the reason the belt is stopped, so $N_B$ matches the
+simulator and $T_B$ up to the $O(\Delta)$ tolerance of (M14). (M15) and the penalized
+objective are specified here and not implemented in the CP-SAT model (0.7.26): for the
+blocking penalty this model is an approximate discretization that has not been
+validated against the continuous definition.
 
 \subsection{Objectives in linear form}
 \begin{itemize}[nosep]
@@ -539,9 +548,12 @@ observable parts (\S\ref{sec:info}, plus forecast arrivals, if any) over a windo
 steps, apply the first decision and re-solve at the next epoch.
 
 \emph{Tie-break.} Rules that rank candidates by travel time compare the times rounded to
-$10^{-9}$\,s and break exact ties by earliest arrival, then by part number. Exact ties
-are frequent (equal moves $\Delta y/v_y$, several parts stopped at $b$), so the tie rule
-is part of the definition of a policy.
+$10^{-9}$\,s and break exact ties by the instant from which the part has been observable
+($o_j$, \S\ref{sec:info}), then by part number (version 0.7.26; up to 0.7.25 the second
+key was the arrival time $r_j$, which the \texttt{belts} and \texttt{zone} levels do not
+observe; the audit of the change is in \texttt{docs/methods/tiebreak\_audit.md}). Exact
+ties are frequent (equal moves $\Delta y/v_y$, several parts stopped at $b$), so the tie
+rule is part of the definition of a policy, and it must use observable quantities only.
 
 \subsection{Information model}\label{sec:info}
 A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts

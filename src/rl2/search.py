@@ -66,7 +66,7 @@ import random
 import torch
 
 from fastsim import FastSim
-from fastsim.policies import nearest_job
+from fastsim.policies import KEY_OBSERVED, nearest_job
 from rl2.features import arrival_rates, encode
 from rl2.model import DispatchNet, collate
 from simulation.arrivals import ArrivalRecord, ProcessingTimeSampler, _burst_times
@@ -189,7 +189,7 @@ class SearchTeacher:
 
     def __init__(self, net: DispatchNet | None = None, k: int = 6, scenarios: int = 0,
                  window_s: float = 30.0, w_pen: float = 0.0, key: str = "0",
-                 horizon_s: float = 0.0, scale=None, cut: str = "time",
+                 horizon_s: float = 0.0, scale=None, cut: str = "time", tie_key=None,
                  futures: str = "poisson"):
         if cut not in ("time", "decision"):
             raise ValueError(f"cut must be 'time' or 'decision', not {cut!r}")
@@ -203,6 +203,7 @@ class SearchTeacher:
             # were requested for the truncated mode (they hurt that objective, §6.2)
             horizon_s, scenarios = 0.0, 0
         self.k, self.m, self.window, self.w_pen, self.key = k, scenarios, window_s, w_pen, key
+        self.tie_key = KEY_OBSERVED if tie_key is None else tie_key   # rule tie-break (0.7.26)
         self.horizon = float(horizon_s)
         self.scale = scale
         self.last_costs: dict[int, float] = {}
@@ -232,9 +233,8 @@ class SearchTeacher:
     def preference(self, sim: FastSim, cands: list[int]) -> list[int]:
         """Candidates ordered by the base policy's preference (best first)."""
         if self.net is None:
-            first = nearest_job(sim, cands)
-            rest = sorted((j for j in cands if j != first),
-                          key=lambda j: (round(sim.travel_time(j), 9), sim.pr[j], j))
+            first = nearest_job(sim, cands, key=self.tie_key)
+            rest = sorted((j for j in cands if j != first), key=lambda j: self.tie_key(sim, j))
             return [first] + rest
         obs = encode(sim, cands)
         logits, _ = self.net(collate([obs]))

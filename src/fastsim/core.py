@@ -167,6 +167,20 @@ class FastSim:
             return False
         return st != MOVING or self.pvis[j] is not None
 
+    def observed_since(self, j: int) -> float:
+        """Instant from which part ``j`` is observable at the simulator's observation
+        level: arrival (``full``), entry in the visible stretch of the belt (``belts``)
+        or entry in the laser zone (``zone``). Falls back to the arrival time if the
+        instant is not set yet. This, not the arrival time, is the observable quantity
+        the rules may use to break ties (0.7.26)."""
+        if self.observation == "belts":
+            t0 = self.pvis[j]
+        elif self.observation == "zone":
+            t0 = self.pready[j]
+        else:
+            t0 = self.pr[j]
+        return self.pr[j] if t0 is None else t0
+
     def lookahead_clone(self, scenario=(), window_s: float = 0.0) -> "FastSim":
         """Clone for look-ahead search with **online information only**.
 

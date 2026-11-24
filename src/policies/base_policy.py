@@ -60,6 +60,12 @@ class DecisionContext:
     def waiting_time(self, part: Part) -> float:
         return self.time - part.arrival_time
 
+    def observed_key(self, part: Part) -> float:
+        """Instant from which the part has been observable at the cell's information
+        level (the engine records it; falls back to the arrival time). The rules break
+        ties on it, not on the arrival time, which is not observed (0.7.26)."""
+        return part.arrival_time if part.observed_time is None else part.observed_time
+
     def time_to_zone_end(self, part: Part) -> float:
         """Time until the part reaches the end of the laser zone at nominal speed."""
         c = self.conveyor(part.conveyor_id)

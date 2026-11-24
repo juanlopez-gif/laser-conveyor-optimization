@@ -236,7 +236,7 @@ class RolloutPolicy(BasePolicy):
         base_choice = self._new_base().select(candidates, ctx)
         if sim is None:                       # no simulation to clone: behave as the base
             return base_choice
-        ranked = sorted(candidates, key=lambda p: (ctx.travel_key(p), p.arrival_time, p.number))
+        ranked = sorted(candidates, key=lambda p: (ctx.travel_key(p), ctx.observed_key(p), p.number))
         if self.max_candidates is not None:
             kept = ranked[:self.max_candidates]
             if base_choice is not None and base_choice not in kept:

@@ -157,6 +157,7 @@ class Simulation:
         self._update_blocking(t)                        # 3
         self._log_conveyor_transitions(t)
         self._admit_parts(t)                            # 4
+        self._record_observation(t)                     # 4b (0.7.26)
         if self.laser.state in (LaserState.MOVING, LaserState.WAITING_FOR_PART):
             self._revoke_prepositioning(t)
 
@@ -347,6 +348,20 @@ class Simulation:
                 self.log.log(t, EventKind.CONVEYOR_STOP,
                              f"Conveyor {c.id} STOPPED ({'; '.join(reasons)})", conveyor_id=c.id)
             self._was_running[i] = c.is_running
+
+    def _record_observation(self, t: float) -> None:
+        """First instant at which each part is observable at the cell's information
+        level (``Part.observed_time``); the rules break ties on it (0.7.26). Parts in the
+        upstream queue are observable only at level ``full``."""
+        for c in self.conveyors:
+            for p in c.parts:
+                if p.observed_time is None and self.observable(p):
+                    p.observed_time = t
+        if self.observation == "full":
+            for c in self.conveyors:
+                for p in c.buffer:
+                    if p.observed_time is None:
+                        p.observed_time = t
 
     def _update_statuses(self, t: float, moved: list[bool]) -> None:
         start = self.geometry.active_start - EPS

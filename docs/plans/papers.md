@@ -476,6 +476,15 @@ baseline on the new representation (session `ppo-baseline`, protocol frozen: 40 
 episodes per run, three seeds, validation groups of rl2.md §8.8, same realizations,
 training cost of both schemes reported). Open: the PPO results, the owner's reading of
 0.2, verification of the seven classical references in `extra.bib`.
+**Draft 0.3 (0.7.26)**, the owner's technical corrections: the rules' tie-break made
+observable (code, tests, audit on development seeds: the phase-4 comparators were
+slightly favoured by `r_j`, the network's margins are conservative; reserved seeds not
+rerun), the MILP witness made strict and the model re-scoped as approximate for the
+blocking penalty, objectives written apart (per-episode cost, mean paired ratio as the
+criterion, PPO's return), light traffic stated as "coincide within I*", "no difference
+from the expert detected", the 5 ms budget qualified, Table 2 labelled, Figure 3
+legend moved. Open: PPO results (session `ppo-baseline`), the Lenstra theorem numbers,
+the owner's reading of 0.3.
 
 **Where the plan's steps already stand.**
 

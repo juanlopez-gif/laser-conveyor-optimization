@@ -85,13 +85,7 @@ def observed_since(sim: FastSim, j: int) -> float:
     the whole entry zone unless ``simulation.visible_length`` is set, 0.7.10) or entry
     in the laser zone (``zone``). Falls back to the arrival time if the instant is not
     set."""
-    if sim.observation == "belts":
-        t0 = sim.pvis[j]
-    elif sim.observation == "zone":
-        t0 = sim.pready[j]
-    else:
-        t0 = sim.pr[j]
-    return sim.pr[j] if t0 is None else t0
+    return sim.observed_since(j)
 
 
 def arrival_rates(cfg) -> list[float]:
