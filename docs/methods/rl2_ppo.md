@@ -78,7 +78,7 @@ changed after seeing the results of §3.
 
 | item | value |
 |---|---|
-| budget | **40 000 training episodes per run** = 40 updates; about the 36 000 acting episodes of the expert-iteration chain `rl2_gen_s_big` (24 000) → `_sf` (8 000) → `_d` (8 000) → `_b` (6 000) that produced the frozen network, and a comparable number of network decisions (≈ 55 000 per 1 000 episodes here, ≈ 50 000 per 1 000 episodes there) |
+| budget | **40 000 training episodes per run** = 40 updates; about the 36 000 acting episodes of the expert-iteration chain `rl2_gen_s_big` (14 000; the frozen text said 24 000, a slip in the description corrected in 0.7.33 against the training log: 14 000 + 8 000 + 8 000 + 6 000 = 36 000) → `_sf` (8 000) → `_d` (8 000) → `_b` (6 000) that produced the frozen network, and a comparable number of network decisions (≈ 55 000 per 1 000 episodes here, ≈ 50 000 per 1 000 episodes there) |
 | training seeds | run s (PPO seed s ∈ {0, 1, 2}) uses seeds 200 000 + 100 000 s + e, e = 0 … 39 999, in order: 200 000–239 999, 300 000–339 999, 400 000–439 999. Distinct from the expert-iteration seeds (100 000+), never 7 000–7 029 or 9 000–9 059. The smoke test (§2) used PPO seed 9 (1 100 000–1 103 999). |
 | PPO seed | also the network initialization, the minibatch order and, through the episode seed, the action sampling (`random.Random(f"rl2ppo/{seed}")`) |
 | checkpoints | every 4 000 episodes (after updates 4, 8, …, 40): `models/<tag>_it<u>.pt` (local, ignored by git) |

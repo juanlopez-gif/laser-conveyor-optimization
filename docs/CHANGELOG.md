@@ -6,6 +6,101 @@ summarized from the git history.
 
 ---
 
+## 0.7.34 — 2026-11-24 — Paper 1 draft 0.6 and Paper 2 draft 0.9: referee corrections
+
+* **Why.** A referee report on drafts 0.5 / 0.8 (recommendation: major revision for
+  both). The owner approved round 1 (verified corrections) and closed six decisions:
+  (1) retire the one-step guarantee of the blocking penalty, option (a); (2) restrict
+  the light-traffic theorem to ready-only dispatch with sufficient conditions; (3) rerun
+  the tie-break audit with the key inside the rollouts (0.7.33); (4) keep the PPO
+  comparison as development evidence under the protocols tried; (5) keep 1.74 as the
+  frozen predictor result with its weighting named; (6) name the thresholds as design
+  decisions and separate the two uses of 0.5 s/part.
+* **Paper 1 (0.6).** Abstract, contribution list, §5.4 Theorem 1 and §§10.1, 11: the
+  light-traffic statement holds for non-idling rules that dispatch among the parts
+  already in the zone (mode `none`), under sufficient conditions, with the single-part
+  counterexample named as the case where pre-positioning completes earlier; §5.3 no
+  longer applies the I* bound to contended instances. Appendix A: the claim that the
+  blocked time matches the continuous model within one step is withdrawn with the
+  referee's counterexample (a part inside the last step while its belt is stopped by a
+  processing operation on another part is charged the whole operation), the error
+  bounded by a processing stop; the dispatching study computes costs with the simulator;
+  the refinement is deferred to the measurement of the penalized optimum. §4.2, §8
+  opening and §9.1: the audit of 0.7.33 (key inside the rollouts, per-seed pooling,
+  changes of either sign), without the claim that the reserved margins are conservative.
+  §8.5: no inference about larger budgets; curriculum, signal and compute named as the
+  three unseparated differences; the decoding diagnosis labelled post hoc; "reaches the
+  rule" → no difference detected. Wording: "the search costs 1.5–3.9 % more than the
+  policy" (no "points"); "no network scored better than its expert" and "no difference
+  detected" instead of ceiling / recovers / same quality / reproduces within the noise;
+  "larger networks did not score better in the three runs made"; throughput marked as
+  maximized; permutation-equivariant; the search-scoring sentence cites Table 3 instead
+  of "better in every variant"; latency header "[ms; teacher in s]"
+  (`experiments/paper1_figures.py`). PDF rebuilt (31 pages).
+* **Paper 2 (0.9).** §4.1: the tie convention per study (earliest arrival in the reference
+  study and the geometry bench, the observable instant in the belt-speed bench) and the
+  "zero by construction" statement restricted to the earliest-arrival key and checked on
+  the extract; §6.8: the owner's sentence ("neither slow-axis cell met the benefit
+  criterion with the full view; the paired comparison between speeds detected a
+  reduction in one of the two"), the shorter views in those cells "undetermined" under
+  the conservative reading (upper bounds 0.51 and 0.57 above the margin) instead of
+  "within the margin", 0.33 for the rounded upper bound, the direct 10-vs-16.7 cm
+  contrasts (+0.09 ±0.26, +0.05 ±0.14), the post hoc label on the alignment caveat, and
+  the disclosure that the rule's `none` level depends on the visible length in this bench
+  (mean changes within ±0.41 s/part, one detected); Table 9 and §6.6 labelled as J with
+  the raw-flow values beside; Limits: the benefit screen is not insensitive to the
+  penalty weights (15 cells instead of 18 on raw flow time, a sensitivity computed after
+  the run); §6.3: τ_pp averages per episode with a move (weighting each move equally
+  gives 2.00 and 1.06 s, sensitivity), predicts the point knee, needs full-view traces,
+  errors 1.02 / 1.13 s together, t_x+t_y labelled supplementary; §4.3 and §4.4: both
+  thresholds design decisions without economic calibration, the two uses of 0.5 s/part
+  distinguished; abstract, contributions and conclusions: "in the four nominal-load
+  regimes", "17 of the 18 cells (one unresolved)", "for the rule, cells with the same
+  crossing time are identical", "cost less than the margin against the full 50 cm view,
+  with the rule" instead of "sufficed", "the three confirmatory runs". PDF rebuilt
+  (24 pages).
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf,tables/confirm_B.tex,tables/confirm_C.tex}`,
+  `docs/papers/paper2/{paper2.tex,paper2.pdf}`, `experiments/paper1_figures.py`,
+  `docs/plans/papers.md`.
+
+---
+
+## 0.7.33 — 2026-11-24 — Tie-break audit rerun with the key inside the rollouts; blocking-time claim withdrawn; legacy parity test
+
+* **Why.** The referee of Paper 1 draft 0.5 found that the 0.7.26 audit applied the
+  legacy key only to the search's candidate ranking: `SearchTeacher.costs` called
+  `run_lookaheads(looks, self.net)`, whose continuations use `nearest_job` with the
+  current key, so the legacy arm of the known-parts search was incomplete. The same
+  report gave a counterexample to the one-step error bound of the blocking witness and
+  found `tests/test_rl.py` failing on the old RL wrapper's parity helper.
+* **What.** `src/rl2/search.py`: the continuations receive
+  `rule=lambda s, c: nearest_job(s, c, key=self.tie_key)` (no effect on the network
+  teacher, whose continuations the network plays; the known-parts search with the
+  default key is unchanged). `experiments/tiebreak_audit.py`: docstring, reserved-range
+  guard extended to 10000–10059, pooled contrast as one mean per seed over the eight
+  regimes with the interval over the 30 seed means. Rerun on seeds 2000–2029
+  (development), 1 440 audits: rules unchanged (`nearest_job` +0.24 ±0.20 B, +0.29 ±0.23
+  C; `nearest_head` +0.35 ±0.16, +0.18 ±0.20), known-parts search +0.01 ±0.13 (B) and
+  +0.18 ±0.19 (C) pooled, up to 0.41 / 0.76 per regime, decisions changed 0.1–1.3 %
+  (0.7.26 had reported ≤ 0.2 and 0–0.5 %). Versioned `docs/methods/tiebreak_audit.md`,
+  `docs/methods/confirmatory.md` §9.6 rewritten (no claim that the reserved margins are
+  conservative). `docs/formulation/formal_formulation.tex`: the "T_B up to O(Δ)"
+  statement replaced by the counterexample and the bound by a processing stop; PDF
+  rebuilt. `docs/methods/geometry.md` §8.1–§8.2: rule-version disclosure for the
+  belt-speed bench (`none` varies with the visible length in 366 of 480 combinations,
+  0 of 4 560 in the geometry bench) and the slow-axis cells' shorter views as
+  "undetermined" (the first text said "within the margin"). `docs/methods/rl2_ppo.md`
+  §1.4: 14 000 episodes for `rl2_gen_s_big` (the frozen text said 24 000).
+  `tests/test_rl.py`: `_greedy_head` uses the current rule (travel rounded to 1e-9 s,
+  observation instant, id), `_greedy_head_legacy` states the historical convention, and
+  `test_legacy_convention_agrees_when_observation_equals_arrival` checks that the two
+  keys differ only through round-off or observation; the RL environment is unchanged.
+* **Where.** `src/rl2/search.py`, `experiments/tiebreak_audit.py`, `tests/test_rl.py`,
+  `docs/methods/{tiebreak_audit.md,confirmatory.md,geometry.md,rl2_ppo.md}`,
+  `docs/formulation/{formal_formulation.tex,formal_formulation.pdf}`.
+
+---
+
 ## 0.7.32 — 2026-11-23 — Paper 2 draft 0.8: the belt-speed bench in the paper
 
 * **Why.** The owner approved draft 0.8 with this message: at 5 cm/s, 10 cm of coverage

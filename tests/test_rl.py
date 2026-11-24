@@ -25,11 +25,49 @@ def test_split_step_is_bit_identical():
     assert sim.result().summary == a
 
 
+def _observed(h):
+    """Instant from which the part has been observable (engine's ``observed_time``; the
+    arrival time when the engine did not record one): the rules' tie-break since 0.7.26."""
+    return h.arrival_time if getattr(h, "observed_time", None) is None else h.observed_time
+
+
 def _greedy_head(env):
+    """The ``nearest_head`` rule as it is today: interception time rounded to 1e-9 s
+    (``DecisionContext.travel_key``), then the observation instant, then the id."""
+    heads = heads_by_conveyor(env.candidates, env.n)
+    return min((i for i, h in enumerate(heads) if h is not None),
+               key=lambda i: (round(env.sim.intercept(heads[i]).time, 9), _observed(heads[i]),
+                              heads[i].number))
+
+
+def _greedy_head_legacy(env):
+    """The historical convention (before 0.7.26): unrounded interception time, then the
+    arrival time, then the id. Kept as the explicit statement of the legacy key."""
     heads = heads_by_conveyor(env.candidates, env.n)
     return min((i for i, h in enumerate(heads) if h is not None),
                key=lambda i: (env.sim.intercept(heads[i]).time, heads[i].arrival_time,
                               heads[i].number))
+
+
+def test_legacy_convention_agrees_when_observation_equals_arrival():
+    """The legacy key is the current key restricted to parts observed from their arrival
+    and to interception times that differ beyond round-off; wherever the two helpers
+    disagree, one of those two conditions fails on the heads of that decision."""
+    env = LaserConveyorEnv(dt=0.05, seed=1)
+    env.reset(options={"load_index": 0, "sim_seed": 7})
+    done, decisions, disagreements = False, 0, 0
+    while not done:
+        heads = [h for h in heads_by_conveyor(env.candidates, env.n) if h is not None]
+        a, b = _greedy_head(env), _greedy_head_legacy(env)
+        decisions += 1
+        if a != b:
+            disagreements += 1
+            same_arrival = all(_observed(h) == h.arrival_time for h in heads)
+            times = sorted(env.sim.intercept(h).time for h in heads)
+            distinct = all(abs(x - y) > 1e-9 for x, y in zip(times, times[1:]))
+            assert not (same_arrival and distinct)
+        _, _, done, _, _ = env.step(a)
+    assert decisions > 10
 
 
 @pytest.mark.parametrize("load_index", [0, 1])

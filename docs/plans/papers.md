@@ -465,7 +465,12 @@ belt speeds is undetermined. **Draft 0.8 (0.7.32):** the belt-speed bench in the
 (new design subsection, results subsection with table and figure, abstract, discussion,
 limits, conclusions) with the owner's message: 10 cm sufficed at 5 cm/s in the two
 fast-axis configurations within the 0.5 s/part margin, the other two fell below the
-benefit criterion even with the full view, centimetres vs seconds open.
+benefit criterion even with the full view, centimetres vs seconds open. **Draft 0.9
+(0.7.34)** after the referee report on 0.8: the tie convention per study (the belt-speed
+bench ran with the observable key, so its `none` level depends on coverage), the
+slow-axis cells' shorter views "undetermined" under the conservative reading, Table 9 as
+J, the benefit screen's sensitivity to the penalty weights (15 vs 18), the predictor's
+weighting and scope, the thresholds as design decisions.
 
 **Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
 at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel
@@ -484,7 +489,12 @@ the owner's reading of 0.4: "no difference detected" for network vs teacher; the
 stated as 22 min per PPO run vs 12.7 h for the chain (CPU-hours are upper bounds, no
 ratio); the PPO comparison framed as development evidence under the protocols tried, the
 confirmatory results being those on reserved seeds. Owner: ready to circulate among
-co-authors. Open: the co-authors' reading;
+co-authors. **Draft 0.6 (0.7.34)** after a referee report on 0.5: the one-step
+blocking-time guarantee withdrawn (counterexample), the light-traffic theorem restricted
+to ready-only dispatch with sufficient conditions, the tie-break audit rerun with the
+key inside the rollouts (0.7.33), the PPO section without inferences about larger
+budgets, and the wording list ("no difference detected", no "points", no ceiling).
+Open: the co-authors' reading;
 the hindsight reference and the generalization bench on new reserved seeds.
 **Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
 properties) with the MILP, the proofs, the lower bounds and the special cases in

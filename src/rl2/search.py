@@ -265,7 +265,7 @@ class SearchTeacher:
                 lk = _Look(cl, known, c, si, t_stop)
                 cl.apply(c)
                 looks.append(lk)
-        run_lookaheads(looks, self.net)
+        run_lookaheads(looks, self.net, rule=lambda s, c: nearest_job(s, c, key=self.tie_key))   # the same key inside the continuations (audit, 0.7.33)
         if finite and self.cut == "time":      # the clone stopped at its time limit
             for lk in looks:
                 lk.stopped = lk.sim.t >= sim.t + self.horizon - _TIE

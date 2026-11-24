@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.8 (results of versions 0.7.13, 0.7.21 and 0.7.28)}
+\date{November 2026 --- draft 0.9 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34)}
 
 \begin{document}
 \maketitle
@@ -46,12 +46,13 @@ learned dispatching policy as a secondary one. In the \emph{reference cell} (eig
 we separate \emph{seeing} earlier (the same actions, a wider view) from \emph{acting}
 earlier (sending the idle head towards a part before it reaches the zone): widening the
 view alone produced small effects in every regime, while acting on it reduced the
-penalized flow time by 2.8--7.4\,\% whenever the head had idle time. The \emph{geometry
+penalized flow time by 2.8--7.4\,\% in the four nominal-load regimes. The \emph{geometry
 bench} (72 regimes: belt spacing 6--18~cm, transverse head speed 5--15~cm/s, along-belt
 head speed 5 and 10~cm/s, two loads, Poisson and bursty arrivals; 60 realizations) then
 measures the gain of acting on a common grid of 0--10~s of anticipation. Pre-positioning
 passes the frozen benefit criterion (an estimated gain of at least 1~s per part with a
-lower 95\,\% bound of at least 0.5~s per part) in 18 of the 56 distinct cells, 13 of them
+lower 95\,\% bound of at least 0.5~s per part, design thresholds fixed before the run
+without an economic calibration) in 18 of the 56 distinct cells, 13 of them
 with Poisson arrivals; in those 18 cells, giving the controller 3.33~s of anticipation
 (10~cm at 3~cm/s) instead of 10~s cost a median of 0.05~s per part and at most 0.44~s per
 part, the largest value observed over the 18 cells, and retained 71--102\,\% of the
@@ -62,18 +63,20 @@ the criterion, halving that speed multiplied the gain by 1.2--2.4 and moved the
 point-estimate requirement from 1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
 is the worst predictor of the required anticipation among those tested (leave-one-out
 error 1.5~s); the mean planned duration of the pre-positioning moves the head starts is
-the best (1.0~s; the factor fitted on these traces is 1.7 times the mean move), and a
-constant of 2.8~s does nearly as well (1.1~s), so the predictor's advantage is small. Cells with the same crossing time are identical by
+the best (1.0~s; the factor fitted on these traces is 1.7 times the mean planned move,
+each episode with a move weighted equally), and a
+constant of 2.8~s does nearly as well (1.1~s), so the predictor's advantage is small. For the rule, cells with the same crossing time are identical by
 the model's structure. The results support specifying the camera in seconds of
 anticipation for this family of cells at the belt speed tested (3~cm/s, at which seconds
 and centimetres are one unit), with the cost of a shorter view measured in the
 conditions where pre-positioning pays and left undetermined where the data do not
 resolve it. A third study, the \emph{belt-speed bench} (3 against 5~cm/s, four cells,
-60 realizations), tests what transfers to a faster belt: at 5~cm/s, 10~cm of coverage
-sufficed in the two configurations with the fast along-belt axis, within a margin of
-0.5~s per part fixed beforehand; the other two configurations fell below the benefit
-criterion even with the full view; and the comparison between centimetres and seconds
-remains open.
+60 realizations, the rule only), tests what transfers to a faster belt: at 5~cm/s, 10~cm
+of coverage cost less than a margin of 0.5~s per part fixed beforehand, against the full
+50~cm view, in the two configurations with the fast along-belt axis; neither slow-axis
+configuration met the benefit criterion with the full view, and the paired comparison
+between speeds detected a reduction in one of the two; and the comparison between
+centimetres and seconds remains open.
 \end{abstract}
 
 %====================================================================
@@ -127,11 +130,11 @@ test that reference, and rejects it in favour of a measured quantity.
 \item The answer in physical units: in the 18 cells that pass the benefit criterion, 3.33~s
   of anticipation cost a median 0.05 and at most 0.44~s per part against 10~s (the
   largest value observed);
-  retaining 90\,\% of the gain conservatively needs 2.0--7.5~s; the along-belt head speed
-  is a first-order factor.
+  retaining 90\,\% of the gain conservatively needs 2.0--7.5~s in 17 of the 18 cells (one
+  unresolved within the grid); the along-belt head speed is a first-order factor.
 \item A test of what predicts the required anticipation: the transverse crossing time is
   the worst of the candidates and the planned duration of the moves the head starts the
-  best, with a constant close behind (the predictor's advantage is small); cells with the same crossing time are identical by
+  best, with a constant close behind (the predictor's advantage is small); for the rule, cells with the same crossing time are identical by
   the model's structure (Section~\ref{sec:predict}).
 \item A trace-based reading of the mechanism: at the nominal load the aggregate gain per
   pre-positioning move is compatible with the saving being transmitted to the parts
@@ -356,10 +359,16 @@ Two unrelated controllers run every configuration, so that the value of informat
 tied to one policy:
 \begin{itemize}[nosep]
 \item \nj\ (\texttt{nearest\_job}), the primary controller: the dispatching rule that
-  chooses the candidate with the smallest interception time (ties: earliest arrival). It
-  never uses a part it cannot select, so for \nj\ the pure-information contrasts (B vs A,
-  D vs B) are zero by construction and only the action contrast (C vs B) and the coverage
-  curve are informative; it is also geometry-agnostic, which makes it the clean
+  chooses the candidate with the smallest interception time (ties: earliest arrival in
+  the reference study and the geometry bench; since version 0.7.26 of the project the
+  instant from which the part has been observable, the convention of the belt-speed
+  bench, Section~\ref{sec:beltdesign}). It
+  never uses a part it cannot select, so under the earliest-arrival key the
+  pure-information contrasts of \nj\ (B vs A, D vs B) are zero by construction, checked
+  on the geometry extract (identical \texttt{none} costs across visible lengths in every
+  cell and realization), and only the action contrast (C vs B) and the coverage curve
+  are informative; under the observable key the tie-break itself depends on the
+  coverage, and Section~\ref{sec:belt} reports that change of the baseline; it is also geometry-agnostic, which makes it the clean
   instrument of the geometry bench. \nh\ (\texttt{nearest\_head}), the same rule restricted
   to the most downstream candidate of each belt, is also run in the reference cell.
 \item the \emph{network}, the secondary controller: the learned dispatching policy of
@@ -451,6 +460,9 @@ seconds, $v_x$ was added as a factor, and the trace statistics were added.
   seeing less.
 \item \emph{Worth sizing:} a regime is worth sizing the coverage for when
   $G(10\,\mathrm{s})\ge1$~s per part and its lower 95\,\% bound is $\ge0.5$~s per part.
+  Both thresholds are design decisions fixed before the run, without an economic
+  calibration; the 0.5~s per part here is the lower bound required of the benefit, a
+  different use of the number from the margin of Section~\ref{sec:beltdesign}.
   Otherwise the absolute effect is reported and the sufficient coverage is left
   \emph{undetermined} for that regime.
 \item \emph{Sufficient coverage (knee):} the first grid anticipation $\tau$ whose paired
@@ -494,7 +506,9 @@ realizations on a new reserved range, used once. The decision is taken per cell 
 paired cost of the shorter view against the full 50~cm view at 5~cm/s,
 $C_5(\ell)=J_{\mathrm{when\_idle},5}(\ell)-J_{\mathrm{when\_idle},5}(50\,\mathrm{cm})$,
 with a margin $\delta=0.5$~s per part fixed before the run (the largest cost of 3.33~s
-observed in the 18 useful cells of the geometry bench was 0.44): $H_{\mathrm{cm}}$, 10~cm
+observed in the 18 useful cells of the geometry bench was 0.44; a design decision, the
+largest loss admitted when shortening the view, distinct from the 0.5~s per part lower
+bound of the benefit criterion): $H_{\mathrm{cm}}$, 10~cm
 keep the benefit ($C_5(10\,\mathrm{cm})\le\delta$); $H_{\mathrm{s}}$, 10~cm do not but
 16.7~cm do; $H_{\mathrm{neither}}$, 16.7~cm do not either. A cell that passes the
 benefit criterion at 3~cm/s and fails it at 5~cm/s is reported as ``benefit lost at this
@@ -521,7 +535,7 @@ cells ($d/v_y=6/5$, $12/10$, $18/15$~cm per cm/s) and the prediction holds exact
 (maximum difference $2.6\cdot10^{-13}$~s over 2\,400 paired episodes in each of the eight
 $v_x\times$load$\times$arrivals blocks). The rule's bench therefore has 56 distinct cells,
 and the predictor analysis counts the triplet once. (v) \emph{Reproducibility}: the
-per-episode results of both confirmatory runs are distributed with the source
+per-episode results of the three confirmatory runs are distributed with the source
 (\texttt{data/phase4\_info.csv}, 15\,360 episodes; \texttt{data/geometry\_bench.csv.gz},
 179\,520 episodes; \texttt{data/belt\_speed\_bench.csv.gz}, 11\,520 episodes) together with
 the scripts that generate every figure and table; the analysis of the
@@ -818,12 +832,18 @@ knee with the lowest leave-one-out error (1.02~s), the crossing time with the hi
 (1.53~s, and 1.75~s when rescaled, since the fitted factor 0.86 is driven by the slow
 heads whose knees lie far below $\tcross$), and a constant of 2.8~s in between (1.13~s).
 The rank correlations point the same way and are all moderate: 0.38 for $\tcross$, 0.50
-for $\tpp$ and 0.47 for $t_x+t_y$ (average ranks for ties, since the knee takes values on
-the grid).\footnote{Draft 0.6 of this paper reported $+0.47$, $+0.53$ and $+0.51$, computed
+for $\tpp$ and 0.47 for $t_x+t_y$, the supplementary sum of the two axis times (average
+ranks for ties, since the knee takes values on the grid).\footnote{Draft 0.6 of this paper reported $+0.47$, $+0.53$ and $+0.51$, computed
 with ties broken by position; the values here use average ranks. The leave-one-out errors
 are unchanged.} The fitted factor, knee $\approx1.74\,\tpp$, is an empirical adjustment on
 these 18 traces and not a mechanism: $\tpp$ is the planned duration recorded when a move
-is decided, and the knee is a grid point. Two qualifications the data impose. No predictor
+is decided, averaged per episode and then over the episodes with at least one move, so
+that each such episode weighs equally (weighting each move equally instead gives a
+factor of 2.00 and a leave-one-out error of 1.06~s, a sensitivity computed after the
+run); the knee it predicts is the point-estimate grid point, not the conservative
+coverage of Table~\ref{tab:sufficient}; and it needs full-view traces, which a designer
+without a simulation of the cell does not have. The two errors belong together: 1.02~s
+for the move duration, 1.13~s for the constant. Two qualifications the data impose. No predictor
 is precise: the errors are two to three grid steps on a 0.5~s grid, and the knee$/\tpp$
 ratios range from 0.8 to 2.6 with two cells at 4.7--5.3. And $\tpp$ beats the constant by
 0.1~s only, a small advantage: for a designer without traces, ``about 3~s of anticipation
@@ -884,7 +904,8 @@ The bench's 35~cm entry zone is 25~cm longer than the reference cell's. On the r
 geometry, with the same visible lengths and the same arrivals at the feed point, the
 longer entry adds $+10.35\pm0.52$ (nominal, Poisson), $+11.11\pm0.55$ (nominal, bursts),
 $+13.19\pm0.71$ (high, Poisson) and $+11.69\pm0.64$~s per part (high, bursts) to the
-rule's flow time (Table~\ref{tab:entry}): the 8.33~s of free transit at 3~cm/s plus
+rule's penalized flow time $J$ (Table~\ref{tab:entry}; on the raw flow time $+10.60\pm0.40$,
+$+11.15\pm0.50$, $+13.34\pm0.67$ and $+11.74\pm0.65$): the 8.33~s of free transit at 3~cm/s plus
 2.0--4.9~s that grow with the load and are therefore the belt stops acting on the parts of
 the longer entry zone. No difference in the gain of pre-positioning at a given anticipation was detected
 between the two entry lengths: the paired differences are at most $\pm0.26$~s per part
@@ -896,7 +917,7 @@ bench measuring the camera's reach rather than the installation; its percentages
 \centering\small
 \caption{Physical-length check, \nj, reference geometry ($d=12$~cm, $v_x=v_y=10$~cm/s):
 the 35~cm entry against the 10~cm entry, same visible lengths, same arrivals at the feed
-point. $\Delta$ `none' level: flow time added by the longer entry; $\Delta G$: difference
+point. $\Delta$ `none' level: penalized flow time $J$ added by the longer entry; $\Delta G$: difference
 of the pre-positioning gain at the same anticipation (35~cm minus 10~cm), paired, 95\,\%
 CI.}
 \label{tab:entry}
@@ -943,35 +964,49 @@ stretch, identical arrivals at both speeds in all 240 cell--realization pairs,
 reproduces the 3~cm/s costs of Section~\ref{sec:howmuch} with the 50~cm entry: $C_3(10\,
 \mathrm{cm})$ is $+0.10\pm0.47$, $+0.18\pm0.23$, $-0.15\pm0.26$ and $-0.11\pm0.17$~s per
 part in the four cells, every interval containing the value of the geometry bench. At
-5~cm/s, \textbf{10~cm of coverage kept the benefit in the two cells with
-$v_x=10$~cm/s}: the upper 95\,\% bounds of $C_5(10\,\mathrm{cm})$ are 0.32 and 0.23~s per
-part, below the margin of 0.5 ($H_{\mathrm{cm}}$, conservative), and 16.7~cm added
-nothing detectable over 10~cm there ($C_5(16.7\,\mathrm{cm})$ at most 0.22 and 0.14 at
-the upper bound). As written beforehand, these two cells cannot separate the two scales,
+5~cm/s, \textbf{10~cm of coverage cost less than the margin in the two cells with
+$v_x=10$~cm/s}: the upper 95\,\% bounds of $C_5(10\,\mathrm{cm})$ are 0.33 and 0.23~s per
+part, below the margin of 0.5 ($H_{\mathrm{cm}}$, conservative), and no difference
+between 16.7 and 10~cm was detected there (direct paired contrast 10 minus 16.7~cm:
+$+0.09\pm0.26$ and $+0.05\pm0.14$~s per part). As written beforehand, these two cells cannot separate the two scales,
 so their result is the practical one, 10~cm suffice at 5~cm/s, not a mechanistic one.
-\textbf{The two cells with $v_x=5$~cm/s fell below the benefit criterion at 5~cm/s even
-with the full 50~cm view}: $G_5(50\,\mathrm{cm})=+0.62\pm0.73$ and $+0.47\pm0.55$~s per
-part, against $+1.74\pm0.87$ and $+1.58\pm0.89$ at 3~cm/s, so there is no benefit worth
-sizing the camera for in them at that speed and the question of the coverage is moot
-there; this is the design result, not $H_{\mathrm{neither}}$, since the costs of the
-shorter views stay within the margin ($C_5(16.7\,\mathrm{cm})=+0.12\pm0.39$ and
-$+0.12\pm0.45$). Paired across speeds, the full-view benefit rose at the faster belt in
-the cell $d=12$, $v_y=10$, $v_x=10$ ($-0.77\pm0.60$~s per part, 3 minus 5~cm/s) and fell in
-$d=6$, $v_y=15$, $v_x=5$ ($+1.11\pm1.02$); no difference was detected in the other two.
+\textbf{At 5~cm/s, neither of the two slow-axis cells met the benefit criterion with
+the full view; the paired comparison between speeds detected a reduction in one of the
+two.} $G_5(50\,\mathrm{cm})=+0.62\pm0.73$ and $+0.47\pm0.55$~s per part, against
+$+1.74\pm0.87$ and $+1.58\pm0.89$ at 3~cm/s; paired across speeds, 3 minus 5~cm/s, the
+difference is $+1.12\pm1.21$ in $d=12$, $v_y=10$, $v_x=5$ (not detected) and
+$+1.11\pm1.02$ in $d=6$, $v_y=15$, $v_x=5$ (detected). The frozen verdict is ``benefit
+lost at this speed'' by the precedence of the benefit criterion, so the coverage question
+is moot there; on the shorter views themselves the conservative reading is undetermined,
+not ``within the margin'': $C_5(16.7\,\mathrm{cm})=+0.12\pm0.39$ and $+0.12\pm0.45$~s per
+part have upper bounds of 0.51 and 0.57, above the margin, with point estimates inside
+it, so $H_{\mathrm{neither}}$ is neither established nor excluded. In the other two
+cells the full-view benefit rose at the faster belt in $d=12$, $v_y=10$, $v_x=10$
+($-0.77\pm0.60$) and no difference was detected in $d=6$, $v_y=15$, $v_x=10$
+($-0.06\pm0.53$).
 \textbf{The comparison between centimetres and seconds remains open}: the cells that
 could have separated the two readings are the ones that lost the benefit, and the
 descriptive alignment reading fixed beforehand (mean absolute difference of the shares
 of the full-view gain retained at matched lengths and at matched anticipations) favours
-the time scale in three cells and the distance scale in one, with a caveat recorded in
-the methods documentation that the matched-anticipation pairs sit where both curves are
-flatter. One premise check: with the 50~cm entry, the cell $d=12$, $v_y=10$, $v_x=10$ sits
+the time scale in three cells and the distance scale in one, with a post hoc caveat
+recorded in the methods documentation that the matched-anticipation pairs sit where both
+curves are flatter. One premise check: with the 50~cm entry, the cell $d=12$, $v_y=10$, $v_x=10$ sits
 on the benefit threshold at 3~cm/s ($+0.99\pm0.38$ against the criterion's 1.0, lower
 bound 0.61 against 0.5) and is reported as it falls. The traces are compatible with the
 interception moving downstream at the faster belt (the planned along-belt component of
 the pre-positioning moves grows from 1.5--1.8 to 2.3--2.5~s in the $v_x=5$ cells and from
 0.5--0.7 to 0.8--1.0~s in the $v_x=10$ cells, the transverse component is unchanged, the
 head's idle share and the number of moves fall); this is a reading of the traces, not a
-tested hypothesis.
+tested hypothesis. One more difference from the geometry bench, found by a referee:
+this bench ran with the observable tie-break of the rule (Section~\ref{sec:design}), so
+the rule's \texttt{none} level itself depends on the visible length here, which it did
+not in the geometry bench (identical across lengths by construction). The mean changes
+$J_{\mathrm{none}}(0)-J_{\mathrm{none}}(50\,\mathrm{cm})$ lie within $\pm0.41$~s per part
+over the eight cell--speed pairs and are detected in one ($-0.21\pm0.17$ at $d=6$,
+$v_y=15$, $v_x=10$, 5~cm/s); $G_v(\ell)$ is defined at each length against its own
+\texttt{none} level and is unaffected as a definition, but ``seeing without acting'' is
+no longer zero by construction in this study, and the geometry and belt-speed benches
+differ in seed range, entry length and rule version.
 
 \begin{table}[t]
 \centering\small
@@ -1011,10 +1046,11 @@ within it seconds and centimetres are one unit ($\lv=3\tv$). The physical argume
 for seconds is that the quantity the anticipation must cover is the head's move, which
 does not depend on $\vb$; but changing $\vb$ also changes where the head intercepts each
 part, and the curve may move with it. The belt-speed bench (Section~\ref{sec:belt}) gives
-the practical answer for 5~cm/s without settling the scale: 10~cm sufficed, within the
-margin of 0.5~s per part, in the two cells with the fast along-belt axis, where the
-requirement at 3~cm/s was already at most 2~s; in the two cells with the slow axis the
-faster belt removed the benefit itself rather than the camera's margin. Whether 2~s or
+the practical answer for 5~cm/s without settling the scale: 10~cm cost less than the
+margin of 0.5~s per part against the full view in the two cells with the fast along-belt
+axis, where the requirement at 3~cm/s was already at most 2~s; in the two cells with the
+slow axis the full-view benefit itself fell below the criterion at 5~cm/s, a reduction
+detected in one of them. Whether 2~s or
 10~cm is the right reading of ``10~cm'' therefore remains open, and the specification
 below is stated at 3~cm/s with that practical extension to 5~cm/s. The pilot's reference, the transverse
 crossing time, is rejected as a predictor: it misses the along-belt part of every move,
@@ -1053,8 +1089,8 @@ zone, constant processing of 2.5~s) and two loads; the specification in seconds 
 tested within the grid of Section~\ref{sec:bench} and not beyond it, so the
 recommendation is for cells of this family at 3~cm/s, with the belt-speed bench of
 Section~\ref{sec:belt} as its only test at 5~cm/s: four cells, the nominal load, Poisson
-arrivals and the rule alone, which showed that 10~cm keep the benefit where the benefit
-survives the speed change and left the choice between centimetres and seconds open,
+arrivals and the rule alone, in which 10~cm cost less than the margin where the
+full-view benefit passed the criterion, and which left the choice between centimetres and seconds open,
 because the cells that could separate the two scales lost the benefit at 5~cm/s. A bench
 that keeps a useful benefit at both speeds in cells with a slow along-belt axis (a lower
 load, or a longer laser zone) would be the experiment that settles the scale. Thirty-eight of the
@@ -1062,7 +1098,9 @@ load, or a longer laser zone) would be the experiment that settles the scale. Th
 load) and some because 60 realizations do not resolve it (the high load); a study of the
 high load alone would need more realizations and a new reserved range. The penalty
 weights are placeholders in equivalent seconds; since the gain is almost entirely flow
-time, the conclusions are insensitive to them, but an economic translation (the break-even
+time, the coverage costs and knees are reported on $J$ as frozen; the benefit screen is
+not insensitive to the weights: scored on the raw flow time instead of $J$, 15 cells pass
+it instead of 18 (a sensitivity computed after the run). An economic translation (the break-even
 cost of the camera's reach against the seconds saved per part at the cell's throughput)
 needs the cell's operating costs and is deferred. The study measures the \emph{reach} of
 the camera, not its precision: detection noise, latency and losses are a separate
@@ -1086,16 +1124,17 @@ in 18, 13 of them with Poisson arrivals; in those, 3.33~s of anticipation cost a
 conservatively with 2.0--7.5~s, the slow along-belt axis needing the most. The transverse
 crossing time, the natural reference, is the worst predictor of that requirement; the
 planned duration of the moves the head starts is the best by a small margin, and a
-constant of about 3~s nearly as good. Cells with the same crossing time are identical by the model's
-structure. At a belt of 5~cm/s, 10~cm of coverage sufficed in the two configurations
-with the fast along-belt axis, within a margin of 0.5~s per part fixed beforehand; the two
-configurations with the slow axis fell below the benefit criterion even with the full
-view; and the comparison between centimetres and seconds remains open. These are
+constant of about 3~s nearly as good. For the rule, cells with the same crossing time are identical by the model's
+structure. At a belt of 5~cm/s, with the rule, 10~cm of coverage cost less than the margin
+of 0.5~s per part fixed beforehand, against the full 50~cm view, in the two configurations
+with the fast along-belt axis; neither slow-axis configuration met the benefit criterion
+with the full view, and the paired comparison between speeds detected a reduction in one
+of the two; and the comparison between centimetres and seconds remains open. These are
 measurements on reserved realizations used once, reproduced in their pattern by two
 controllers in the first two studies, and they give the designer of a cell of this
 family, at 3~cm/s, a coverage specification in seconds of anticipation with the cost of a
-shorter view measured, and at 5~cm/s the practical finding that 10~cm kept the benefit
-where there was one.
+shorter view measured, and at 5~cm/s the practical finding that 10~cm cost less than
+the margin where the full-view benefit passed the criterion.
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references}

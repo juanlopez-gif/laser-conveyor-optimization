@@ -152,7 +152,7 @@ def t_regimes(b: Bench):
 def t_confirm(b: Bench, t: str):
     L = [r"\begin{tabular}{@{}lccc|cc|ccc@{}}", r"\toprule",
          r" & \multicolumn{3}{c|}{paired $\Delta$ vs \textsc{nj} [\%]} & \multicolumn{2}{c|}{contrasts [\%]} & "
-         r"\multicolumn{3}{c}{latency p50 / p95 [ms]} \\",
+         r"\multicolumn{3}{c}{latency p50 / p95 [ms; teacher in s]} \\",
          r"regime & known-parts & sampled-future & network & search vs net & teacher vs net & search & network & teacher \\",
          r"\midrule"]
     for reg in REGIMES:

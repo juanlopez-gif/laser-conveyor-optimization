@@ -469,7 +469,7 @@ the fast simulator only.
   conveyors in seconds of belt travel: 7.5 cm (2.5 s) for the nominal head, the whole
   10 cm zone (3.3 s) for a head twice as slow.
 
-### 9.6 Tie-break audit (0.7.26, after the review of Paper 1 draft 0.2)
+### 9.6 Tie-break audit (0.7.26, rerun 0.7.33 after the referee report on drafts 0.5 / 0.8)
 
 Up to 0.7.25 `nearest_job`, `nearest_head` and the candidate ranking of the known-parts
 search broke exact ties on the interception time by the real arrival time `r_j`, which
@@ -477,19 +477,26 @@ the `belts` and `zone` information models do not observe. **The phase-4 run of �
 that legacy key for the rules and the search** (the network does not use `r_j`). The
 key is now the observation instant (`FastSim.observed_since`, `Part.observed_time`);
 the effect was measured on development seeds 2000–2029, eight regimes, B and C
-(`experiments/tiebreak_audit.py`, full tables in `tiebreak_audit.md`):
+(`experiments/tiebreak_audit.py`, full tables in `tiebreak_audit.md`). The 0.7.26 run
+applied the legacy key only to the search's candidate ranking while its look-ahead
+continuations kept the current key (the referee found it); the 0.7.33 rerun passes the
+key under audit to the continuations as well (`SearchTeacher` → `run_lookaheads`), and
+pools with one mean contrast per seed over its eight regimes, the interval over the 30
+seed means, since the eight episodes of a seed share the realization:
 
-| t | policy | decisions changed | Δ new vs legacy, pooled [%] | max |Δ| by regime [%] |
+| t | policy | decisions changed | Δ new vs legacy, pooled per seed [%] | max |Δ| by regime [%] |
 |---|---|---|---|---|
-| B | `nearest_job` | 0.2–1.7 % | +0.24 ±0.23 | 1.27 (heavy / Poisson / slow) |
+| B | `nearest_job` | 0.2–1.7 % | +0.24 ±0.20 | 1.27 (heavy / Poisson / slow) |
 | B | `nearest_head` | 0.4–2.4 % | +0.35 ±0.16 | 1.51 (heavy / Poisson / slow) |
-| B | search | 0–0.5 % | +0.04 ±0.07 | 0.21 |
-| C | `nearest_job` | 0.3–2.2 % | +0.29 ±0.25 | 1.41 (heavy / Poisson / nominal) |
+| B | search | 0.4–1.2 % | +0.01 ±0.13 | 0.41 (heavy / Poisson / nominal) |
+| C | `nearest_job` | 0.3–2.2 % | +0.29 ±0.23 | 1.41 (heavy / Poisson / nominal) |
 | C | `nearest_head` | 0.3–2.5 % | +0.18 ±0.20 | 0.82 |
-| C | search | 0–0.4 % | −0.01 ±0.05 | 0.20 |
+| C | search | 0.1–1.3 % | +0.18 ±0.19 | 0.76 (heavy / Poisson / slow) |
 
-Reading: the legacy key, informed by an unobservable quantity, made the rules slightly
-*better* (0.2–0.4 points pooled, up to 1.5 at the heavy load with Poisson arrivals), and
-left the search unchanged. The published comparators of §9.3 were therefore slightly
-favoured; the network's margins over them are conservative by those amounts. The
-reserved seeds were not rerun (used once); the papers state the audit instead.
+Reading: on development realizations the legacy key changed the rules' cost by
+0.2–0.4 points pooled (up to 1.5 at the heavy load with Poisson arrivals) and the
+known-parts search by 0.0–0.2 pooled (up to 0.8 per regime), with per-regime changes of
+either sign. The published comparators of §9.3 ran under the legacy key; the papers
+state the audit and its size, and make no claim that every reserved margin is
+conservative. The reserved seeds were not rerun (used once). The 0.7.26 search rows
+(+0.04 ±0.07 B, −0.01 ±0.05 C, max 0.21 / 0.20) are superseded.

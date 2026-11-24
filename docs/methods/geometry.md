@@ -728,6 +728,22 @@ realizations, seconds of penalized flow time per part; the criteria are those fr
 
 ### 8.1 Checks
 
+**Rule version (found by the referee of Paper 2 draft 0.8).** This bench ran after
+0.7.26, so `nearest_job` breaks ties on the instant from which a part has been
+observable, which depends on the visible length; the geometry bench (§6) and phase 4
+ran with the legacy arrival-time key. Consequence, checked on the extracts: in the
+geometry bench the `none` cost is identical across visible lengths for every (cell,
+seed) (0 of 4 560 combinations differ), i.e. seeing without acting was zero by
+construction for the rule; in this bench the `none` cost differs across lengths in 366
+of the 480 (speed, cell, seed) combinations, with a largest within-combination range of
+10.27 s/part (an episode maximum) and small mean effects, `none`(0) − `none`(50 cm) =
+−0.41 ±0.47, −0.33 ±0.43, −0.03 ±0.23, +0.19 ±0.25, +0.15 ±0.32, −0.17 ±0.47, −0.01 ±0.12
+and −0.21 ±0.17 s/part over the eight (cell, speed) pairs. G_v(ℓ) = `none`(ℓ) −
+`when_idle`(ℓ) at the same length is the pre-registered quantity and is unaffected as a
+definition; the "value of seeing alone" is no longer zero by construction here. The
+geometry and belt-speed benches therefore differ in seed range, entry length and rule
+version; the C_3(10 cm) check column is the only bridge between them.
+
 0 candidate violations of the visible stretch over 11 520 episodes; the number of
 parts and the sum of their arrival instants agree across the two speeds, every length,
 mode and controller in all 240 (cell, seed) pairs (the realizations are common, as
@@ -759,9 +775,17 @@ detectably either.
   5 cm/s** (design result of §7.1): G_5(50 cm) = +0.62 ±0.73 and +0.47 ±0.55 s/part,
   below 1 s/part on the point and with lower bounds −0.11 and −0.08, against +1.74
   ±0.87 and +1.58 ±0.89 at 3 cm/s. The question "10 or 16.7 cm" is moot there: there
-  is no benefit worth sizing the camera for, at any length. This is **not H_neither**
-  (C_5(16.7 cm) = +0.12 ±0.39 and +0.12 ±0.45 do not exceed δ): the shorter views are
-  not costly, the full view is not valuable. The §7.1 predictions under H_s for these
+  is no benefit worth sizing the camera for, at any length. Written as the owner
+  fixed it after the referee report (0.7.33): at 5 cm/s neither slow-axis cell met the
+  benefit criterion with the full view; the paired comparison between speeds detected a
+  reduction in one of the two (+1.11 ±1.02 in 6 / 15 / v_x 5; +1.12 ±1.21 in 12 / 10 /
+  v_x 5 does not exclude zero). On the shorter views in these cells the frozen `keeps`
+  reading is **undetermined**, not "within the margin": C_5(16.7 cm) = +0.12 ±0.39 and
+  +0.12 ±0.45 have upper bounds 0.51 and 0.57 above δ = 0.5 (the point estimates are
+  within it), so H_neither is neither established nor excluded there; the verdict
+  "benefit lost" comes from the precedence of the benefit criterion in §7.1. (The first
+  version of this bullet said the costs "stay within the margin"; the referee of Paper 2
+  draft 0.8 caught it.) The §7.1 predictions under H_s for these
   cells (+0.68 and +0.54) assumed the 3 cm/s benefit level persists, which it does not;
   the first interval (upper bound 0.51) excludes its H_s prediction, the second (+0.48
   ±0.55) contains both predictions, and neither reading is evidence about the scale
