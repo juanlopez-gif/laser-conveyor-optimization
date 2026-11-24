@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.4 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.26; PPO baseline of 0.7.29)}
+\date{November 2026 --- draft 0.5 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.26; PPO baseline of 0.7.29)}
 
 \begin{document}
 \maketitle
@@ -67,8 +67,8 @@ the best decision rule we found, but it needs about a second per decision. A
 permutation-invariant Transformer policy over the parts, the belts, the head and the cell's
 parameters, trained by expert iteration with that scenario search as the expert, on
 randomized cells with one to six conveyors, amortizes it: on 30 reserved realizations of
-eight operating regimes, used once, the policy alone equals its teacher in every regime
-(no difference detected in any regime), beats the look-ahead over the known parts in
+eight operating regimes, used once, no difference between the policy alone and its
+teacher was detected in any tested regime; the policy beats the look-ahead over the known parts in
 every regime by 1.5--3.9 points (significant in seven), and beats the nearest-part rule
 by 2--7\,\% of the penalized flow time in seven of the eight regimes, at 10.8~ms per
 decision (median, one thread, machine fully loaded; 17.5~ms at the 95th percentile)
@@ -78,11 +78,14 @@ futures help only when the look-ahead counts every part; and larger networks (6.
 39~M parameters) do not raise the ceiling set by the teacher. Giving the teacher the cell's
 bursty arrival model does not improve it either. A policy-gradient (PPO) baseline on the
 same tokens, action mask, simulator and cell distribution, trained under a protocol fixed
-before the run, measures what learning from the search adds over learning from the
-reward: from scratch, after a number of acting episodes comparable to the expert-iteration
-chain, PPO stays 4--8\,\% above \nj\ and 8--12\,\% above the learned policy on three
-seeds, at about one fortieth of the CPU-hours; fine-tuning the learned policy with PPO
-makes it worse on all three seeds. The distance to the optimum is not measured.
+before the run, compares learning from the reward with learning from the search on
+development realizations: from scratch, after a number of acting episodes comparable to
+the expert-iteration chain, PPO stayed 4--8\,\% above \nj\ and 8--12\,\% above the
+learned policy on three seeds, in 22 minutes per run against 12.7 hours for the whole
+chain on the same workstation; fine-tuning the learned policy with PPO made it worse on
+all three seeds. Under the protocols tried, the chain trained with the search performed
+better; the two methods differ in the learning signal and in the compute spent. The
+distance to the optimum is not measured.
 \end{abstract}
 
 %====================================================================
@@ -865,7 +868,7 @@ sampled futures) and the network learns its average. Two further continuations c
 training set rather than the method: the design mode with its corrected tokens and the
 three observation levels (score $-3.98$\,\% in the design mode, where the \nj\ baseline
 already pre-positions), and bursty arrivals with slow heads in the mix (score $-3.82$\,\%
-over four groups). The last network is indistinguishable from the previous one head to
+over four groups). No difference between the last network and the previous one was detected head to
 head ($+0.47\pm0.69$, $-0.36\pm0.83$, $+0.20\pm0.48$ and $+0.09\pm0.36$\,\% on the four
 groups): extending the training to the declared scope produced no detectable improvement,
 and the owner froze that network (iteration~1) for the confirmatory run.
@@ -939,9 +942,13 @@ expert-iteration seeds); checkpoints every 4\,000 episodes scored greedily on th
 validation groups with the scoring of expert iteration, the best kept; evaluation paired
 on the same development realizations against \nj\ and against the frozen network, per
 seed and as the mean over seeds, with 95\,\% intervals; and the training cost of both
-schemes. The reserved realizations are not used. The improvement is decided by the
-evaluation performance and the training cost; a larger approximate KL per update means
-that the policy changed more during training, nothing else.
+schemes. The reserved realizations are not used: the checkpoints are selected and compared on
+the same development validation realizations as the expert-iteration chain, so this
+section is development evidence, like the rest of Section~\ref{sec:dev}; the
+comparisons that used reserved realizations are those of Section~\ref{sec:confirm}. The
+improvement is decided by the evaluation performance and the training cost; a larger
+approximate KL per update means that the policy changed more during training, nothing
+else.
 
 \paragraph{V1: PPO from scratch.}
 Table~\ref{tab:ppo_v1} and Figure~\ref{fig:ppo} (left). No run reaches \nj\ within the
@@ -1024,10 +1031,12 @@ expert-iteration chain that produced the frozen network took 12.7~hours on 47 wo
 an upper bound of 596 CPU-hours, 90\,\% of it in generation, where the expert's
 look-ahead runs about 39~million partial-episode clones (known-parts expert, 4.1 clone
 runs per labelled decision; scenario-search expert, 32.8, measured on a sample of 40
-episodes per setting and scaled by the logged labelled decisions). The baseline is
-about 35 times cheaper in wall-clock and 40 times in CPU-hours at a comparable number
-of acting episodes, and the difference is the expert's search. The V2 runs take
-6~minutes each. The PPO checkpoint has the latency of the network it is (same
+episodes per setting and scaled by the logged labelled decisions). The clearest
+comparison is the wall-clock on the same workstation: 22~minutes for one PPO run against
+12.7~hours for the whole chain, at a comparable number of acting episodes, with the
+chain's extra time in the expert's look-ahead; the CPU-hour figures are upper bounds
+computed as wall-clock times workers, not measured consumption, and are given to state
+the scope of the comparison, not as a ratio. The V2 runs take 6~minutes each. The PPO checkpoint has the latency of the network it is (same
 architecture, 884\,994 parameters): 1.06~ms per decision for a single state on one
 thread, against 1.06~ms for an untrained network of the same size on the same machine,
 so the comparison with expert iteration is at equal inference cost.
@@ -1045,12 +1054,16 @@ validation score vs \nj\ [\%].}
 \end{table}
 
 \paragraph{Reading.}
-With the same representation and a comparable number of acting episodes, learning from
-the reward alone gives a policy 8--12\,\% worse than the one learned from the search,
-and 4--8\,\% worse than the dispatching rule that the search-trained policy beats by
-3.8\,\%; the search costs about 40 times more CPU-hours and is where the quality comes
-from. Fine-tuning the search-trained policy with the reward does not improve it. Not
-done, and listed as the limits of this baseline: a hyperparameter search, reward
+Under the protocols tried, the chain trained with the search performed better: with the
+same architecture and a comparable number of acting episodes, learning from the reward
+alone gave a policy 8--12\,\% worse than the one learned from the search and 4--8\,\%
+worse than the dispatching rule that the search-trained policy beats by 3.8\,\%, in
+22~minutes per run against 12.7~hours for the chain. The two methods differ in the
+learning signal and in the compute spent, and the experiment does not separate the two.
+Fine-tuning the search-trained policy with the reward did not improve it. The PPO
+checkpoints were selected and compared on the same validation realizations, so this is
+development evidence; the confirmatory comparisons are those of Section~\ref{sec:confirm}.
+Not done, and listed as the limits of this baseline: a hyperparameter search, reward
 shaping, a penalty towards the initialization in V2, and longer budgets.
 
 %====================================================================
@@ -1251,14 +1264,15 @@ known parts by 2--4 points, and a permutation-invariant pointer policy trained b
 iteration with that search as expert, on randomized cells, reproduces it within the noise
 at a hundredth of its latency, 10~ms per decision on a loaded machine. The size of the
 network does not matter beyond 0.88~M parameters; the expert does. On reserved
-realizations of eight regimes the policy beats the rule in seven and is
-indistinguishable from its expert in all. What remains open is how far all of this is
+realizations of eight regimes the policy beats the rule in seven, and no difference
+from its expert was detected in any. What remains open is how far all of this is
 from the optimum, which needs the exact
 reference of Appendix~\ref{app:milp} with the penalized objective on the realized
 instances and a new set of reserved realizations; what learning from the reward
-alone gives on the same representation is answered within one protocol: 8--12\,\%
-worse than learning from the search at a comparable number of episodes and one
-fortieth of the cost (Section~\ref{sec:ppo}).
+alone gives on the same representation was measured under one protocol, on development
+realizations: PPO from scratch stayed 8--12\,\% behind the chain trained with the search
+at a comparable number of episodes, in 22 minutes per run against 12.7 hours for the
+chain (Section~\ref{sec:ppo}).
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references,extra}

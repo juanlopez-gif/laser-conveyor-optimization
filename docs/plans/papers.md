@@ -461,8 +461,11 @@ bench (0.7.27 protocol, 0.7.28 run; `geometry.md` §7–§8, seeds 10000–10059
 δ = 0.5 s/part, `nearest_job` only):** at 5 cm/s the 10 cm view keeps the benefit in
 the two cells with v_x = 10 cm/s (H_cm, conservative) and the benefit of pre-positioning
 is lost in the two with v_x = 5 cm/s; whether centimetres or seconds transfer across
-belt speeds is undetermined. Not yet in the paper: integrating §8 into Paper 2 (0.8,
-§6.7 and the Limits) is an owner decision, after the co-authors' reading of 0.7.
+belt speeds is undetermined. **Draft 0.8 (0.7.32):** the belt-speed bench in the paper
+(new design subsection, results subsection with table and figure, abstract, discussion,
+limits, conclusions) with the owner's message: 10 cm sufficed at 5 cm/s in the two
+fast-axis configurations within the 0.5 s/part margin, the other two fell below the
+benefit criterion even with the full view, centimetres vs seconds open.
 
 **Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
 at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel
@@ -476,7 +479,12 @@ pruned search, one 3-belt cell in the confirmatory run. **Draft 0.4 (0.7.30):** 
 baseline of the parallel session (0.7.29, `docs/methods/rl2_ppo.md`) integrated as V1
 (from scratch: +3.6 to +7.9 % above `nearest_job`, +7.9 to +12.3 % above the learned
 policy, one fortieth of the CPU-hours) and V2 (fine-tuning of the learned policy: worse
-on all three seeds); the "work in progress" notice removed. Open: the owner's reading;
+on all three seeds); the "work in progress" notice removed. **Draft 0.5 (0.7.31)** after
+the owner's reading of 0.4: "no difference detected" for network vs teacher; the cost
+stated as 22 min per PPO run vs 12.7 h for the chain (CPU-hours are upper bounds, no
+ratio); the PPO comparison framed as development evidence under the protocols tried, the
+confirmatory results being those on reserved seeds. Owner: ready to circulate among
+co-authors. Open: the co-authors' reading;
 the hindsight reference and the generalization bench on new reserved seeds.
 **Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
 properties) with the MILP, the proofs, the lower bounds and the special cases in

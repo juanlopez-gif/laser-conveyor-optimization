@@ -6,6 +6,52 @@ summarized from the git history.
 
 ---
 
+## 0.7.32 — 2026-11-23 — Paper 2 draft 0.8: the belt-speed bench in the paper
+
+* **Why.** The owner approved draft 0.8 with this message: at 5 cm/s, 10 cm of coverage
+  sufficed in the two configurations with the fast along-belt axis, within the margin of
+  0.5 s/part; the other two configurations fell below the benefit criterion even with the
+  full view; the comparison between centimetres and seconds remains open.
+* **What.** `docs/papers/paper2/paper2.tex` (draft 0.8): abstract (three studies), new
+  §4.4 "The belt-speed bench" (design, frozen hypotheses H_cm / H_s / H_neither, margin,
+  the pre-registered note that only the v_x = 5 cells can separate the scales), check (v)
+  lists the third extract, new §6.9 `sec:belt` "Belt speed: what transfers to 5 cm/s"
+  with Table `tab:belt` and Figure `fig:belt`, Discussion ("A specification in seconds"),
+  Limits (the open scale question and the bench that would settle it) and Conclusions
+  rewritten with the owner's message; "untested" statements removed.
+  `experiments/paper2_bench_figures.py`: table `bench_belt` generated from
+  `docs/papers/paper2/data/belt_speed_bench.csv.gz` through `belt_speed_bench.Bench`;
+  figure `bench_belt` (2 × 2 panels, G_v(ℓ) in cm at both speeds, legend below the
+  panels; the eight-panel methods figure was unreadable at page width). PDF rebuilt.
+* **Where.** `docs/papers/paper2/{paper2.tex,paper2.pdf,tables/bench_belt.tex,figures/bench_belt.pdf}`,
+  `experiments/paper2_bench_figures.py`, `docs/plans/papers.md`.
+
+---
+
+## 0.7.31 — 2026-11-23 — Paper 1 draft 0.5: three corrections before circulating
+
+* **Why.** The owner's reading of 0.4 (commit 5d0c989; the three PPO tables regenerated
+  identically): (1) the abstract still said the policy "equals" its teacher although
+  the analysis says the intervals include zero; (2) "40 times fewer CPU-hours" is a
+  ratio of upper bounds (wall-clock × workers), not measured consumption; (3) "the
+  quality comes from the search" overstates what the experiment shows.
+* **What.** `docs/papers/paper1/paper1.tex` (draft 0.5): "no difference between the
+  policy alone and its teacher was detected in any tested regime" (abstract,
+  conclusions; the same wording for the head-to-head of the last two networks in §8.3);
+  the cost comparison stated as 22 min per PPO run against 12.7 h for the whole
+  expert-iteration chain on the same workstation, the CPU-hour figures named as upper
+  bounds given for scope and not as a ratio (abstract, §8.5, conclusions); the reading
+  of the baseline restated as "under the protocols tried, the chain trained with the
+  search performed better", the two methods sharing architecture and a comparable
+  number of episodes and differing in the learning signal and the compute, which the
+  experiment does not separate; the PPO checkpoints selected and compared on the same
+  validation realizations, so §8.5 is development evidence and the confirmatory
+  comparisons are those of §9 (protocol paragraph, reading, abstract, conclusions). PDF
+  rebuilt (31 pages). Ready to circulate among co-authors per the owner.
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf}`, `docs/plans/papers.md`.
+
+---
+
 ## 0.7.30 — 2026-11-23 — Paper 1 draft 0.4: the PPO baseline integrated (V1 from scratch, V2 fine-tuning)
 
 * **Why.** The owner asked to wait for the PPO session's final report before draft 0.4 and
