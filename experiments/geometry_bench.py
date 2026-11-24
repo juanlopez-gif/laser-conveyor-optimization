@@ -38,7 +38,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 
-from rl2.expert_iteration import BURST_VAL, _init_worker, val_config  # noqa: E402
+
+def _rl2():
+    """``rl2.expert_iteration`` imports PyTorch; it is needed to run episodes, not to analyse the
+    extract, so the import is deferred (the paper's tables regenerate with NumPy and Matplotlib)."""
+    from rl2.expert_iteration import BURST_VAL, _init_worker, val_config
+    return BURST_VAL, _init_worker, val_config
 
 # ------------------------------------------------------------------ frozen design
 SPACINGS = (6.0, 12.0, 18.0)
@@ -102,7 +107,7 @@ def extra(job):
          f"arrivals.stochastic.mean_interarrival=[{', '.join(str(x) for x in LOADS[job['load']])}]",
          f"processing.time={PROC}"]
     if job["arrivals"] == "burst":
-        e += list(BURST_VAL)
+        e += list(_rl2()[0])
     return e
 
 
@@ -123,7 +128,7 @@ def policy(job):
 def run(job):
     from fastsim import FastSim
     from fastsim.core import MOVING
-    cfg = val_config("real", job["seed"], "none", extra=tuple(extra(job)))
+    cfg = _rl2()[2]("real", job["seed"], "none", extra=tuple(extra(job)))
     sim = FastSim(cfg)
     pol = policy(job)
     bad = 0
@@ -261,21 +266,44 @@ MODELS = {
 }
 
 
+def _ranks(a):
+    """Ranks with ties given their average rank (the knee takes values on the grid, so ties are common)."""
+    a = np.asarray(a, float)
+    order = a.argsort(kind="stable")
+    r = np.empty(len(a))
+    i = 0
+    while i < len(a):
+        j = i
+        while j + 1 < len(a) and a[order[j + 1]] == a[order[i]]:
+            j += 1
+        r[order[i:j + 1]] = (i + j) / 2 + 1
+        i = j + 1
+    return r
+
+
 def spearman(x, y):
+    """Spearman rank correlation with average ranks for ties (before 0.7.25 ties were broken by
+    position, which overstated the correlations of the geometry bench by 0.03-0.09)."""
     x, y = np.asarray(x, float), np.asarray(y, float)
     if len(x) < 3:
         return math.nan
-    rx, ry = x.argsort().argsort(), y.argsort().argsort()
-    return float(np.corrcoef(rx, ry)[0, 1])
+    return float(np.corrcoef(_ranks(x), _ranks(y))[0, 1])
 
 
 # ------------------------------------------------------------------ tables
+def _burst_val():
+    try:
+        return _rl2()[0]
+    except ImportError:                      # no PyTorch: the header names the constant instead
+        return ("rl2.expert_iteration.BURST_VAL",)
+
+
 def tables(b: Bench, args) -> str:
     L = [f"# Geometry bench `{args.tag}`", "",
          f"Seeds {b.seeds[0]}–{b.seeds[-1]} ({len(b.seeds)} paired realizations per configuration). "
          f"Belts {V_BELT:g} cm/s, entry zone {ENTRY:g} cm, processing {PROC:g} s; loads by the arrival rates: "
          + ", ".join(f"{k} = {'/'.join(f'{x:g}' for x in v)} s (ρ_p {rho(k):.2f})" for k, v in LOADS.items())
-         + f"; bursts `{' '.join(BURST_VAL)}`. G = seconds per part saved by pre-positioning (`none` − "
+         + f"; bursts `{' '.join(_burst_val())}`. G = seconds per part saved by pre-positioning (`none` − "
          "`when_idle` at the same anticipation, paired, 95 % CI; (n) = realizations with a positive gain). "
          f"Useful benefit: G(10 s) ≥ {MIN_USEFUL} s/part with lower bound ≥ {MIN_USEFUL_LB}. Knee: first grid "
          f"anticipation retaining {100 * SHARE:.0f} % of G(10 s), point estimate / lower simultaneous-95 % bound "
@@ -524,7 +552,7 @@ def main() -> None:
         J = jobs(args)
         print(f"{len(J)} episodes", flush=True)
         t0 = time.perf_counter()
-        with ProcessPoolExecutor(args.workers, initializer=_init_worker) as ex:
+        with ProcessPoolExecutor(args.workers, initializer=_rl2()[1]) as ex:
             J.sort(key=lambda j: (j["who"] != "net", j["load"] != "high"))
             rows = list(ex.map(run, J, chunksize=8))
         res = {"args": vars(args), "design": {"grid_s": GRID_S, "loads": LOADS, "proc": PROC, "entry": ENTRY,

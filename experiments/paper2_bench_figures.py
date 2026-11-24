@@ -123,7 +123,7 @@ def t_predictors(b: Bench):
     fit = lambda x: float(np.sum(x * knee) / np.sum(x * x))
     rows = [(r"knee $=\tau_{\mathrm{cross}}$", spearman(tc, knee), loo_mae(tc, knee, MODELS["knee = τ_cross"]), "---"),
             (r"knee $=a\,\tau_{\mathrm{cross}}$", spearman(tc, knee), loo_mae(tc, knee, MODELS["knee = a·τ_cross"]), f"$a={fit(tc):.2f}$"),
-            (r"knee $=b\,\tau_{\mathrm{pp}}$ (mean duration of the moves made)", spearman(tpp, knee), loo_mae(tpp, knee, MODELS["knee = b·τ_pp"]), f"$b={fit(tpp):.2f}$"),
+            (r"knee $=b\,\tau_{\mathrm{pp}}$ (mean planned duration of the moves started)", spearman(tpp, knee), loo_mae(tpp, knee, MODELS["knee = b·τ_pp"]), f"$b={fit(tpp):.2f}$"),
             (r"knee $=b'\,(t_x+t_y)$", spearman(txy, knee), loo_mae(txy, knee, MODELS["knee = b·τ_pp"]), f"$b'={fit(txy):.2f}$"),
             (r"knee $=$ constant", math.nan, loo_mae(tc, knee, MODELS["knee = constant"]), f"${knee.mean():.2f}$~s")]
     best = min(r[2] for r in rows)

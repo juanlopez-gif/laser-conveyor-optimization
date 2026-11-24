@@ -376,6 +376,13 @@ gzip extract with the per-episode fields is the versioned data of the paper, cop
 
 ## 6. Results of the confirmatory bench (seeds 9000–9059, run 2026-11-23)
 
+> Corrections 2026-11-23 (Paper 2 draft 0.7, after an external audit; no data changed):
+> the Spearman correlations of §6.3 are now computed with average ranks for ties (the
+> earlier values broke ties by position); the v_x effect of §6.2 is given as a ratio per
+> geometry instead of "roughly doubles"; §6.4 separates the Poisson and bursty high-load
+> cells; §6.5 replaces "no visible degradation" by the direct level comparison; the
+> cost of 3.33 s is the largest value observed in the 18 cells, not a bound.
+
 179 520 episodes, 1 139 s on 40 workers (12.0 CPU-hours). Tables:
 `results/experiments/geometry_bench/tables.md`; the same tables regenerate from the
 versioned extract (`python experiments/geometry_bench.py --from-extract
@@ -421,10 +428,11 @@ penalty contributes ≤ 0.44 s/part.
   most +0.77 (median +0.09; 5 of 18); at 1.5 s at most +1.50 (median +0.33; 10 of 18).
 
 **The x axis is a first-order factor.** At the nominal load with Poisson arrivals,
-halving v_x from 10 to 5 cm/s roughly doubles the gain of pre-positioning (1.03–1.32 →
-2.05–2.44 s/part for τ_cross ≤ 2.4 s), lengthens the along-belt component of the
-moves from 0.44–1.27 s to 1.57–2.42 s, lowers the head's idle fraction from 17–27 % to
-12–15 %, and moves the knee from 1.5–3.33 s (conservative 2.0–3.33) to 3.33–5 s
+halving v_x from 10 to 5 cm/s multiplies the gain of pre-positioning by 1.19–2.36 in the
+four geometries (τ_cross ≤ 2.4 s) where both speeds pass the criterion (1.03–1.32 →
+1.49–2.44 s/part; by 1.1–1.5 in the three where neither does), lengthens the along-belt
+component of the moves from 0.44–1.27 s to 1.57–2.42 s (seven geometries), lowers the
+head's idle fraction under `none` from 17–27 % to 12–15 % in the four cells, and moves the knee from 1.5–3.33 s (conservative 2.0–3.33) to 3.33–5 s
 (conservative 5–7.5). The pilot's finding that the knee "barely moves" was
 conditional on v_x = 10 cm/s; the pilot's recommendation to vary v_x is confirmed.
 
@@ -432,13 +440,16 @@ conditional on v_x = 10 cm/s; the pilot's recommendation to vary v_x is confirme
 
 | predictor | Spearman with the knee | leave-one-out MAE [s] | fitted coefficient |
 |---|---|---|---|
-| knee = τ_cross | +0.47 | 1.53 | — |
-| knee = a · τ_cross | +0.47 | 1.75 | a = 0.86 |
-| knee = b · τ_pp (mean duration of the moves made) | +0.53 | **1.02** | b = 1.74 |
-| knee = b′ · (t_x + t_y) | +0.51 | 1.18 | b′ = 1.33 |
+| knee = τ_cross | +0.38 | 1.53 | — |
+| knee = a · τ_cross | +0.38 | 1.75 | a = 0.86 |
+| knee = b · τ_pp (mean planned duration of the moves started) | +0.50 | **1.02** | b = 1.74 |
+| knee = b′ · (t_x + t_y) | +0.47 | 1.18 | b′ = 1.33 |
 | knee = constant | — | 1.13 | 2.76 s |
 
-By the frozen criterion the answer is **the moves the head actually makes**: τ_pp
+(Spearman with average ranks for ties; τ_pp is the planned duration recorded when the move
+is decided, before any revocation; b = 1.74 is an empirical fit on these 18 traces.)
+
+By the frozen criterion the answer is **the moves the head starts**: τ_pp
 predicts the knee with the lowest error (1.0 s), the transverse crossing time with the
 highest (1.5 s, and 1.75 s when rescaled), and a constant of 2.8 s lies in between
 (1.1 s). Two qualifications the data impose: (i) no predictor is precise, the errors
@@ -455,9 +466,11 @@ With the number of unfinished parts recorded at each move, the implied saving pe
 part (aggregate gain per move / WIP at the move) is 1.0–2.0 times the move's own
 duration in all ten useful nominal-load cells: the pre-registered "within a factor of
 two" holds, and the reading of the pilot (a second saved on the head's cycle is saved by
-the parts queued behind it) is supported there. At the high load the ratio is 2.1–9.5
-(2.5–6.8 moves per episode, head idle 6–10 %): the aggregate gain per move (17–87 s)
-is more than the queue at the move explains, so for those cells the transmission
+the parts queued behind it) is supported there. At the high load the ratio is 3.5–9.5 in the
+five Poisson cells (2.5–6.8 moves per episode, head idle 6–10 % under `none`, aggregate
+gain per move 20–87 s) and 2.1–2.5 in the three bursty cells (13–17 moves per episode,
+idle 14–20 %, 7–17 s per move): the aggregate gain per move is more than the queue at
+the move explains, so for those cells the transmission
 mechanism is **not** supported and the interpretation is dropped; what remains is the
 measured effect itself (flow time, not penalty, since the penalty part is ≤ 0.2 s/part
 there). A plausible alternative, not tested, is that one early service at high load
@@ -466,8 +479,8 @@ WIP count sees.
 
 ### 6.5 The network (secondary)
 
-Useful in 17 of 72 regimes (14 nominal, 14 Poisson, 13 with v_x = 5), G(10 s) 0.13–1.68
-s/part, curves of the same shape as the rule's but noisier and with slower saturation:
+Useful in 17 of 72 regimes (14 nominal, 14 Poisson, 13 with v_x = 5; G(10 s) 1.01–1.68
+s/part in those; 0.13–1.68 over the 72 regimes, 0.38–1.68 at the nominal load), curves of the same shape as the rule's but noisier and with slower saturation:
 knee point 1–10 s, and the conservative knee is never reached before 10 s in any of the
 17 (shares at 3.33 s: min 34 %, median 90 %). No predictor works for it (Spearman
 ≤ 0.14, the constant of 2.7 s has the lowest error). The value of widening the view
@@ -476,8 +489,11 @@ nominal load (e.g. +1.03 ±0.49 against G = +1.13 ±0.58), so the `none` baselin
 distort the network's curve there. The value of seeing with the same actions,
 `none(0)` − `none(τ)`, is within ±0.3 s/part at the nominal load and positive at the high
 load with bursts (+0.6 to +1.4 ±0.65 s/part at 10 s), consistent with the one
-significant B-vs-A cell of Paper 2 (heavy, bursts). The 35 cm entry and v_x = 5 produce
-no visible degradation relative to the rule's levels.
+significant B-vs-A cell of Paper 2 (heavy, bursts). With `when_idle` at 10 s the network's
+level lies below the rule's in 71 of the 72 regimes (significantly in 70), by 3.1–11.1
+s/part at v_x = 5 and 0.2–4.9 at v_x = 10, and above it in one (18 / 5 / v_x 10, high,
+Poisson, +1.26 ±1.07): the extrapolation beyond the training ranges does not show in the
+levels.
 
 ### 6.6 Physical entry length (H3)
 
@@ -486,20 +502,24 @@ The longer entry adds +10.35 ±0.52 (nominal, Poisson), +11.11 ±0.55 (nominal, 
 `none` level: the 8.33 s of free transit plus 2.0–4.9 s that grow with the load and are
 therefore the belt stops acting on the parts of the longer entry zone. The gain of
 pre-positioning at a given anticipation differs between the two entry lengths by at
-most ±0.26 s/part (nominal) and ±0.46 (high), never significantly: H3 holds, and the
-bench measures the camera's reach, not the installation.
+most ±0.26 s/part (nominal) and ±0.46 (high), never significantly: no difference was detected (no equivalence margin was fixed), and
+within that precision the bench measures the camera's reach, not the installation.
 
 ### 6.7 Answer to the paper's question
 
 How much anticipation does the camera need when the head can pre-position? In the
 regimes where pre-positioning is worth at least 1 s per part (Poisson arrivals, or
 bursts with a slow x axis), 2.0–3.3 s with the head at 10 cm/s on both axes and
-3.3–5 s with the x axis at 5 cm/s, conservatively; 3.33 s (10 cm at 3 cm/s) costs at
-most 0.44 s/part against the full 10 s of coverage in every such regime. What predicts
+3.3–5 s with the x axis at 5 cm/s, conservatively; 3.33 s (10 cm at 3 cm/s) cost at
+most 0.44 s/part (median 0.05; the largest value observed in the 18 cells) against the
+full 10 s of coverage. What predicts
 that coverage? The duration of the moves the head actually makes, with both axes,
-about 1.7 times its mean, and not the transverse crossing time, which was the worst
+about 1.7 times its mean (an empirical fit on the 18 traces), and not the transverse
+crossing time, which was the worst
 of the candidates tested; with the caveat that a flat 3 s does nearly as well as
 either, because the knees lie in a narrow band once the gain is large enough to size
 for. Same-τ_cross cells are identical by the model's structure, so the question "does
 the same crossing time give the same coverage?" is answered yes for the rule and
-trivially so; the informative comparison is across different τ_cross and v_x.
+trivially so; the informative comparison is across different τ_cross and v_x. Every cell runs its
+belts at 3 cm/s, so seconds and centimetres are one unit inside the bench; which scale
+transfers to another belt speed is untested (next experiment: 3 vs 5 cm/s).
