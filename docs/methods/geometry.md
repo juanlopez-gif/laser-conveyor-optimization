@@ -341,7 +341,7 @@ range, refuses to overwrite its `bench.json`, and refuses the range without the 
   transit (entry length / belt speed).
 * **Cost of less coverage:** J_when_idle(τ_vis) − J_when_idle(10 s) at τ_vis = 1.5, 2.5
   and 3.33 s, paired.
-* **Network only:** `when_idle(τ_vis)` − `when_idle(0)` (value of widening the view
+* **Network only:** `when_idle(0)` − `when_idle(τ_vis)` (value of widening the view, savings positive, the direction Paper 2 uses
   with the mode token fixed) and `none(0)` − `none(τ_vis)` (value of seeing with the
   same actions). Two different questions, reported apart.
 * **Minimum useful benefit:** a regime is worth sizing the coverage for when G(10 s)
@@ -484,7 +484,7 @@ s/part in those; 0.13–1.68 over the 72 regimes, 0.38–1.68 at the nominal loa
 knee point 1–10 s, and the conservative knee is never reached before 10 s in any of the
 17 (shares at 3.33 s: min 34 %, median 90 %). No predictor works for it (Spearman
 ≤ 0.14, the constant of 2.7 s has the lowest error). The value of widening the view
-with the mode token fixed, `when_idle(τ)` − `when_idle(0)`, equals G within noise at the
+with the mode token fixed, `when_idle(0)` − `when_idle(τ)` (savings positive), differs from G by less than its uncertainty at the
 nominal load (e.g. +1.03 ±0.49 against G = +1.13 ±0.58), so the `none` baseline does not
 distort the network's curve there. The value of seeing with the same actions,
 `none(0)` − `none(τ)`, is within ±0.3 s/part at the nominal load and positive at the high
@@ -759,12 +759,12 @@ detectably either.
 | cell | G_3(50 cm) | useful at 3 | G_5(50 cm) | useful at 5 | C_5(10 cm = 2.00 s) | C_5(16.7 cm = 3.33 s) | verdict (conservative / point) |
 |---|---|---|---|---|---|---|---|
 | spacing 12 / v_y 10 / v_x 5 (τ_cross 2.4 s) | +1.74 ±0.87 | yes | +0.62 ±0.73 | no | −0.00 ±0.51 | +0.12 ±0.39 | **benefit lost at this speed** / same |
-| spacing 12 / v_y 10 / v_x 10 (τ_cross 2.4 s) | +0.99 ±0.38 | no (by 0.01 on the point; lower bound 0.61) | +1.76 ±0.39 | yes | +0.06 ±0.26 (upper 0.32) | −0.02 ±0.24 (upper 0.22) | **H_cm** / H_cm |
+| spacing 12 / v_y 10 / v_x 10 (τ_cross 2.4 s) | +0.99 ±0.38 | no (by 0.01 on the point; lower bound 0.61) | +1.76 ±0.39 | yes | +0.06 ±0.26 (upper 0.33) | −0.02 ±0.24 (upper 0.22) | **H_cm** / H_cm |
 | spacing 6 / v_y 15 / v_x 5 (τ_cross 0.8 s) | +1.58 ±0.89 | yes | +0.47 ±0.55 | no | +0.48 ±0.55 | +0.12 ±0.45 | **benefit lost at this speed** / same |
 | spacing 6 / v_y 15 / v_x 10 (τ_cross 0.8 s) | +1.16 ±0.34 | yes | +1.22 ±0.37 | yes | +0.05 ±0.18 (upper 0.23) | +0.00 ±0.14 (upper 0.14) | **H_cm** / H_cm |
 
 * **10 cm keep the benefit at 5 cm/s in the two cells with v_x = 10 cm/s** (H_cm,
-  conservative: the upper 95 % bounds of C_5(10 cm), 0.32 and 0.23 s/part, are below
+  conservative: the upper 95 % bounds of C_5(10 cm), 0.33 and 0.23 s/part, are below
   δ = 0.5). In those cells 16.7 cm keep it too (upper bounds 0.22 and 0.14) and add
   nothing detectable over 10 cm (C_5(16.7) − C_5(10) = −0.08 and −0.05 on the point).
   As §7.1 (i) stated before the run, these two cells cannot separate H_cm from H_s
@@ -848,17 +848,17 @@ the v_x = 10 cells the moves stay short (≤ 1.5 s) and the benefit stays. This 
 reading of the traces, not a tested hypothesis; the bench was not designed to separate
 these two mechanisms.
 
-### 8.5 Answer
+### 8.5 Answer (wording aligned with Paper 2 §6.8, 0.7.35)
 
-At 5 cm/s, **10 cm of visible belt keep the benefit of pre-positioning wherever the
-benefit survives the speed change**, which in this bench is the two cells with the x
-axis at 10 cm/s (upper bounds of the cost 0.32 and 0.23 s/part against δ = 0.5); 16.7
-cm add nothing detectable there. With the x axis at 5 cm/s the benefit itself falls
-below the criterion at 5 cm/s (point 0.62 and 0.47 s/part), so no visible length is
-worth sizing for in those cells. Whether the specification that transfers across belt
-speeds is "centimetres" or "seconds" remains undetermined: the cells that could have
-separated the two readings are the ones that lost the benefit. For Paper 2 this
-replaces the untested statement of §6.7 by: the 10 cm camera keeps its benefit at
-5 cm/s with the fast x axis; with the slow x axis the benefit, not the camera, is what
-the faster belt removes; and the scale question is open. The reserved seeds 10000–10059
-are used.
+At 5 cm/s, with `nearest_job`, **10 cm of visible belt cost less than the margin of
+0.5 s/part against the full 50 cm view in the two cells with the x axis at 10 cm/s**
+(upper bounds of the cost 0.33 and 0.23 s/part); no difference between 16.7 and 10 cm
+was detected there (+0.09 ±0.26 and +0.05 ±0.14 s/part). **Neither slow-axis cell met
+the benefit criterion with the full view at 5 cm/s** (point 0.62 and 0.47 s/part), and
+the paired comparison between speeds detected a reduction in one of the two; on the
+shorter views in those cells the conservative reading is undetermined (§8.2). Whether
+the specification that transfers across belt speeds is "centimetres" or "seconds"
+remains undetermined: the cells that could have separated the two readings are the
+ones that fell below the criterion. The bench ran under the observable tie-break (§8.1),
+so its `none` level depends on the visible length, unlike the geometry bench. The
+reserved seeds 10000–10059 are used.

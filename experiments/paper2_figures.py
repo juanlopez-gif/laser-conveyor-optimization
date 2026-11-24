@@ -337,7 +337,7 @@ def fig_coverage(b: Bench, path: Path, load: str):
             ax.fill_between(xs, -g[:, 0] - g[:, 1], -g[:, 0] + g[:, 1], color=st["color"], alpha=0.12, lw=0)
             ax.plot(xs, -g[:, 0], color=st["color"], marker=st["marker"], label=st["label"])
         zone = 10.0 / v
-        label = f"$\\tau_{{\\mathrm{{head}}}}$ = {th:.1f} s"
+        label = f"$\\tau_{{\\mathrm{{cross}}}}$ = {th:.1f} s"
         if th <= xmax:
             ax.axvline(th, color="#c0392b", ls=(0, (4, 2)), lw=1.1)
             ax.text(th - 0.05 if th > zone else th + 0.05, 0.03, label, transform=ax.get_xaxis_transform(),

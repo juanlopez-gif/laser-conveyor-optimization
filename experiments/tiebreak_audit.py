@@ -88,6 +88,8 @@ def main():
     for b0, n in ((7000, 30), (9000, 60), (10000, 60)):
         if lo <= b0 + n - 1 and hi >= b0:
             sys.exit("reserved seeds")
+    if hi >= 100000:
+        sys.exit("training seed ranges (100000+, 200000+) are not development seeds")
     regimes = [(g, a, tr) for g in LOADS for a in ARRIVALS for tr in TRAVEL]
     jobs = [{"load": g, "arrivals": a, "travel": tr, "slow": 0.5, "seed": s, "t": t,
              "obs": TREATMENTS[t][0], "mode": TREATMENTS[t][1], "visible": None, "who": w}

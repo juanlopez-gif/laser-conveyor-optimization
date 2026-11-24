@@ -470,7 +470,10 @@ benefit criterion even with the full view, centimetres vs seconds open. **Draft 
 bench ran with the observable key, so its `none` level depends on coverage), the
 slow-axis cells' shorter views "undetermined" under the conservative reading, Table 9 as
 J, the benefit screen's sensitivity to the penalty weights (15 vs 18), the predictor's
-weighting and scope, the thresholds as design decisions.
+weighting and scope, the thresholds as design decisions. **Draft 1.0 (0.7.35)** after
+the second round (minor revision): conclusions with 17/18 and the point-knee predictor as
+separate sentences, the entry-length residual not attributed, controller scope, figure
+captions. Owner's submission order: Paper 2 first.
 
 **Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
 at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel
@@ -494,7 +497,10 @@ blocking-time guarantee withdrawn (counterexample), the light-traffic theorem re
 to ready-only dispatch with sufficient conditions, the tie-break audit rerun with the
 key inside the rollouts (0.7.33), the PPO section without inferences about larger
 budgets, and the wording list ("no difference detected", no "points", no ceiling).
-Open: the co-authors' reading;
+**Draft 0.7 (0.7.35)** after the second referee round: conventions of the discrete
+model in Appendix A, state/observation and the whole-episode cost identity in §4.1,
+§5.4 and Appendix D aligned (ready-only, sufficient conditions), both blocking
+guarantees withdrawn, the 5 ms budget as exceedances. Open: the co-authors' reading;
 the hindsight reference and the generalization bench on new reserved seeds.
 **Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
 properties) with the MILP, the proofs, the lower bounds and the special cases in

@@ -281,8 +281,10 @@ $$
 
 If 1 holds and 2–3 are strengthened to $r_i\ge r_h+a/v_k+I^\ast+p_h$ and
 $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$, then at every decision epoch of the simulator exactly
-one part is READY, so **all policies (fifo, nearest_job, round_robin, weighted_score, any
-fixed sequence that is non-idling) produce the same schedule**, and it satisfies
+one part is READY, so **all non-idling policies that dispatch among READY parts with the
+earliest interception (fifo, nearest_job, round_robin, weighted_score, any non-idling fixed
+sequence; not a policy that pre-positions the idle laser, `laser.prepositioning: none`
+only) produce the same schedule**, and it satisfies
 $e^0_j\le S_j\le e^0_j+I^\ast$. Hence its makespan and mean flow/waiting time exceed the
 optimum of $\mathcal P$ by at most $I^\ast$.
 
@@ -305,8 +307,11 @@ Test: `test_light_traffic_all_policies_coincide_and_bound_is_exact` (instance: 6
 $S_j-e^0_j\in\lbrace1.36,1.21,1.21,2.41,1.21,1.21\rbrace\le I^\ast$; bound = $\mathcal P$-optimum
 = 35.83 s makespan, 5.83 s mean flow; policies 37.04 s and 7.27 s).
 
-Note that under light traffic **no** policy of the simulator is optimal for $\mathcal P$: the
-optimum pre-positions the laser (see (d)).
+Note that under light traffic the optimum of $\mathcal P$ pre-positions the laser (see (d)),
+so a ready-only policy of the simulator is in general not optimal for $\mathcal P$; it can
+coincide with the optimum in special cases (a laser already standing at the entry point
+of the next part). The conditions above are sufficient, not necessary (Paper 1 draft 0.7,
+0.7.35).
 
 ### (c) When are nearest_job / FIFO optimal?
 

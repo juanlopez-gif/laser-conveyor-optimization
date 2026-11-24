@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.6 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29)}
+\date{November 2026 --- draft 0.7 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; second referee round, 0.7.35)}
 
 \begin{document}
 \maketitle
@@ -64,18 +64,18 @@ time of the offline optimum. We then ask how to decide well in
 milliseconds. A look-ahead search scores each candidate part by simulating the known parts
 together with sampled futures of the unknown arrivals (eight Poisson futures over a 30~s
 window, common random numbers, the realized cost of every part as the objective); it is
-the best decision rule we found, but it needs about a second per decision. A
+the best-scoring decision rule among those tried on the development groups, but it needs about a second per decision. A
 permutation-equivariant Transformer policy over the parts, the belts, the head and the cell's
 parameters, trained by expert iteration with that scenario search as the expert, on
 randomized cells with one to six conveyors, amortizes it: on 30 reserved realizations of
 eight operating regimes, used once, no difference between the policy alone and its
 teacher was detected in any tested regime; the look-ahead over the known parts costs
-1.5--3.9\,\% more than the policy in every regime (significant in seven), and the policy beats the nearest-part rule
+1.5--3.9\,\% more than the policy in every regime of the basic mode (1.4--4.4\,\% in the design mode; significant in seven of eight in each), and the policy beats the nearest-part rule
 by 2--7\,\% of the penalized flow time in seven of the eight regimes, at 10.8~ms per
 decision (median, one thread, machine fully loaded; 17.5~ms at the 95th percentile)
 against 1.2~s for the search. Three negative results shape the method:
 truncating the look-ahead with a learned value is far worse than not truncating; sampled
-futures help only when the look-ahead counts every part; and larger networks (6.7~M and
+futures helped only in the tested variants in which the look-ahead scores every part; and larger networks (6.7~M and
 39~M parameters) did not score better than the 0.88~M one with the same teacher in the three runs made. Giving the teacher the cell's
 bursty arrival model does not improve it either. A policy-gradient (PPO) baseline on the
 same tokens, action mask, simulator and cell distribution, trained under a protocol fixed
@@ -348,7 +348,8 @@ $\sum_j(C_j-r_j)$, the total waiting time $\sum_j(S_j-r_j)$, the maximum latenes
 $L_{\max}=\max_j(C_j-d_j)$ for due dates $d_j$, the head's travel distance, the conveyor
 downtime $\sum_k\bigl(T-D_k(T)/v_k\bigr)$ with $T$ the exit time of the last part, and the
 throughput $n/C_{\max}$ (the one quantity to be maximized; for a fixed number of parts
-it is the makespan). A part that reaches the end of the laser zone unprocessed stops
+it is the makespan). The penalty weights carry units: $\lambda_N$ is seconds per event
+and $\lambda_T$ is dimensionless, since $T_B$ and the flow time are both in seconds. A part that reaches the end of the laser zone unprocessed stops
 its whole conveyor by (C4)--(C5); the delays it causes are inside the $C_j$, but a blocked
 conveyor has further costs in the cell (restart, accumulation upstream, risk for the
 upstream process), so it is penalized explicitly. Let $B_j=\min\{t:\ D_{k(j)}(t)-E_j\ge b\}$
@@ -385,8 +386,10 @@ completes at $5.83$~s in $\Pb$ and at $7.19$~s in $\Psim$). The cell's two actio
 are, with $\mathcal R(t)$ the ready unassigned parts (inside the zone) and $\mathcal U(t)$
 the unassigned parts in the entry zone of a running belt: \texttt{none}, candidates
 $\mathcal R(t)$, which realizes $\Psim$; and \texttt{when\_idle}, candidates $\mathcal R(t)$
-if non-empty and $\mathcal U(t)$ otherwise, feasible for $\Pb$. A decision epoch is an
-instant at which the head is free and the candidate set is non-empty. Commitments are
+if non-empty and $\mathcal U(t)$ otherwise, feasible for $\Pb$. A \emph{dispatch event} is an
+instant at which the head is free and the candidate set is non-empty; with a single
+candidate the dispatch is forced, and a \emph{decision epoch} (Section~\ref{sec:online})
+is a dispatch event with at least two candidates. Commitments are
 irrevocable until processing starts, except that under \texttt{when\_idle} a commitment to
 an entry-zone part $j$ is revoked at the first instant $t'$ with $\mathcal R(t')\ne\emptyset$,
 $j\notin\mathcal R(t')$; the head keeps its position, nothing else is charged, and a new
@@ -408,8 +411,9 @@ and inside a rolling horizon. Once the order $\pi$ is fixed,
 the earliest schedule compatible with (C1)--(C5) and (C7) is obtained by a deterministic
 forward pass $\Phi:\pi\mapsto(S,u)$, which is what the cell's simulator computes for a
 fixed sequence; $\min_\pi\Fpi(\Phi(\pi))$ is a permutation problem, but $\Phi$ is a
-heuristic restriction of $\Psim$ (delaying a start can move a part closer to the head,
-Appendix~\ref{app:special}), and dynamic programming over (processed set, last part) is not
+heuristic restriction of $\Psim$ (Proposition~\ref{prop:delay} shows that a delay cannot
+pay through the head's travel alone; whether it can pay through the belt's motion, which
+brings a part closer to the head, is left open, Appendix~\ref{app:special}), and dynamic programming over (processed set, last part) is not
 exact, because the odometers depend on the whole history.
 
 %====================================================================
@@ -432,7 +436,27 @@ maximizes the undiscounted return minimizes the total cost, a discounted proxy w
 not, and because $n$ varies between episodes the return weights an episode by its
 number of parts, which is not the per-part cost $\Fpi$ of \eqref{eq:J}; the two
 objectives are stated where each is used (Sections~\ref{sec:general} and
-\ref{sec:ppo}). Rules that rank candidates by travel time compare the times rounded to
+\ref{sec:ppo}).
+
+\textbf{State, observation and the cost identity.} The state of the process is the full
+state of the cell: the head, the belts' odometers and stops, every part released,
+including those waiting in the hidden queue upstream of the feed point, and, under
+bursty arrivals, the phase of the source; between epochs it evolves under the action and
+the arrival process. A policy acts on the observation $\I_t$ of Section~\ref{sec:info},
+which omits the hidden queue and the source's phase, so $\I_t$ need not be a Markov
+state of the process; every policy of this paper is a function of $\I_t$ and nothing
+below assumes more. The identity between return and cost covers the whole episode:
+$n\Fpi=c(0,t_1)+\sum_{i=1}^{m-1}c(t_i,t_{i+1})+c(t_m,T)$, with $t_1$ the first decision
+epoch, $t_m$ the last and $T$ the instant the last part leaves; the first and last
+terms are the cost of the forced segments (waiting for the first part, single-candidate
+dispatches, draining after the last decision), which no decision influences but which
+the episode's cost contains. An episode with a single part has a positive cost and no
+decision epoch. The learners of Sections~\ref{sec:policy} and \ref{sec:ppo} attribute
+to each decision the cost accrued until the next one and the terminal segment to the
+last decision, and score the forced initial segment in the episode cost. An episode
+with no arrival has zero total cost and an undefined per-part cost $\Fpi$: it is
+excluded from every per-part mean and reported separately where it occurs
+(Section~\ref{sec:ppo}). Rules that rank candidates by travel time compare the times rounded to
 $10^{-9}$~s and break exact ties by the instant from which the part has been observable
 ($o_j$ below), then by part number; exact ties are frequent (equal lane moves, several
 parts stopped at $b$), so the tie rule is part of the definition of a policy, and it
@@ -443,14 +467,14 @@ information model is not observed (an external review found it). An audit on 30
 development realizations of the eight regimes, both modes, compares the two keys, each
 applied both to the candidate ranking and inside every look-ahead continuation of the
 known-parts search (a first version of the audit had changed only the ranking; a
-referee found it): the observable key changes 0.1--2.5\,\% of the decisions of the
+referee found it): the observable key changes 0.2--2.5\,\% of the decisions of the
 rules and 0.1--1.3\,\% of those of the search; the paired cost of \nj\ moves by
 $+0.24\pm0.20$\,\% (B) and $+0.29\pm0.23$\,\% (C) pooled over the regimes (one mean per
 realization over its eight regimes, interval over the 30 means), by $+0.35\pm0.16$ and
 $+0.18\pm0.20$\,\% for \nh, and by $+0.01\pm0.13$ and $+0.18\pm0.19$\,\% for the
-known-parts search; per regime the changes are of either sign, within $\pm0.6$ points
-in the reference cell and up to $+1.5$ points at the heavy load with Poisson arrivals
-for the rules and up to $+0.8$ for the search. The confirmatory numbers below therefore
+known-parts search; per regime the changes are of either sign, within $\pm0.6$\,\%
+in the reference cell and up to $+1.5$\,\% at the heavy load with Poisson arrivals
+for the rules and up to $+0.8$\,\% for the search. The confirmatory numbers below therefore
 compare the network with comparators run under the legacy key, whose effect on
 development realizations is small and of either sign; the reserved realizations were
 not rerun, and no claim is made that every reserved margin is conservative.
@@ -474,8 +498,10 @@ alternatives are used by Paper~2: \texttt{zone}, $O(t)$ the parts in the laser z
 (no camera, incompatible with pre-positioning), and \texttt{full}, also the parts queued
 upstream of the feed point (a what-if upper bound). A policy maps $\I_t$ to a candidate; a
 look-ahead may simulate only the parts of $O(t)$ plus synthetic arrivals drawn from
-$\theta$, never the real future. Every policy of this paper, including the look-ahead
-searches, uses only $\I_t$: the simulator's look-ahead copy drops the real future arrivals
+$\theta$, never the real future. Every policy of this paper ranks its candidates on $\I_t$ only,
+the look-ahead searches included, with one audited exception: the tie-break of the
+legacy comparators of Section~\ref{sec:confirm} used $r_j$ (above). The simulator's
+look-ahead copy drops the real future arrivals
 and the hidden queue, and a test verifies that changing them changes no search cost. The
 processing time $p_j$ is assumed known once the part is observed (constant in the
 reference cell).
@@ -636,8 +662,9 @@ ready, every non-idling policy that dispatches among the parts ready in the zone
 earliest interception (the mode \texttt{none} of Section~\ref{sec:online}; not a policy
 that pre-positions the idle head) produces the same schedule, and that schedule satisfies
 $e^0_j\le S_j\le e^0_j+I^\ast$; its makespan and mean flow time exceed the optimum of $\Pb$
-by at most $I^\ast$. Under the weaker conditions $r_i\ge r_h+a/v_k+p_h$ and
-$e^0_{(q+1)}\ge e^0_{(q)}+p_{(q)}+|y_{(q+1)}-y_{(q)}|/v_y$, the schedule $S_j=e^0_j$ with
+by at most $I^\ast$. Under the weaker conditions $r_i\ge r_h+a/v_k+p_h$,
+$e^0_{(q+1)}\ge e^0_{(q)}+p_{(q)}+|y_{(q+1)}-y_{(q)}|/v_y$ and
+$e^0_{(1)}\ge\tau(P_0,(a,y_{(1)}))$, the schedule $S_j=e^0_j$ with
 the head pre-positioned at $(a,y_{k(j)})$ is feasible for $\Pb$ and optimal for every
 regular objective, and the bound of Section~\ref{sec:bounds} is exact.
 \end{theorem}
@@ -650,7 +677,7 @@ In the reference cell the first conditions need inter-arrivals of at least 8.5~s
 conveyor and 5.2~s between consecutive availabilities overall; under its Poisson arrivals
 (total rate 0.255~s$^{-1}$) a gap of 5.2~s has probability 0.27, so the light-traffic
 regime describes the uncontended stretches of the operation and the reference instances
-are contended. Outside it, none of the rules is optimal, for three distinct reasons that
+are contended. Outside it, the rules are not optimal in general, for three distinct reasons that
 Appendix~\ref{app:special} documents with explicit instances, each reproduced by a test:
 \begin{itemize}[nosep]
 \item \emph{Belt order is not optimal for the flow time} (Counterexample~\ref{cex:single}):
@@ -683,7 +710,8 @@ optimal, which is the room the online method of the next sections works in.
 \subsection{Rollout over the known parts}
 The first search is a fortified rollout \cite{M02_Bertsekas1997} on the cell's exact
 event-driven simulator. At a decision epoch with candidate set $\mathcal C$ and base policy
-$\mu$, it keeps the $K=6$ candidates with the smallest interception time, always
+$\mu$, it keeps $K=6$ candidates, ranked by interception time when $\mu$ is a rule and
+by $\mu$'s own scores when $\mu$ is the network, always
 including $\mu$'s own choice; for each it clones the simulator with online information
 only (the real future arrivals and the hidden queue removed), forces the candidate, lets
 $\mu$ continue until every part known at the decision is processed, and scores the sum of
@@ -695,7 +723,7 @@ $\mu=\nj$ it is the \emph{known-parts search} of the tables below; with $\mu$ eq
 current network it is the expert of the first training stage.
 
 \subsection{Scenario search: sampled futures, scored on every part}
-The known-parts rollout has a ceiling: on the validation cells no network of any size
+The known-parts rollout sets the level the networks reach: on the validation cells no network of any size
 exceeded it by more than the noise (Section~\ref{sec:ladder}). The reason is its horizon.
 The known parts are a few; the decision that serves them best may leave the head far from
 the belt that will need it next, and the rollout cannot see that. The second search
@@ -721,7 +749,7 @@ expert. Legacy arrival-time tie-break (Section~\ref{sec:dev}).}
 \resizebox{\linewidth}{!}{\input{tables/variants}}
 \end{table}
 
-Four findings fix the design. (i) \emph{Sampled futures help only when the objective
+Four findings fix the design. (i) \emph{Sampled futures helped only, among the variants tried, when the objective
 counts every part.} An earlier attempt added four futures to the known-parts score and
 was much worse than no futures at all ($+7.9$ against $-3.8$\,\% on the reference cell):
 with synthetic arrivals in the clone and only the known parts in the score, the
@@ -910,7 +938,7 @@ observation of the source's current state). Table~\ref{tab:futures} tests it on 
 frozen network, the same realizations and the same budget. On Poisson cells the two
 experts coincide by construction; on the bursty cell the burst-aware expert is half a
 point \emph{worse} ($+0.52\pm0.49$\,\% paired against the Poisson one), and with strong
-bursts the two are equal within $\pm0.4$--$0.6$ points. The stationary start adds to
+bursts no difference between the two was detected (intervals of $\pm0.4$--$0.6$\,\%). The stationary start adds to
 every future the uncertainty of whether the source is emitting now, which eight futures
 do not average out; the smoother Poisson future ranks the candidates with less noise. With
 strong bursts the cell alternates between an idle head and a saturated burst, no expert
@@ -1110,7 +1138,7 @@ thread, the machine fully loaded by the other workers), 16\,215 decisions in B a
 per-episode results and the per-decision latencies are distributed with the source.
 The run used the legacy arrival-time tie-break for \nj, \nh\ and the known-parts search
 (Section~\ref{sec:online}): their numbers below are those of comparators run under
-that key, whose effect on development realizations was at most $\pm1.5$ points per
+that key, whose effect on development realizations was at most $\pm1.5$\,\% per
 regime and of either sign; the reserved realizations were not rerun with the observable key.
 
 \begin{table}[t]
@@ -1169,21 +1197,23 @@ fully loaded), pooled over the eight regimes: 16\,215 decisions in B, 17\,147 in
 ($-7.2$ and $-7.3$\,\% on the reference cell with Poisson arrivals, $-2.0$ and $-6.2$ with
 bursts, $-2.8$ to $-4.2$ at the heavy load) and by 2.0--7.1\,\% in C; the exception is the
 heavy load with Poisson arrivals and a slow head ($-1.3\pm2.3$ and $-1.6\pm2.7$), where
-with every belt queueing and a head at 2.5~cm/s the nearest-part rule is close to the
-best one can do without seeing the queues.
+with every belt queueing and a head at 2.5~cm/s no tested policy improved on the
+nearest-part rule by a detectable amount; how far all of them are from the optimum is
+not measured.
 
 \textbf{It beats the known-parts search in every regime}: the search costs 1.5--3.9\,\% more than the policy in B and
 1.4--4.4 in C, significantly in seven of eight in both modes, at 2--3 times the search's
-latency. The known-parts search is not a competitive reference at the heavy load
-($+0.3$ and $+2.3$\,\% against \nj\ with Poisson arrivals in B): the look-ahead over the
-parts in view, without the sampled future, ranks the candidates worse than the rule when
-every belt is queueing.
+latency. At the heavy load with Poisson arrivals in B the known-parts search shows no detected
+improvement over \nj\ (point estimates $+0.3$ and $+2.3$\,\%, intervals containing zero):
+the look-ahead over the parts in view, without the sampled future, is not better than
+the rule when every belt is queueing, and whether it is worse is not resolved by these
+intervals.
 
 \textbf{No difference from its expert was detected.} The paired contrast of the
 scenario search over the network against the network alone includes zero in every
-regime and mode: within $\pm0.8$ points in B, and in C within $\pm0.8$ points except
+regime and mode: within $\pm0.8$\,\% in B, and in C within $\pm0.8$\,\% except
 the heavy load with Poisson arrivals and a slow head, where the point estimate favours
-the network by $2.0\pm2.8$ points; the search is cheaper in 12--18 of the 30
+the network by $2.0\pm2.8$\,\%, an interval that admits a practically relevant difference; the search is cheaper in 12--18 of the 30
 realizations, at 0.4--1.9~s per decision
 (median by regime; 1.2~s pooled, 3.6~s at the 95th percentile, 12~s at most; 2\,600
 look-aheads per episode on average). No difference between the amortized policy and
@@ -1193,7 +1223,12 @@ realizations, which is what every development run had shown on the validation ce
 \textbf{Latency.} Pooled over the regimes, the network decides in 10.8~ms (median),
 17.5~ms (95th percentile), 25.5~ms (99th) and 106~ms at most, on one thread with the
 machine fully loaded by 47 other workers (Figure~\ref{fig:latency}); the 4~ms of
-Section~\ref{sec:policy} is the same model on an unloaded machine. The physical slack of
+Section~\ref{sec:policy} is the same model on an unloaded machine. Against the design's
+5~ms budget, on the loaded machine the network exceeded it in 98.07\,\% of the 16\,215
+decisions of B and in 97.62\,\% of the 17\,147 of C, the known-parts search in 48.25 and
+45.72\,\%, the scenario search in every decision and the rules in none; on the unloaded
+machine the only figure available is the 4.1~ms median, which does not establish a
+per-decision guarantee. The physical slack of
 the cell, the time until the next part reaches $b$, is seconds, three orders of magnitude
 above either figure. The known-parts search decides in 4.8~ms (16~ms at the 95th
 percentile) and the rules in under 0.2~ms.
@@ -1203,8 +1238,10 @@ percentile) and the rules in under 0.2~ms.
 \includegraphics[width=\linewidth]{figures/latency.pdf}
 \caption{Empirical distribution of the per-decision latency of the four policies on the
 same decisions (basic mode, eight regimes pooled, one thread, machine fully loaded; log
-scale). The dotted line is the 5~ms budget of the design, which the network meets on an
-unloaded machine (4.1~ms) and exceeds in this loaded-machine protocol (10.8~ms median).}
+scale). The dotted line is the 5~ms budget of the design: on this loaded machine the
+network exceeded it in 98.1\,\% of the decisions in B and 97.6\,\% in C (10.8~ms median);
+on an unloaded machine the available figure is a median of 4.1~ms, not a per-decision
+guarantee.}
 \label{fig:latency}
 \end{figure}
 
@@ -1236,7 +1273,7 @@ confirmatory evaluation measures it.
 \subsection{What sets the quality of the policy}
 Three facts of Section~\ref{sec:dev} point the same way. Networks of 0.88, 6.7 and 39
 million parameters scored $-2.79$, $-2.88$ and $-2.44$\,\% with the same expert in one
-run each, no difference detected; every network reaches its expert's score within one or two iterations and then trades one validation group against
+run each, no difference detected; for every network no difference from its expert's score is detected after one or two iterations and then trades one validation group against
 another; and changing the expert moved the score by two points where changing the size
 moved it by none. The quality of the amortized policy is the quality of the search that
 labels its data, and the search's quality is set by what it scores (every part, not the
@@ -1263,7 +1300,7 @@ instances was deferred to a second confirmatory run on new reserved realizations
 lower bounds of Section~\ref{sec:bounds} have been compared with offline solutions on
 small instances only, where part of the gap is the anticipation the rules cannot do. The
 known-parts look-ahead is a rollout with $K=6$, not an exact search with the bounds as
-pruning; since its ceiling was found low before the exact version was built, that search
+pruning; since the level it reached was found low before the exact version was built, that search
 remains a verification tool for the known-parts sub-problem. The policy-gradient baseline
 of Section~\ref{sec:ppo} is one protocol at one budget, without a hyperparameter
 search; it bounds what the reward alone gave here, not what it could give. The confirmatory
@@ -1284,8 +1321,9 @@ rule under the sufficient conditions of light traffic, where every such non-idli
 coincides within one interception time of the offline optimum. In the contended regimes of a real cell, the decision that
 serves the parts in view best is not the best decision: a look-ahead that samples the
 unknown arrivals and scores the realized cost of every part decides better than the
-nearest-part rule by 3--8\,\% of the penalized flow time and than a look-ahead over the
-known parts by 2--4\,\% of the cost, and a permutation-equivariant pointer policy trained by expert
+nearest-part rule by 3--8\,\% of the penalized flow time in the seven significant regimes
+of the basic mode (1.4--7.7\,\% over the eight) and than a look-ahead over the
+known parts by 2--4\,\% of the cost in that mode, and a permutation-equivariant pointer policy trained by expert
 iteration with that search as expert, on randomized cells, shows no detected difference
 from it at a hundredth of its latency, 10~ms per decision on a loaded machine. The size of the
 network does not matter beyond 0.88~M parameters; the expert does. On reserved
@@ -1346,23 +1384,29 @@ the position resolution), i.e.\ parts that cannot advance a full step without
 overshooting $b$, which is where the belt must stop; (M12) forces it there: such a part
 \emph{is} blocking, whatever the reason the belt is stopped, so that
 $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with $\gamma_j\ge\beta_{jt}$
-count every such part as the continuous definition \eqref{eq:block} does. The
+count the parts that carry a witness. The
 thresholds are strict on purpose: with a non-strict threshold $x_j\ge b-v_k\Delta$ (the
 project's earlier statement) a part at exactly $x_j=b-v_k\Delta$ that advances one step
 and starts the moment it reaches $b$, i.e.\ $S_j=B_j$ in the continuous model, which
 charges nothing, would be charged a full event $\lambda_N$ one step early, an error in
 the cost that does not vanish with $\Delta$ (found by an external review). With the
-strict threshold that part is not a witness at that step. The blocked time, however, is
-\emph{not} bounded within one step of the continuous model, as a previous draft
-claimed (a referee gave the counterexample): a part strictly inside the last step
-whose belt is stopped by a processing operation on another part of the same belt is
-charged blocked time for the whole operation, although in continuous time it has not
-reached $b$ and accumulates no blocking; the error of $T_B$ is bounded by the duration
-of a processing stop, not by $\Delta$, and the witness would have to distinguish a part
-that has reached $b$ from one that cannot travel another whole step. The dispatching
-study is unaffected, since every cost in it is computed by the event-driven simulator;
-the refinement is deferred to the point at which the distance to the penalized optimum
-is measured. (Without (M12) a penalized objective could
+strict threshold that part is not a witness at that step. Neither the blocked time $T_B$
+nor the event count $N_B$ of this discretization has been shown to agree with the
+continuous definition \eqref{eq:block}, and a previous draft was wrong to claim a
+one-step agreement for $T_B$ (a referee gave the counterexample): a part strictly inside
+the last step whose belt is stopped by a processing operation on another part of the
+same belt is charged blocked time for the whole operation, although in continuous time
+it has not reached $b$ and accumulates no blocking. A part can therefore accumulate
+spurious blocked time during an entire service operation, and if this happens in several
+operations the errors add; for the same reason a part served before it reaches $b$ can
+carry a witness and be charged an event without any blocking event in continuous time.
+What the discretization guarantees is the local statement only: a witness exists exactly
+for an unstarted part parked inside the last step. The aggregate blocked time and the
+event count remain unvalidated approximations, which would need a witness that
+distinguishes a part that has reached $b$ from one that cannot travel another whole
+step. The dispatching study is unaffected, since every cost in it is computed by the
+event-driven simulator; the refinement is deferred to the point at which the distance
+to the penalized optimum is measured. (Without (M12) a penalized objective could
 set $\beta_{jt}=0$ while the belt is stopped by a processing operation, which an earlier
 audit of the project found.) The project's CP-SAT implementation realizes (M1)--(M11)
 for the makespan and flow-time objectives and uses the strict threshold in its decoder;
@@ -1375,6 +1419,41 @@ immediate-successor binaries and is exact because $\ell$ is convex in $\Delta x$
 model has $O(nH)$ binaries $s_{jt}$, $O(NH)$ binaries $u_{kt}$ and $O(n^2)$ order binaries:
 a few thousand for 10--15 parts in a 60~s window at $\Delta=0.1$~s, tractable for CP-SAT or
 a MILP solver on small instances and inside a rolling horizon.
+
+\paragraph{Conventions of the discrete model.} (i) \emph{First part and first move.} For
+the first part of each conveyor $E_{\pred(j)}:=-\infty$, so (M3) reduces to
+$E_j=D_{k(j),\bar r_j}$ and the pair (M3b) is dropped for it (the implementation uses an
+exact maximum, so no big-$M$ appears there); the first processing of the episode is
+constrained by $S_j\ge\tau_{0j}$ in (M8), the travel from the home $P_0=(x_0,y_0)$, which
+also covers an instance with a single part, for which (M7)--(M8) between pairs are void.
+(ii) \emph{Horizon.} A start is admissible only if it completes within the grid,
+$t+\bar p_j\le H$; the implementation replaces a fixed $H$ by start windows
+$[\mathrm{est}_j,\mathrm{lst}_j]$ derived from the incumbent's objective value, so that no
+solution at least as good as the incumbent is cut off, and sets
+$H=\max_j(\mathrm{lst}_j+\bar p_j)$. (iii) \emph{Big-$M$ constants.} Every $M$ is finite
+and instance-specific: $M\ge\max_kv_kH\Delta+L$ for the odometer differences of
+(M3)--(M4) and (M11)--(M12), $M\ge H\Delta$ for the starts of (M8); the implementation
+uses indicator constraints and an exact maximum instead, so no big-$M$ is instantiated.
+(iv) \emph{Position lattice and $\varepsilon$.} Positions are integers in a unit chosen
+as the inverse least common multiple of the denominators of $v_k\Delta$, $a$, $b$,
+$\delta$ and $x_0$ (1~mm for the reference cell), so that every odometer value and every
+threshold lies on the lattice and $\varepsilon$ is one unit: the strict threshold reads
+$D_{k,t}-E_j\ge b-v_k\Delta+1$ in lattice units. (v) \emph{Event indicator.}
+$\gamma_j\in\{0,1\}$ with $\gamma_j\ge\beta_{jt}$ for all $t$, otherwise free; it enters
+only through $\Pi$, which drives it to the indicator of $\exists t:\beta_{jt}=1$.
+(vi) \emph{Axes.} (M9) is written for simultaneous axes (the travel time is the maximum
+of the two axis times); for sequential axes the two terms add,
+$\tau_{ij}\ge|X_j-X_i|/v_x+|y_{k(i)}-y_{k(j)}|/v_y$, and the implementation rounds every
+travel time up to a whole number of steps (the ceiling is subadditive, so the triangle
+inequality is preserved). (vii) \emph{What is implemented.} The project's CP-SAT model
+implements the discrete problem $\Pb_\Delta$ for the makespan, the flow time and the
+waiting time, in two variants, $\Pb$ (the head may travel towards a part before it is
+ready) and $\Psim$ (ready-only dispatch), with (M10)--(M11) and the strict threshold in
+its decoder; the penalized objective with (M12), the event indicator and the
+travel-distance objective are specified here and not implemented. Its optimum is the
+optimum of $\Pb_\Delta$, with releases and travel times rounded up to the grid; it is not
+a certificate for the continuous model, whose distance to $\Pb_\Delta$ is the rounding
+of the grid for the objectives implemented and unvalidated for the blocking penalty.
 
 %====================================================================
 \section{Proof of Proposition~\ref{prop:complexity}}\label{app:complexity}
@@ -1610,7 +1689,8 @@ for processing. Optimality: every feasible schedule has $S_j\ge\underline s_j\ge
 Simultaneous axes, $\sigma=I$, $P_0\in W$, $v_k\le v_x$ for all $k$, $v_kI^\ast\le b-a$. If
 $a\ge\delta$ and the conditions of Theorem~\ref{thm:LTP} are strengthened to
 $r_i\ge r_h+a/v_k+I^\ast+p_h$ and $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$, then at every
-decision epoch of the cell exactly one part is ready, so all non-idling policies produce
+decision epoch of the cell exactly one part is ready, so all non-idling policies that
+dispatch among the ready parts with the earliest interception (mode \texttt{none}) produce
 the same schedule, and it satisfies $e^0_j\le S_j\le e^0_j+I^\ast$; hence its makespan and
 mean flow and waiting times exceed the optimum of $\Pb$ by at most $I^\ast$.
 \end{theorem}
@@ -1627,9 +1707,11 @@ within $I^\ast$, before $b$, so without blocking.
 In the reference cell $I^\ast=\max(35/13,24/10)=2.69$~s and $vI^\ast=8.1\le35$. A test
 instance (6 parts, one every 6~s cycling over the three conveyors) has all rules giving
 identical start times with $S_j-e^0_j\le I^\ast$, a bound equal to the $\Pb$-optimum
-(35.83~s makespan, 5.83~s mean flow) and the rules at 37.04 and 7.27~s. Under light
-traffic no non-anticipating policy is optimal for $\Pb$: the optimum pre-positions the
-head.
+(35.83~s makespan, 5.83~s mean flow) and the rules at 37.04 and 7.27~s. Under these
+conditions the optimum of $\Pb$ pre-positions the head, so a ready-only policy is in
+general not optimal for $\Pb$; it coincides with the optimum in special cases, for
+instance when the head already stands at the entry point of the next part, which is why
+the conditions are sufficient and not necessary.
 
 \begin{counterexample}[Waiting beats serving]\label{cex:wait}
 Reference cell, five parts: three on conveyor~2 at $r\approx0.56,0.74,2.41$~s, one on

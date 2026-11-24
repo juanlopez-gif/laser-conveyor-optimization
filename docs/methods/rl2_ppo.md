@@ -105,8 +105,12 @@ changed after seeing the results of §3.
   training seed, and as the mean over the three seeds: per realization the mean of
   the three ratios, then mean and interval over the realizations.
 * The same realizations select the checkpoint and evaluate it, for PPO as for expert
-  iteration (whose iteration 1 was chosen on them). The selection bias is the same
-  for both methods and is small (10 candidates); the reserved seeds 7 000–7 029 and
+  iteration (whose iteration 1 was chosen on them). [Superseded, 0.7.35: the sentence
+  "the selection bias is the same for both methods and is small" was an interpretation
+  written before the runs; the referee report on Paper 1 draft 0.5 rejected it, since the
+  two chains select among different numbers of candidates on the same realizations, and
+  Paper 1 reports the comparison as development evidence without that claim.] The
+  selection bias was described here as the same for both methods and small (10 candidates); the reserved seeds 7 000–7 029 and
   9 000–9 059 stay untouched for the owner.
 
 ### 1.6 Cost accounting
@@ -298,7 +302,9 @@ Per group:
 from the reward alone, with the same tokens, network, mask, simulator and cell
 distribution and a comparable number of acting episodes, gives a policy 7–12 %
 worse than the expert-iteration network, and 4–8 % worse than `nearest_job`, which
-expert iteration beats by 3.8 %. The budget is not the whole story (two runs were
+expert iteration beats by 3.8 %. [Superseded, 0.7.35: the inference "the budget is not
+the whole story" is withdrawn in Paper 1 draft 0.6+; the curves do not say what a larger
+budget would have given.] The budget is not the whole story (two runs were
 still improving), but the gap at equal episodes is an order of magnitude larger
 than the between-checkpoint improvements at the end of the runs (≈ 0.5–1 % per
 4 000 episodes).

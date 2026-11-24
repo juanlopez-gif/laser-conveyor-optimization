@@ -442,18 +442,23 @@ D_{k(j),t}-E_j\le b-v_{k(j)}\Delta+M\Big(\beta_{jt}+\textstyle\sum_{t'\le t}s_{j
 \end{equation}
 an unstarted part strictly inside the last step of the zone \emph{is} blocking. With
 (M13)--(M15), $\beta_{jt}=1$ exactly when $j$ has not started and lies strictly within
-$v_k\Delta$ of $b$, whatever the reason the belt is stopped. This matches the
-simulator's event count whenever such a part exists, but it does \emph{not} bound the
-blocked time $T_B$ within one step, as an earlier version of this paragraph claimed
-(the referee of Paper~1 draft 0.5 gave the counterexample): a part that lies strictly
-within $v_k\Delta$ of $b$ while its belt is stopped by a processing operation on another
-part of the same belt is charged blocked time for the whole operation, although in
-continuous time it has not reached $b$ and accumulates no blocking; the error of $T_B$
-is therefore bounded by the duration of a processing stop, not by $\Delta$, and does
-not vanish with $\Delta$ for a part parked inside the last step. The witness would
-need to distinguish a part that has reached $b$ from one that cannot travel another
-whole step; that refinement is deferred to the point at which the distance to the
-penalized optimum is measured. (M15) and the penalized
+$v_k\Delta$ of $b$, whatever the reason the belt is stopped. Neither the blocked time
+$T_B$ nor the event count $N_B$ of this discretization has been shown to agree with the
+continuous definition, and an earlier version of this paragraph was wrong to claim a
+one-step agreement for $T_B$ (the referee of Paper~1 draft 0.5 gave the
+counterexample): a part that lies strictly within $v_k\Delta$ of $b$ while its belt is
+stopped by a processing operation on another part of the same belt is charged blocked
+time for the whole operation, although in continuous time it has not reached $b$ and
+accumulates no blocking; a part can therefore accumulate spurious blocked time during
+an entire service operation, and if this happens in several operations the errors add.
+For the same reason a part that is served before it reaches $b$ can carry a grid witness
+and be charged an event ($\gamma_j=1$) without any blocking event in continuous time.
+What the discretization guarantees is only the local statement that a witness exists
+exactly for an unstarted part parked inside the last step; the aggregate duration and
+the event count remain unvalidated approximations. The witness would need to
+distinguish a part that has reached $b$ from one that cannot travel another whole
+step; that refinement is deferred to the point at which the distance to the penalized
+optimum is measured. (M15) and the penalized
 objective are specified here and not implemented in the CP-SAT model (0.7.26): for the
 blocking penalty this model is an approximate discretization that has not been
 validated against the continuous definition.

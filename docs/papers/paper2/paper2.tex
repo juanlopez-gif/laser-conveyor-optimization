@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.9 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34)}
+\date{November 2026 --- draft 1.0 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34 and 0.7.35)}
 
 \begin{document}
 \maketitle
@@ -46,7 +46,7 @@ learned dispatching policy as a secondary one. In the \emph{reference cell} (eig
 we separate \emph{seeing} earlier (the same actions, a wider view) from \emph{acting}
 earlier (sending the idle head towards a part before it reaches the zone): widening the
 view alone produced small effects in every regime, while acting on it reduced the
-penalized flow time by 2.8--7.4\,\% in the four nominal-load regimes. The \emph{geometry
+penalized flow time by 2.8--7.4\,\% (network) and 2.7--7.4\,\% (rule) in the four nominal-load regimes. The \emph{geometry
 bench} (72 regimes: belt spacing 6--18~cm, transverse head speed 5--15~cm/s, along-belt
 head speed 5 and 10~cm/s, two loads, Poisson and bursty arrivals; 60 realizations) then
 measures the gain of acting on a common grid of 0--10~s of anticipation. Pre-positioning
@@ -61,12 +61,12 @@ estimated gain (71\,\% in one cell). Under the conservative criterion of retaini
 within the grid. In the four nominal-load Poisson cells in which both along-belt speeds pass
 the criterion, halving that speed multiplied the gain by 1.2--2.4 and moved the
 point-estimate requirement from 1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
-is the worst predictor of the required anticipation among those tested (leave-one-out
-error 1.5~s); the mean planned duration of the pre-positioning moves the head starts is
+is the poorest predictor family of the required anticipation among those tested
+(leave-one-out error 1.5~s unscaled, 1.75~s rescaled); the mean planned duration of the pre-positioning moves the head starts is
 the best (1.0~s; the factor fitted on these traces is 1.7 times the mean planned move,
 each episode with a move weighted equally), and a
-constant of 2.8~s does nearly as well (1.1~s), so the predictor's advantage is small. For the rule, cells with the same crossing time are identical by
-the model's structure. The results support specifying the camera in seconds of
+constant of 2.8~s does nearly as well (1.1~s), so the predictor's advantage is small. For the rule, cells with the same crossing time, the same along-belt geometry and the
+same arrival realizations are identical by the model's structure. The results support specifying the camera in seconds of
 anticipation for this family of cells at the belt speed tested (3~cm/s, at which seconds
 and centimetres are one unit), with the cost of a shorter view measured in the
 conditions where pre-positioning pays and left undetermined where the data do not
@@ -295,7 +295,8 @@ are compared:
 \item[\texttt{belts}] the above plus the parts in the visible stretch $[a-\lv,a)$ of the
   entry zone, with their positions ($\lv=0$ coincides with \texttt{zone});
 \item[\texttt{full}] the above with the whole entry zone plus the parts waiting upstream
-  of the belt entry, which the real camera cannot see (a what-if upper bound).
+  of the belt entry, which the real camera cannot see (the richest input tried: an upper
+  bound on the information available, not on the value a fixed controller realizes from it).
 \end{description}
 Under \texttt{belts} a part upstream of the visible stretch, or waiting in the hidden
 queue, is unknown to the controller: it produces no observation, it is not a candidate, and
@@ -355,7 +356,8 @@ duration of those moves, $\tpp$, as predictors of the anticipation the camera ne
 %====================================================================
 
 \subsection{Controllers}
-Two unrelated controllers run every configuration, so that the value of information is not
+Two unrelated controllers run every configuration of the first two studies (the belt-speed
+bench runs the rule only), so that the value of information is not
 tied to one policy:
 \begin{itemize}[nosep]
 \item \nj\ (\texttt{nearest\_job}), the primary controller: the dispatching rule that
@@ -523,7 +525,10 @@ Five checks support the causal reading. (i) \emph{Masks are respected}: unit tes
 the parts that a treatment cannot see and verify that neither the network's inputs nor the
 look-ahead costs of the search policies change; in the bench every decision of every
 episode is additionally checked at run time (no candidate upstream of the visible stretch
-in 179\,520 episodes). (ii) \emph{Simulator}: every run uses an exact event-driven
+in 179\,520 episodes; these run-time assertions are recorded as totals and cannot be
+re-derived from the per-episode rows of (v), whereas the identity of (iv), the identity
+of the arrivals across treatments and the equality of the two modes at zero coverage
+can). (ii) \emph{Simulator}: every run uses an exact event-driven
 simulator of the cell; on the reference realizations the fixed-step reference engine at a
 1~ms step gives the identical processing order in 96\,\% of the episodes and a mean
 absolute difference of $J$ of 0.03--0.06\,\%. (iii) \emph{Schedules} are checked against
@@ -584,8 +589,8 @@ little, since processing takes 2.5~s and the head crosses the lanes in 2.4~s, so
 that enters the zone during a processing is reachable soon after it ends whatever the
 order.
 
-\textbf{C vs B.} Acting on the same view is where the value is, whenever the head has
-idle time. At the nominal load the network gains $7.4\pm1.9$\,\% with the nominal head,
+\textbf{C vs B.} Acting on the same view is where the value is, in the four nominal-load
+regimes, where the head has idle time. At the nominal load the network gains $7.4\pm1.9$\,\% with the nominal head,
 $3.6\pm2.5$\,\% with the slow head, $2.8\pm1.5$\,\% with bursts and $4.3\pm2.2$\,\% with
 both, in 22--27 of the 30 realizations; the \nj\ rule gains the same ($7.4$, $3.6$, $2.7$,
 $3.9$\,\%). In absolute terms, at the nominal regime the rule's penalized flow time falls
@@ -662,7 +667,8 @@ pre-positioning with 5 or 7.5~cm against with the whole 10~cm zone (\texttt{when
 at both lengths; paired $\Delta$ of the penalized flow time, \%, 95\,\% CI; positive = the
 shorter view costs more; in parentheses, realizations in which the shorter view was
 better). Right: pre-positioning benefit lost, the gain of Table~\ref{tab:coverage} at
-the shorter length minus the gain at 10~cm, per realization (points). Bold: the
+the shorter length minus the gain at 10~cm, per realization (points). A secondary
+analysis of the phase-4 data, added after the run. Bold: the
 interval excludes zero.}
 \label{tab:direct}
 \resizebox{\linewidth}{!}{\input{tables/direct}}
@@ -688,15 +694,14 @@ excludes zero in two cells, both C vs B, in which the frozen network obtains mor
 pre-positioning ($-0.92\pm0.87$ points at the nominal regime with Poisson arrivals and
 $-1.30\pm1.05$ at the heavy load with bursts and the nominal head). These are 24
 exploratory comparisons with individual 95\,\% intervals, close to the one or two
-exclusions of zero that chance alone would give. The pattern of the contrasts (the null
-B vs A, the value of acting at the nominal load, the value of the hidden queue at the
+exclusions of zero that chance alone would give. The pattern of the contrasts (no detected B-vs-A effect, the value of acting at the nominal load, the value of the hidden queue at the
 heavy load, the sign of every significant cell) is conserved after the retraining, with
 differences of magnitude in some regimes; the reference network's coverage curve at the
 nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~cm.
 
 \begin{table}[t]
 \centering\small
-\caption{Reference cell, robustness: the reference network's contrasts (as
+\caption{Reference cell, robustness (a secondary analysis of the phase-4 data, added after the run): the reference network's contrasts (as
 Table~\ref{tab:contrasts}) and the paired difference between the frozen and the
 reference network's contrasts (frozen minus reference, per realization, points; negative
 = the frozen network obtains more from the treatment). Bold: the interval excludes zero.}
@@ -754,7 +759,7 @@ reference cell's whole entry zone.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/bench_curves_burst.pdf}
-\caption{As Figure~\ref{fig:curves}, bursty arrivals.}
+\caption{Geometry bench, \nj, bursty arrivals: gain of pre-positioning $G(\tv)$ [s per part, 95\,\% band] against the anticipation, one panel per cell, with the layout, units and markers of Figure~\ref{fig:curves} (Poisson arrivals).}
 \label{fig:curvesburst}
 \end{figure}
 
@@ -783,7 +788,7 @@ the paired cost what the cell loses by it. Both ranges are those of the 18 cells
 and are not a bound for cells outside the bench.
 
 \textbf{The conservative answer.} The knee that retains 90\,\% of the gain lies at
-0.5--5~s as a point estimate (median 2.5--3.3~s) and at 2.0--7.5~s conservatively, with
+0.5--5~s as a point estimate (median 2.5~s over the 18 cells: 1.75~s at $v_x=10$ and 3.33~s at $v_x=5$~cm/s) and at 2.0--7.5~s conservatively, with
 one cell undetermined ($d=12$, $v_y=5$, $v_x=5$, high load, Poisson, where no grid point
 is conservatively at 90\,\%). The two answers differ because the curves are flat near
 their top: a cell can retain 95\,\% of its gain at 3.33~s and still need 5--7.5~s before
@@ -828,9 +833,10 @@ from the other 17 cells; bold: lowest.}
 \end{table}
 
 By the frozen criterion the answer is the moves the head starts: $\tpp$ predicts the
-knee with the lowest leave-one-out error (1.02~s), the crossing time with the highest
-(1.53~s, and 1.75~s when rescaled, since the fitted factor 0.86 is driven by the slow
-heads whose knees lie far below $\tcross$), and a constant of 2.8~s in between (1.13~s).
+knee with the lowest leave-one-out error (1.02~s), the crossing-time family with the
+highest (1.53~s unscaled and 1.75~s rescaled, the poorest candidates, since the fitted
+factor 0.86 is driven by the slow heads whose knees lie far below $\tcross$), and a
+constant of 2.76~s in between (1.13~s), a serious comparator on these selected cells.
 The rank correlations point the same way and are all moderate: 0.38 for $\tcross$, 0.50
 for $\tpp$ and 0.47 for $t_x+t_y$, the supplementary sum of the two axis times (average
 ranks for ties, since the knee takes values on the grid).\footnote{Draft 0.6 of this paper reported $+0.47$, $+0.53$ and $+0.51$, computed
@@ -844,7 +850,7 @@ run); the knee it predicts is the point-estimate grid point, not the conservativ
 coverage of Table~\ref{tab:sufficient}; and it needs full-view traces, which a designer
 without a simulation of the cell does not have. The two errors belong together: 1.02~s
 for the move duration, 1.13~s for the constant. Two qualifications the data impose. No predictor
-is precise: the errors are two to three grid steps on a 0.5~s grid, and the knee$/\tpp$
+is precise: the errors are two to three steps of the fine end of the grid (0.5~s steps up to 2.5~s; the grid is not uniform beyond), and the knee$/\tpp$
 ratios range from 0.8 to 2.6 with two cells at 4.7--5.3. And $\tpp$ beats the constant by
 0.1~s only, a small advantage: for a designer without traces, ``about 3~s of anticipation
 at these loads'' is nearly as good as ``about 1.7 times the mean move''. The crossing time is the worst candidate because it ignores
@@ -905,13 +911,14 @@ geometry, with the same visible lengths and the same arrivals at the feed point,
 longer entry adds $+10.35\pm0.52$ (nominal, Poisson), $+11.11\pm0.55$ (nominal, bursts),
 $+13.19\pm0.71$ (high, Poisson) and $+11.69\pm0.64$~s per part (high, bursts) to the
 rule's penalized flow time $J$ (Table~\ref{tab:entry}; on the raw flow time $+10.60\pm0.40$,
-$+11.15\pm0.50$, $+13.34\pm0.67$ and $+11.74\pm0.65$): the 8.33~s of free transit at 3~cm/s plus
-2.0--4.9~s that grow with the load and are therefore the belt stops acting on the parts of
-the longer entry zone. No difference in the gain of pre-positioning at a given anticipation was detected
+$+11.15\pm0.50$, $+13.34\pm0.67$ and $+11.74\pm0.65$): 8.33~s of it is the free transit at
+3~cm/s, and the remaining 2.0--4.9~s, which grow with the load, are not decomposed by
+the data: they contain the belt stops acting on the parts of the longer entry zone, any
+change of dispatch, and the change of the penalty term. No difference in the gain of pre-positioning at a given anticipation was detected
 between the two entry lengths: the paired differences are at most $\pm0.26$~s per part
 (nominal) and $\pm0.46$ (high), with intervals that include zero at every grid point
 (Table~\ref{tab:entry}). We read this, within the precision of those intervals, as the
-bench measuring the camera's reach rather than the installation; its percentages, where given, are taken against the flow net of the free transit.
+bench measuring the camera's reach rather than the installation; its percentages, where given, use as denominator the \texttt{none} level minus the free transit $\ell_{\mathrm{entry}}/\vb$ (8.33~s here).
 
 \begin{table}[t]
 \centering\small
@@ -925,16 +932,18 @@ CI.}
 \end{table}
 
 \subsection{The network as a secondary controller}\label{sec:benchnet}
-The network's curves have the same shape as the rule's and the same order of gain
+The network's curves rise and saturate like the rule's, with gains of the same order
 ($G(10\,\mathrm{s})$ 0.13--1.68~s per part over the 72 regimes, 0.38--1.68 at the nominal
 load), but they are noisier and saturate more slowly: it passes the benefit criterion in
 17 of the 72 regimes (14 at the nominal load, 14 with Poisson, 13 with $v_x=5$; $G$
 1.01--1.68 in those), its point-estimate knees lie at 1--10~s, and its conservative knee is never
 reached before 10~s. No predictor works for it (Spearman correlations $\le0.14$). The
 value of widening the view with the network's mode input fixed,
-$J_{\mathrm{when\_idle}}(0)-J_{\mathrm{when\_idle}}(\tv)$, equals $G$ within noise at the
-nominal load (e.g.\ $+1.03\pm0.49$ against $G=+1.13\pm0.58$ at $d=6$, $v_y=5$, $v_x=5$),
-so the \texttt{none} baseline does not distort its curve there. The value of seeing with
+$J_{\mathrm{when\_idle}}(0)-J_{\mathrm{when\_idle}}(\tv)$, differs from $G$ by less than
+its uncertainty at the nominal load (e.g.\ $+1.03\pm0.49$ against $G=+1.13\pm0.58$ at
+$d=6$, $v_y=5$, $v_x=5$; a fixed-mode contrast and a mode-change contrast answer
+different questions), so no distortion of its curve by the \texttt{none} baseline was
+detected there. The value of seeing with
 the same actions, $J_{\mathrm{none}}(0)-J_{\mathrm{none}}(\tv)$, is within $\pm0.3$~s per
 part at the nominal load and positive at the high load with bursts (up to $+1.6$~s per
 part, significant in 5 of 9 cells at each $v_x$; Table~\ref{tab:net}), consistent with
@@ -1084,7 +1093,7 @@ that reading at the nominal load; at the high load the queue count does not acco
 the size of the effect, and the mechanism there is open.
 
 \subsection{Limits}\label{sec:limits}
-The results are for one family of cells (three belts, a belt at 3~cm/s, a 35~cm laser
+The results are for one family of cells (three belts, a belt at 3~cm/s in the first two studies, a 35~cm laser
 zone, constant processing of 2.5~s) and two loads; the specification in seconds has been
 tested within the grid of Section~\ref{sec:bench} and not beyond it, so the
 recommendation is for cells of this family at 3~cm/s, with the belt-speed bench of
@@ -1120,12 +1129,14 @@ head) for both a dispatching rule and a learned policy. Across 56 distinct cells
 spacings of 6--18~cm, transverse head speeds of 5--15~cm/s, along-belt speeds of 5 and
 10~cm/s, two loads and two arrival processes, pre-positioning passes the benefit criterion
 in 18, 13 of them with Poisson arrivals; in those, 3.33~s of anticipation cost a median
-0.05 and at most 0.44~s per part against 10~s (the largest value observed), and 90\,\% of the gain is retained
-conservatively with 2.0--7.5~s, the slow along-belt axis needing the most. The transverse
-crossing time, the natural reference, is the worst predictor of that requirement; the
-planned duration of the moves the head starts is the best by a small margin, and a
-constant of about 3~s nearly as good. For the rule, cells with the same crossing time are identical by the model's
-structure. At a belt of 5~cm/s, with the rule, 10~cm of coverage cost less than the margin
+0.05 and at most 0.44~s per part against 10~s (the largest value observed). Seventeen of
+the 18 configurations reached the conservative criterion of retaining 90\,\% of the
+gain, with coverages of 2 to 7.5~s, the slow along-belt axis needing the most; one is
+unresolved within the grid. In a separate question, predicting the point-estimate knees
+of all 18 configurations, the mean planned duration of the pre-positioning moves
+obtained a leave-one-out error of 1.02~s and a constant of 2.76~s obtained 1.13~s, while
+the transverse crossing time, the natural reference, was the poorest family (1.53~s). For the rule, cells with the same crossing time, the same along-belt geometry and the
+same arrival realizations are identical by the model's structure. At a belt of 5~cm/s, with the rule, 10~cm of coverage cost less than the margin
 of 0.5~s per part fixed beforehand, against the full 50~cm view, in the two configurations
 with the fast along-belt axis; neither slow-axis configuration met the benefit criterion
 with the full view, and the paired comparison between speeds detected a reduction in one

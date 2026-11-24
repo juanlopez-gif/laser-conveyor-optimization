@@ -6,6 +6,71 @@ summarized from the git history.
 
 ---
 
+## 0.7.35 — 2026-11-24 — Second referee round: Paper 1 draft 0.7 (model conventions, state and cost identity, theorem alignment, latency exceedances) and Paper 2 draft 1.0
+
+* **Why.** The second-round referee report on drafts 0.6 / 0.9 (Paper 1: major revision
+  confined to the mathematical statements; Paper 2: minor revision). The owner approved
+  the two Paper 1 definitions and every remaining correction, added that the bound on
+  the total blocked time is withdrawn as well as the event-count guarantee, and verified
+  the 5 ms exceedances from `docs/papers/paper1/data/phase4_latency.csv.gz`
+  (recomputed here: network 98.07 % of 16 215 decisions in B and 97.62 % of 17 147 in C,
+  known-parts search 48.25 / 45.72 %, scenario teacher 100 %, rules 0 %).
+* **Paper 1 (0.7).** Appendix A: "Conventions of the discrete model" (first part and first
+  move, horizon rule and start windows, finite big-M values and the indicator
+  implementation, the 1 mm position lattice that defines ε, the domain and link of γ,
+  simultaneous vs sequential axes, and what CP-SAT implements per objective and variant);
+  the blocking paragraph withdraws both the one-step bound on T_B and any agreement of
+  N_B with the continuous definition, with the referee's counterexample (spurious blocked
+  time during a whole service operation, adding over operations; an event charged to a
+  part served before reaching b), the same in `docs/formulation/formal_formulation.tex`
+  (PDF rebuilt). §4.1: full state of the process vs the observation I_t (hidden queue and
+  source phase; I_t need not be Markov), the cost identity over the whole episode with
+  the forced initial and terminal segments, the single-part episode, the zero-arrival
+  convention; dispatch event vs decision epoch defined in §3.5. §5.4 and Appendix D
+  aligned (ready-only dispatch with the earliest interception, sufficient conditions,
+  the initial-head condition kept in the weaker set, the head-already-at-entry case as
+  the reason the conditions are not necessary); `docs/methods/theory.md` scoped the
+  same way. Latency: the 5 ms budget stated as exceedances (§9.2 and the caption of
+  Figure 5); the unloaded 4.1 ms named a median, not a guarantee. Wording: the audit's
+  rule range 0.2–2.5 %; "every policy ranks on I_t" with the audited exception; "%"
+  instead of "points" for cost ratios; "ceiling", "equal within", "close to the best one
+  can do", "every network reaches its expert's score" removed; "best-scoring decision
+  rule among those tried"; "sampled futures helped only in the tested variants";
+  basic-mode labels on 1.5–3.9 % (1.4–4.4 % in C) and on 3–8 % (1.4–7.7 % over the
+  eight); the heavy-load known-parts search as "no detected improvement"; candidate
+  ranking by the base's scores when the base is the network; the delay remark tied to
+  Proposition `prop:delay`; units of the penalty weights. PDF rebuilt (32 pages).
+* **Paper 2 (1.0).** Conclusions as the owner fixed them: 17 of 18 configurations reached
+  the conservative 90 % criterion with coverages of 2–7.5 s (one unresolved), and, as a
+  separate question on the point knees of all 18, the move duration 1.02 s against the
+  constant of 2.76 s at 1.13 s (crossing-time family 1.53 s). §6.6: the entry-length
+  residual (2.0–4.9 s) no longer attributed to belt stops; the denominator of the
+  percentages net of free transit defined. Controller scope: "two controllers" limited
+  to the first two studies, C-vs-B "in the four nominal-load regimes", abstract with the
+  network (2.8–7.4 %) and rule (2.7–7.4 %) ranges; D as the richest input, not the value
+  a fixed controller realizes. §6.2 median 2.5 s over the 18 (1.75 at v_x = 10, 3.33 at
+  v_x = 5); §6.3 the nonuniform grid, the crossing-time family as the poorest candidates
+  and the constant as a serious comparator; §6.7 without "same shape" / "equals within
+  noise"; §5.3 without "the null"; §7.4 3 cm/s scoped to the first two studies; the
+  identity qualified by along-belt geometry and realizations; Figure 5 caption
+  self-contained; Figure 3 label τ_cross; the direct 7.5-vs-10 cm table and the
+  robustness table labelled secondary analyses added after the run; check (i)
+  distinguishes run-time assertions from row-reconstructible checks. PDF rebuilt.
+* **Methods and code.** `docs/methods/geometry.md`: 0.33, §8.5 aligned with Paper 2
+  §6.8, the fixed-mode contrast written savings-positive as in the paper;
+  `docs/methods/rl2_ppo.md`: the two superseded interpretations marked (selection bias,
+  budget); `experiments/tiebreak_audit.py`: training ranges (≥ 100000) refused;
+  `experiments/paper2_bench_figures.py`: provenance comment names
+  `belt_speed_bench.csv.gz` for the belt table; `experiments/paper2_figures.py`: τ_cross
+  label; `tests/test_rl.py`: the legacy helper uses the rounded travel time (the rounding
+  dates from 0.7.0) and `test_constructed_tie_has_the_expected_winner_under_each_convention`
+  gives a constructed tie with the expected winner under each key.
+* **Not done, by the owner's scope.** No new experiment; the rolling-forecast treatment
+  of the end of arrivals in the scenario search (referee minor 4, second half) is not
+  described further in this draft.
+
+---
+
 ## 0.7.34 — 2026-11-24 — Paper 1 draft 0.6 and Paper 2 draft 0.9: referee corrections
 
 * **Why.** A referee report on drafts 0.5 / 0.8 (recommendation: major revision for

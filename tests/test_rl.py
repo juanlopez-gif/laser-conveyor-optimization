@@ -41,12 +41,36 @@ def _greedy_head(env):
 
 
 def _greedy_head_legacy(env):
-    """The historical convention (before 0.7.26): unrounded interception time, then the
-    arrival time, then the id. Kept as the explicit statement of the legacy key."""
+    """The historical convention (0.7.0 to 0.7.25): interception time rounded to 1e-9 s (the
+    rounding dates from 0.7.0, ``DecisionContext.travel_key``), then the ARRIVAL time, then
+    the id. Kept as the explicit statement of the legacy key (the test helper of earlier
+    versions used the unrounded time, which was never the rule's convention)."""
     heads = heads_by_conveyor(env.candidates, env.n)
     return min((i for i, h in enumerate(heads) if h is not None),
-               key=lambda i: (env.sim.intercept(heads[i]).time, heads[i].arrival_time,
+               key=lambda i: (round(env.sim.intercept(heads[i]).time, 9), heads[i].arrival_time,
                               heads[i].number))
+
+
+def test_constructed_tie_has_the_expected_winner_under_each_convention():
+    """Two candidates with the same rounded interception time: the legacy key picks the
+    earlier ARRIVAL, the current key the earlier OBSERVATION, and they disagree when the
+    part that arrived first was observed later (it waited in the hidden queue)."""
+    from fastsim.policies import KEY_ARRIVAL, KEY_OBSERVED, nearest_job
+
+    class _Sim:
+        pr = [10.0, 12.0]                       # part 0 arrived first ...
+        _obs = [15.0, 12.0]                     # ... but became observable later
+
+        def travel_time(self, j):
+            return 1.0 + (3e-10 if j else 0.0)  # equal after rounding to 1e-9
+
+        def observed_since(self, j):
+            return self._obs[j]
+
+    sim = _Sim()
+    assert nearest_job(sim, [0, 1], key=KEY_ARRIVAL) == 0
+    assert nearest_job(sim, [0, 1], key=KEY_OBSERVED) == 1
+    assert KEY_ARRIVAL(sim, 0) < KEY_ARRIVAL(sim, 1) and KEY_OBSERVED(sim, 1) < KEY_OBSERVED(sim, 0)
 
 
 def test_legacy_convention_agrees_when_observation_equals_arrival():
