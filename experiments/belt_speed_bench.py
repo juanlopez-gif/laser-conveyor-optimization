@@ -1,4 +1,5 @@
-"""Belt-speed bench (confirmatory design, NOT yet run): when the belt runs faster, which
+"""Belt-speed bench (run 2026-11-23 on the reserved seeds 10000–10059, ``nearest_job`` only;
+results in ``docs/methods/geometry.md`` §8): when the belt runs faster, which
 scale of the camera's reach transfers, the centimetres of belt or the seconds of
 anticipation, or neither because the interception changes?
 
@@ -67,7 +68,7 @@ MARGIN = 0.5                                           # s/part: "keeps the bene
 MIN_USEFUL, MIN_USEFUL_LB, SHARE = 1.0, 0.5, 0.9      # benefit criterion and knee share, as in §5
 Z95 = 1.96
 Z_BONF = 2.838            # two-sided 95 % simultaneous over the 11 non-zero grid lengths (2.773 for 9 in §5)
-RESERVED_BASE = None      # reserved range to be fixed by the owner; used once
+RESERVED_BASE = 10000     # reserved range 10000–10059, fixed by the owner on 2026-11-23; used once
 RESERVED_N = 60
 USED = ((7000, 30), (9000, 60))                        # ranges already used once (phase 4, geometry bench)
 NET = "models/rl2_gen_s_b.pt"

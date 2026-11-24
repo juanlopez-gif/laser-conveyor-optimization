@@ -456,7 +456,13 @@ over a constant, the threshold is kept and 38 cells stay undetermined. Draft 0.6
 matched to Table 7, 2–5 s at v_x = 10 and 5–7.5 s at v_x = 5 plus one unresolved; queue
 traces "compatible with", not "confirm"); the owner considers it ready to share with
 co-authors. Decisions 4–6 are answered by the draft's structure (§6.7, §6.5, §§6.1 and
-7.4). Open: co-authors' reading; economic translation deferred.
+7.4). Open: co-authors' reading; economic translation deferred. **Belt-speed
+bench (0.7.27 protocol, 0.7.28 run; `geometry.md` §7–§8, seeds 10000–10059 used once,
+δ = 0.5 s/part, `nearest_job` only):** at 5 cm/s the 10 cm view keeps the benefit in
+the two cells with v_x = 10 cm/s (H_cm, conservative) and the benefit of pre-positioning
+is lost in the two with v_x = 5 cm/s; whether centimetres or seconds transfer across
+belt speeds is undetermined. Not yet in the paper: integrating §8 into Paper 2 (0.8,
+§6.7 and the Limits) is an owner decision, after the co-authors' reading of 0.7.
 
 **Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
 at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel

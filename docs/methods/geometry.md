@@ -522,9 +522,9 @@ for. Same-τ_cross cells are identical by the model's structure, so the question
 the same crossing time give the same coverage?" is answered yes for the rule and
 trivially so; the informative comparison is across different τ_cross and v_x. Every cell runs its
 belts at 3 cm/s, so seconds and centimetres are one unit inside the bench; which scale
-transfers to another belt speed is untested (next experiment: 3 vs 5 cm/s).
+transfers to another belt speed is untested here; §7–§8 run that experiment (3 vs 5 cm/s).
 
-## 7. Belt-speed bench: protocol (frozen 2026-11-23, before the run; NOT yet run)
+## 7. Belt-speed bench: protocol (frozen 2026-11-23, before the run; results in §8)
 
 Section 6.7 and the external audit of Paper 2 (draft 0.7) leave one question open:
 every cell of the geometry bench runs its belts at 3 cm/s, so seconds of anticipation
@@ -702,10 +702,139 @@ and were not read as results; they live under `results/experiments/_belt_smoke/`
 (git-ignored, figures included). The guards were exercised: seed bases 9010 and 7020
 are refused, and `--confirmatory` is refused while the range is unset.
 
-### 7.6 Pending owner decisions before the run
+### 7.6 Owner decisions before the run (taken 2026-11-23)
 
-1. The reserved seed range (60 seeds proposed; `RESERVED_BASE`), checked unused as in
-   §5.1.
-2. The margin δ (0.5 s/part proposed, §7.2; `MARGIN`).
-3. Whether the network runs (≈ 1.5 of the 1.7 CPU-hours) or `--who nearest_job` only.
-4. The explicit go. Once run, the seeds are used once, like 7000–7029 and 9000–9059.
+1. Reserved seed range **10000–10059** (`RESERVED_BASE = 10000`, 60 seeds), checked
+   unused as in §5.1 (no seed key in that range in any `results/experiments/**/*.json`;
+   the test suites use 100000+). Used once by the run of §8.
+2. Margin **δ = 0.5 s/part** (`MARGIN = 0.5`, as proposed in §7.2).
+3. **`nearest_job` only** (`--who nearest_job`); the network did not run.
+4. The explicit go, after a smoke test on development seeds 3100–3101 (one cell,
+   `nearest_job`, 96 episodes: 0 violations, identical arrivals at both speeds, exact
+   identity at ℓ = 0). Nothing in §7.1–§7.5 was changed after the smoke test or the run.
+
+## 8. Results of the belt-speed bench (seeds 10000–10059, run 2026-11-23)
+
+`experiments/belt_speed_bench.py --tag belt_speed_bench --confirmatory --who nearest_job`:
+11 520 episodes (2 speeds × 4 cells × 12 lengths × 2 modes × 60 seeds), 7 s of wall
+time on 40 workers, 0.03 CPU-hours. Outputs: `results/experiments/belt_speed_bench/`
+(`bench.json`, `tables.md`, `extract.csv.gz`), the extract versioned as
+`docs/papers/paper2/data/belt_speed_bench.csv.gz` (`--from-extract` regenerates
+identical tables without PyTorch, checked), figures
+`docs/methods/figures/belt_speed_bench_nearest_job_{curves,cost}.{pdf,png}`. All
+numbers below are the rule `nearest_job`, mean ± 95 % half-width over the 60 paired
+realizations, seconds of penalized flow time per part; the criteria are those frozen in
+§7.2 and §7.4 and were not changed after the run.
+
+### 8.1 Checks
+
+0 candidate violations of the visible stretch over 11 520 episodes; the number of
+parts and the sum of their arrival instants agree across the two speeds, every length,
+mode and controller in all 240 (cell, seed) pairs (the realizations are common, as
+designed); `when_idle` = `none` at ℓ = 0 exactly (max |ΔJ| = 0). The C_3(10 cm) check
+column reproduces the 3 cm/s costs of §6.2 within the precision: +0.10 ±0.47, +0.18
+±0.23, −0.15 ±0.26 and −0.11 ±0.17 s/part in the four cells against the §6 values
++0.06, +0.01, −0.05 and +0.00 predicted in §7.1 (every interval contains its
+prediction), so the observable tie-break of 0.7.26 did not move the 3 cm/s result
+detectably either.
+
+### 8.2 The frozen question, per cell (headline)
+
+| cell | G_3(50 cm) | useful at 3 | G_5(50 cm) | useful at 5 | C_5(10 cm = 2.00 s) | C_5(16.7 cm = 3.33 s) | verdict (conservative / point) |
+|---|---|---|---|---|---|---|---|
+| spacing 12 / v_y 10 / v_x 5 (τ_cross 2.4 s) | +1.74 ±0.87 | yes | +0.62 ±0.73 | no | −0.00 ±0.51 | +0.12 ±0.39 | **benefit lost at this speed** / same |
+| spacing 12 / v_y 10 / v_x 10 (τ_cross 2.4 s) | +0.99 ±0.38 | no (by 0.01 on the point; lower bound 0.61) | +1.76 ±0.39 | yes | +0.06 ±0.26 (upper 0.32) | −0.02 ±0.24 (upper 0.22) | **H_cm** / H_cm |
+| spacing 6 / v_y 15 / v_x 5 (τ_cross 0.8 s) | +1.58 ±0.89 | yes | +0.47 ±0.55 | no | +0.48 ±0.55 | +0.12 ±0.45 | **benefit lost at this speed** / same |
+| spacing 6 / v_y 15 / v_x 10 (τ_cross 0.8 s) | +1.16 ±0.34 | yes | +1.22 ±0.37 | yes | +0.05 ±0.18 (upper 0.23) | +0.00 ±0.14 (upper 0.14) | **H_cm** / H_cm |
+
+* **10 cm keep the benefit at 5 cm/s in the two cells with v_x = 10 cm/s** (H_cm,
+  conservative: the upper 95 % bounds of C_5(10 cm), 0.32 and 0.23 s/part, are below
+  δ = 0.5). In those cells 16.7 cm keep it too (upper bounds 0.22 and 0.14) and add
+  nothing detectable over 10 cm (C_5(16.7) − C_5(10) = −0.08 and −0.05 on the point).
+  As §7.1 (i) stated before the run, these two cells cannot separate H_cm from H_s
+  (their predicted costs under H_s, +0.21 and +0.03, lie inside the observed intervals
+  as well), so the result there is practical, "10 cm suffice at 5 cm/s", not
+  mechanistic.
+* **In the two cells with v_x = 5 cm/s the benefit of pre-positioning is lost at
+  5 cm/s** (design result of §7.1): G_5(50 cm) = +0.62 ±0.73 and +0.47 ±0.55 s/part,
+  below 1 s/part on the point and with lower bounds −0.11 and −0.08, against +1.74
+  ±0.87 and +1.58 ±0.89 at 3 cm/s. The question "10 or 16.7 cm" is moot there: there
+  is no benefit worth sizing the camera for, at any length. This is **not H_neither**
+  (C_5(16.7 cm) = +0.12 ±0.39 and +0.12 ±0.45 do not exceed δ): the shorter views are
+  not costly, the full view is not valuable. The §7.1 predictions under H_s for these
+  cells (+0.68 and +0.54) assumed the 3 cm/s benefit level persists, which it does not;
+  the first interval (upper bound 0.51) excludes its H_s prediction, the second (+0.48
+  ±0.55) contains both predictions, and neither reading is evidence about the scale
+  because the premise fails.
+* **The scale question (centimetres or seconds) is undetermined**, for a reason
+  different from the one §7.1 (ii) anticipated: the discriminating cells lost the
+  benefit rather than sitting in the margin-noise overlap, and the non-discriminating
+  cells answered H_cm as foreseen under either hypothesis.
+* **Premise check.** §7.1 took all four cells as useful at 3 cm/s from the 35 cm bench
+  of §6. With the 50 cm entry, three are; spacing 12 / v_y 10 / v_x 10 sits on the
+  threshold (point 0.99 against the criterion's 1.0, lower bound 0.61 against 0.5). It
+  is reported as it falls; the criterion is not relaxed.
+
+### 8.3 The level of the benefit across speeds and the entry length
+
+G_3(50 cm) − G_5(50 cm), paired per realization: +1.12 ±1.21 (12 / 10 / v_x 5, not
+detected), **−0.77 ±0.60** (12 / 10 / v_x 10: more benefit at the faster belt),
+**+1.11 ±1.02** (6 / 15 / v_x 5: less) and −0.06 ±0.53 (6 / 15 / v_x 10). The `none`
+levels net of the free transit are the same at both speeds within 1.7 s/part (32.7 /
+32.3, 20.9 / 22.6, 26.5 / 26.3 and 15.0 / 15.5), so the change is in the gain of
+pre-positioning, not in the baseline. Against the 35 cm bench of §6 (3 cm/s, nominal,
+Poisson, G at 10 s = 30 cm, different seeds, unpaired): 1.65 ±0.76 vs 2.05 ±0.73,
+1.06 ±0.36 vs 1.32 ±0.38, 1.87 ±0.88 vs 2.44 ±0.78 and 1.15 ±0.35 vs 1.03 ±0.26
+s/part. No difference is detected (the unpaired half-widths are 0.4–1.2), three of the
+four point estimates are lower with the longer entry, and no equivalence margin was
+fixed; this is the H3 check of §6.6 at 50 cm and it stays a check, not a result.
+
+Knees at 5 cm/s (secondary, §7.4): 10 cm point / 25 cm conservative (2.0 / 5.0 s) in
+12 / 10 / v_x 10, 25 cm point / 50 cm conservative (5 / 10 s) in 6 / 15 / v_x 10,
+undetermined conservative in both cells that lost the benefit. The knee (90 % of
+G_5(50 cm)) and the margin (δ = 0.5 s/part absolute) are different criteria: with
+G_5(50 cm) = 1.22 s/part the missing 10 % share is 0.12 s/part, finer than δ, which is
+why 10 cm "keep the benefit" in 6 / 15 / v_x 10 while the knee lies at 25 cm.
+
+Alignment reading (frozen in §7.4, descriptive, no test; mean absolute difference of
+the retained shares, distance scale over 11 lengths / time scale over 5 pairs): 30 / 24,
+17 / 30, 59 / 52 and 23 / 13 points. The time scale is the better-aligned one in three
+cells and the distance scale in 12 / 10 / v_x 10; in the only cell useful at both
+speeds (6 / 15 / v_x 10) the time scale is better (13 against 23). Post hoc caveat,
+written after the run: the five time-scale pairs sit at ≥ 1.5 s where both curves are
+flatter, which favours that scale by construction; restricted to the same five lengths
+(7.5–50 cm) the distance reading is 32, 16, 58 and 15 points, no better separated than
+the time reading in any cell. The reading does not resolve the scale question.
+
+### 8.4 Mechanism (traces, reported apart from the verdict)
+
+From 3 to 5 cm/s, in the four cells in the order of the table: pre-positioning moves
+per episode 8.2 → 6.4, 14.3 → 13.5, 11.6 → 8.5 and 23.5 → 20.4; idle share of the
+head under `none` 13 → 9 %, 18 → 14 %, 16 → 11 % and 27 → 20 %; mean planned t_x of
+the moves 1.78 → 2.49, 0.72 → 1.03, 1.48 → 2.32 and 0.48 → 0.80 s with t_y unchanged
+(0.94 / 0.95, 0.93 / 0.94, 0.32 / 0.33, 0.35 / 0.34 s); mean planned max(t_x, t_y)
+2.14 → 2.77, 1.30 → 1.52, 1.62 → 2.43 and 0.68 → 0.97 s; share of y-dominated moves
+31 → 23 %, 47 → 39 %, 30 → 22 % and 44 → 36 %. The traces are compatible with the
+interception moving downstream at the faster belt (the part travels further during the
+move, so the x component grows and dominates more often) and with fewer idle windows in
+which to pre-position. In the two cells with v_x = 5 cm/s the x component of the moves
+(2.3–2.5 s) exceeds the transverse crossing time and approaches the time the belt
+needs to carry a part across the same stretch, which is where the benefit was lost; in
+the v_x = 10 cells the moves stay short (≤ 1.5 s) and the benefit stays. This is a
+reading of the traces, not a tested hypothesis; the bench was not designed to separate
+these two mechanisms.
+
+### 8.5 Answer
+
+At 5 cm/s, **10 cm of visible belt keep the benefit of pre-positioning wherever the
+benefit survives the speed change**, which in this bench is the two cells with the x
+axis at 10 cm/s (upper bounds of the cost 0.32 and 0.23 s/part against δ = 0.5); 16.7
+cm add nothing detectable there. With the x axis at 5 cm/s the benefit itself falls
+below the criterion at 5 cm/s (point 0.62 and 0.47 s/part), so no visible length is
+worth sizing for in those cells. Whether the specification that transfers across belt
+speeds is "centimetres" or "seconds" remains undetermined: the cells that could have
+separated the two readings are the ones that lost the benefit. For Paper 2 this
+replaces the untested statement of §6.7 by: the 10 cm camera keeps its benefit at
+5 cm/s with the fast x axis; with the slow x axis the benefit, not the camera, is what
+the faster belt removes; and the scale question is open. The reserved seeds 10000–10059
+are used.

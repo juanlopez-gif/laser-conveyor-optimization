@@ -6,6 +6,47 @@ summarized from the git history.
 
 ---
 
+## 0.7.28 — 2026-11-23 — Belt-speed bench run on the reserved seeds 10000–10059 (`geometry.md` §8)
+
+* **Decisions (owner, `geometry.md` §7.6).** Reserved seeds **10000–10059** (checked
+  unused in every `results/experiments/**/*.json`; the test suites use 100000+), margin
+  **δ = 0.5 s/part**, **`nearest_job` only** (the network did not run), explicit go.
+  `experiments/belt_speed_bench.py`: `RESERVED_BASE = 10000`, docstring updated; the
+  protocol of §7.1–§7.5 was not changed after the smoke test or the run.
+* **Run.** Smoke test on development seeds 3100–3101 (one cell, 96 episodes: 0
+  violations, identical arrivals at both speeds, exact identity at ℓ = 0), then
+  `--tag belt_speed_bench --confirmatory --who nearest_job`: 11 520 episodes (2 speeds
+  × 4 cells × 12 lengths × 2 modes × 60 seeds), 7 s on 40 workers. Outputs under
+  `results/experiments/belt_speed_bench/` (git-ignored); the extract is versioned as
+  `docs/papers/paper2/data/belt_speed_bench.csv.gz` (0.8 MB; `--from-extract`
+  regenerates identical tables without PyTorch, checked); figures
+  `docs/methods/figures/belt_speed_bench_nearest_job_{curves,cost}.{pdf,png}`.
+* **Results (`docs/methods/geometry.md` §8, criteria as frozen).** Checks pass (0
+  violations over 11 520 episodes, common arrivals in all 240 (cell, seed) pairs); the
+  C_3(10 cm) column reproduces the 3 cm/s costs of §6.2 within the precision (the
+  observable tie-break of 0.7.26 moved nothing detectably). At 5 cm/s, **10 cm keep the
+  benefit in the two cells with v_x = 10 cm/s** (H_cm conservative: upper bounds of the
+  cost 0.32 and 0.23 s/part against δ = 0.5; 16.7 cm add nothing detectable), and
+  **the benefit of pre-positioning is lost in the two cells with v_x = 5 cm/s**
+  (G_5(50 cm) = +0.62 ±0.73 and +0.47 ±0.55 s/part against +1.74 ±0.87 and +1.58 ±0.89
+  at 3 cm/s: the design result of §7.1, not H_neither, since C_5(16.7 cm) stays ≤ δ).
+  The scale question (centimetres or seconds) is **undetermined**: the discriminating
+  cells lost the benefit, the others answer H_cm under either hypothesis (foreseen in
+  §7.1 (i)). The frozen alignment reading favours the time scale in three cells and the
+  distance scale in one, with a post hoc caveat recorded. G_3(50) − G_5(50) paired:
+  −0.77 ±0.60 (12 / 10 / v_x 10, more benefit at 5 cm/s) and +1.11 ±1.02 (6 / 15 /
+  v_x 5, less), the other two not detected. Premise check: with the 50 cm entry the
+  cell 12 / 10 / v_x 10 sits on the benefit threshold at 3 cm/s (0.99 ±0.38 against
+  1.0; lower bound 0.61), reported as it falls. Traces (moves, idle share, t_x up at
+  5 cm/s, t_y unchanged) are compatible with the interception moving downstream and
+  fewer idle windows; a reading, not a tested hypothesis.
+* **Where it goes.** Paper 2 §6.7's "untested" statement on belt speed is replaced by
+  §8.5 of `geometry.md`; the paper itself (draft 0.7, shared with co-authors) is not
+  edited in this version. Used reserved ranges are now 7000–7029, 9000–9059 and
+  10000–10059.
+
+---
+
 ## 0.7.27 — 2026-11-23 — Belt-speed bench (3 vs 5 cm/s): frozen protocol and script, not run
 
 * **Why.** Every cell of the geometry bench runs its belts at 3 cm/s, so seconds of
