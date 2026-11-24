@@ -107,6 +107,14 @@ summarized from the git history.
   complexity proof, now say exactly that and state that the reduction inherits the
   hardness of its source (strong if the source is strongly NP-hard); the owner must
   check the 1977 version before submission.
+* **Owner checked the published 1977 version (same day):** 1|r_j|ΣC_j is strongly
+  NP-hard by its Theorem 5 (p. 357, 3-PARTITION; unary encoding p. 359); for
+  1|r_j|L_max the paper gives Theorem 4(g) (p. 356, KNAPSACK, ordinary), so Paper 1's
+  Appendix B now states and proves the classical 3-PARTITION reduction for L_max
+  (Lemma B.1, the owner's construction: unit separator jobs in fixed slots, gaps of
+  length B filled by exactly three jobs). Proposition 4 keeps the strong sense for both
+  objectives; §5.2, Appendix B and the formulation document cite the exact theorems.
+  The provisional footnote is gone.
 
 ## 0.7.25 — 2026-11-23 — Paper 1 draft 0.2: the formulation in the body, proofs and MILP in appendices
 

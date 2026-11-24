@@ -538,20 +538,16 @@ With the stop rule $\sigma=I$ and the number of conveyors $N$ part of the input,
 decision versions of $\Pb$ for $L_{\max}$ and for $\sum_jC_j$ (equivalently $\sum_jF_j$)
 are NP-hard in the strong sense.
 \end{proposition}
-The reduction (Appendix~\ref{app:complexity}) is from $1\,|\,r_j\,|\,L_{\max}$ and
-$1\,|\,r_j\,|\,\sum C_j$ \cite{Lenstra1977}, with one part per conveyor, where the head
-is the only coupling; it preserves the encoding of the numbers up to a polynomial
-factor, so the problem inherits the hardness of its source: strong NP-hardness if the
-source is strongly NP-hard, ordinary NP-hardness otherwise.%
-\footnote{The 1975 preprint of \cite{Lenstra1977} (Mathematisch Centrum report
-BW~43/75, P.~Brucker, J.K.~Lenstra, A.H.G.~Rinnooy Kan) proves the NP-completeness of
-$n\,|\,1\,|\,r_j\ge0,w_j=1\,|\,\sum w_jC_j$ and of $n\,|\,1\,|\,r_j\ge0\,|\,L_{\max}$ by
-reductions from KNAPSACK (its Theorem~4(a) and~4(c)), which gives ordinary NP-hardness
-only. The strong NP-hardness of both problems is attributed in the scheduling
-literature to the published 1977 version; its theorem numbers could not be checked
-against that version for this draft and must be before submission. Until then the
-claim of Proposition~\ref{prop:complexity} that is verified from a source is ordinary
-NP-hardness.}
+The reduction (Appendix~\ref{app:complexity}) is from $1\,|\,r_j\,|\,\sum C_j$ and
+$1\,|\,r_j\,|\,L_{\max}$, with one part per conveyor, where the head is the only
+coupling; it preserves the encoding of the numbers up to a polynomial factor, so the
+problem inherits the strong NP-hardness of its sources. For $1\,|\,r_j\,|\,\sum C_j$
+that is Theorem~5 of \cite{Lenstra1977} (p.~357, a reduction from 3-PARTITION, with
+the unary-encoding argument on p.~359). For $1\,|\,r_j\,|\,L_{\max}$,
+\cite{Lenstra1977} give a reduction from KNAPSACK (Theorem~4(g), p.~356), which
+establishes ordinary NP-hardness; the strong version is the classical reduction from
+3-PARTITION, which Appendix~\ref{app:complexity} states and proves
+(Lemma~\ref{lem:lmax}) so that the proposition is self-contained.
 Not covered: a \emph{fixed} number of conveyors, where parts share belts
 and their availability depends on earlier stops, and the all-conveyors stop rule; the
 makespan version is not claimed. In Graham-style notation the problem is
@@ -1222,10 +1218,31 @@ a MILP solver on small instances and inside a rolling horizon.
 %====================================================================
 \section{Proof of Proposition~\ref{prop:complexity}}\label{app:complexity}
 %====================================================================
-Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$ with integer data
-\cite{Lenstra1977} (NP-complete by the KNAPSACK reductions of the 1975 preprint;
-strongly NP-hard according to the published version, see the footnote in
-Section~\ref{sec:properties}). Given $n$ jobs $(r_j,p_j,d_j)$, build $N=n$ conveyors of
+The two source problems are strongly NP-hard: $1\,|\,r_j\,|\,\sum C_j$ by Theorem~5 of
+\cite{Lenstra1977} (reduction from 3-PARTITION), and $1\,|\,r_j\,|\,L_{\max}$ by the
+following classical reduction, which we include because \cite{Lenstra1977} prove that
+problem's NP-hardness from KNAPSACK (Theorem~4(g)), i.e.\ in the ordinary sense.
+
+\begin{lemma}\label{lem:lmax}
+Deciding whether an instance of $1\,|\,r_j\,|\,L_{\max}$ with integer data admits a
+schedule with $L_{\max}\le0$ is NP-complete in the strong sense.
+\end{lemma}
+\begin{proof}
+Reduce from 3-PARTITION: given $3m$ positive integers $a_1,\dots,a_{3m}$ with
+$\sum_ia_i=mB$ and $B/4<a_i<B/2$, decide whether they can be split into $m$ triples of
+sum $B$. Build $3m$ jobs with processing times $a_i$, all released at $t=0$ and with
+the common due date $H=mB+m-1$, and $m-1$ separator jobs of processing time 1, the
+$k$-th released at $k(B+1)-1$ with due date $k(B+1)$, $k=1,\dots,m-1$. A schedule with
+$L_{\max}\le0$ must run each separator exactly in its interval
+$[k(B+1)-1,\,k(B+1)]$, which leaves $m$ gaps $[0,B]$, $[B+1,2B+1]$, \dots, each of length
+$B$, and the $3m$ jobs, of total length $mB$, must fill them completely without
+preemption; since $B/4<a_i<B/2$, a gap holds exactly three jobs, so the gaps are a
+3-partition. Conversely a 3-partition gives such a schedule. All numbers of the
+instance are polynomial in those of the 3-PARTITION instance, which is NP-complete in
+the strong sense, and membership in NP is immediate.
+\end{proof}
+
+Given $n$ jobs $(r_j,p_j,d_j)$ of either source problem, build $N=n$ conveyors of
 equal speed $v$, one part per conveyor, and scale by an integer $M$: $r'_j=Mr_j$,
 $p'_j=Mp_j$, $d'_j=Md_j+c$ with $c=a/v$. Part $j$ reaches $x=a$ at $Mr_j+c$. With one part
 per conveyor and $\sigma=I$ no belt stop delays another part, and blocking only makes an

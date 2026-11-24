@@ -688,14 +688,18 @@ decision versions of $\Pb$ for $L_{\max}$ and for $\sum_jC_j$ (equivalently $\su
 are NP-hard in the strong sense.
 \end{proposition}
 \begin{proof}
-Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$ with integer data
-(Lenstra, Rinnooy Kan and Brucker, 1977; the 1975 preprint BW~43/75 of the
-Mathematisch Centrum proves their NP-completeness by reductions from KNAPSACK, its
-Theorem~4(a) and~4(c), i.e.\ ordinary NP-hardness; the strong NP-hardness used here is
-attributed to the published 1977 version, whose theorem numbers have not been checked
-against that version, version 0.7.26). The reduction below preserves the encoding of
-the numbers up to a polynomial factor, so the problem inherits the hardness of its
-source. Given $n$ jobs $(r_j,p_j,d_j)$,
+Reduce from $1\,|\,r_j\,|\,\sum C_j$ and $1\,|\,r_j\,|\,L_{\max}$ with integer data,
+both strongly NP-hard: the first by Theorem~5 of Lenstra, Rinnooy Kan and Brucker
+(1977, Annals of Discrete Mathematics 1, p.~357, reduction from 3-PARTITION; unary
+encoding discussed on p.~359); the second by the classical reduction from 3-PARTITION
+(jobs $a_i$ released at $0$ with a common due date $mB+m-1$, and $m-1$ unit separator
+jobs released at $k(B+1)-1$ with due date $k(B+1)$; $L_{\max}\le0$ forces the
+separators into their slots and the $m$ gaps of length $B$ into a 3-partition), stated
+and proved in Paper~1, Appendix~B; Lenstra et al.\ (1977) prove the ordinary
+NP-hardness of $1\,|\,r_j\,|\,L_{\max}$ from KNAPSACK (Theorem~4(g), p.~356). The
+reduction below preserves the encoding of the numbers up to a polynomial factor, so the
+problem inherits the strong NP-hardness of its sources (version 0.7.26, checked against
+the published version by the owner). Given $n$ jobs $(r_j,p_j,d_j)$,
 build $N=n$ conveyors of equal speed $v$, one part per conveyor, and scale by an integer
 $M$: $r'_j=Mr_j$, $p'_j=Mp_j$, $d'_j=Md_j+c$ with $c=a/v$. Part $j$ reaches $x=a$ at
 $Mr_j+c$. With one part per conveyor and $\sigma=I$ no belt stop delays another part, and
