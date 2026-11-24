@@ -88,6 +88,12 @@ summarized from the git history.
   in C), Appendix A (strict witness, the review's case, implementation status),
   Figure 3 legend moved below the panels, `extra.bib` DAgger authors as in PMLR, a
   footnote flagging the Lenstra theorem numbers as pending. PDF rebuilt.
+* **Same day, after the owner's reading of the 0.3 PDF:** the figures overlapped
+  (legends over the curves in Figure 2, over the NJ curve in Figure 4, the right-hand
+  x label of Figure 2 cut) — every legend now sits below its panel, shorter labels,
+  taller figures (`experiments/paper1_figures.py`); and the PPO baseline in progress
+  is stated explicitly on the title page, in the abstract, in a framed paragraph of
+  §8.4 with the frozen protocol, and in the conclusions. 28 pages.
 
 ## 0.7.25 — 2026-11-23 — Paper 1 draft 0.2: the formulation in the body, proofs and MILP in appendices
 

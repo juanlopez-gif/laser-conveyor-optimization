@@ -42,7 +42,8 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.3 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.26)}
+\date{November 2026 --- draft 0.3 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.26)\\[0.3em]
+\normalsize\textbf{Work in progress: a PPO baseline on the same representation is being trained under a frozen protocol; its results are not yet in this draft (Section~\ref{sec:ppo}).}}
 
 \begin{document}
 \maketitle
@@ -76,8 +77,11 @@ against 1.2~s for the search. Three negative results shape the method:
 truncating the look-ahead with a learned value is far worse than not truncating; sampled
 futures help only when the look-ahead counts every part; and larger networks (6.7~M and
 39~M parameters) do not raise the ceiling set by the teacher. Giving the teacher the cell's
-bursty arrival model does not improve it either. The distance to the optimum is not
-measured and is the main open question.
+bursty arrival model does not improve it either. Two things are open at this draft: the
+distance to the optimum is not measured, and a policy-gradient (PPO) baseline on the
+same tokens, action mask, simulator and cell distribution, which answers what learning
+from the search adds over learning from the reward, is being trained under a protocol
+fixed before the run (three seeds, 40\,000 episodes each) and will be reported here.
 \end{abstract}
 
 %====================================================================
@@ -900,15 +904,30 @@ training always made the cloned policy worse. Those results explain why the proj
 changed representation, action space and training scheme, but they do not answer the
 question that matters now, since both the features and the actions differed.
 
-\label{sec:ppo}\textbf{PPO on the present representation (pending).} A policy-gradient
-baseline \cite{Schulman2017} with the same tokens, the same action mask, the same
-simulator and the same cell distribution, with a budget fixed before training (40\,000
-episodes per run, three training seeds), checkpoint selection on the validation groups,
-and the same paired evaluation on the development realizations, is being run at the
-time of this draft; its results, with the training cost of both schemes (including the
-expert's scenario generation), will be reported here. If it matches the policy learned
-from the search, that is a result worth stating; the reserved realizations are not used
-for it.
+\label{sec:ppo}
+\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{%
+\textbf{PPO baseline on the present representation: in progress at this draft.}
+A policy-gradient baseline \cite{Schulman2017} is being trained with the same tokens,
+the same action mask (non-candidates excluded, single-candidate decisions taken without
+the network), the same event-driven simulator and the same cell distribution as the
+policy of Section~\ref{sec:policy}, to answer one question: what does learning from the
+scenario search add over learning directly from the reward? The protocol was fixed
+before training and is recorded in the project's methods documentation: reward per
+decision equal to minus the increase of the penalized objective between decisions,
+$\gamma=1$ (finite drained episodes), GAE with $\lambda=0.95$, clipping 0.2, four epochs
+per update, minibatches of 256 decisions, entropy coefficient 0.01, value coefficient
+0.5, AdamW at $3\cdot10^{-4}$, network size S from scratch; one update per batch of
+about 1\,000 episodes; a budget of 40\,000 training episodes per run, comparable to the
+36\,000 acting episodes of the expert-iteration chain that produced the frozen network;
+three training seeds (200\,000+, disjoint from the expert-iteration seeds); checkpoint
+selection every 4\,000 episodes on the validation groups with the same scoring as expert
+iteration; evaluation paired on the same development realizations against \nj\ and
+against the frozen network, per seed and pooled, with 95\,\% intervals; and the
+training cost of both schemes (wall-clock, CPU-hours, simulated episodes including the
+expert's look-ahead clones). The reserved realizations are not used. Whatever the
+outcome, it will be reported here: if PPO matches the policy learned from the search,
+that is a result worth stating; if it falls short, the margin is the value of the
+expert.}}
 
 %====================================================================
 \section{Confirmatory evaluation}\label{sec:confirm}
@@ -1108,8 +1127,9 @@ realizations of eight regimes the policy beats the rule in seven and is
 indistinguishable from its expert in all. What remains open is how far all of this is
 from the optimum, which needs the exact
 reference of Appendix~\ref{app:milp} with the penalized objective on the realized
-instances and a new set of reserved realizations, and what learning from the reward alone
-would give on the same representation.
+instances and a new set of reserved realizations; and what learning from the reward
+alone gives on the same representation, which the PPO baseline now being trained
+(Section~\ref{sec:ppo}) will answer in the next draft.
 
 \bibliographystyle{plain}
 \bibliography{../../literature/references,extra}

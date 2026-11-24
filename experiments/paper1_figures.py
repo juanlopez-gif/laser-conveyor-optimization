@@ -316,32 +316,34 @@ def _rc():
 
 def fig_training(path: Path):
     plt = _rc()
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.0))
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 4.4))
     ax = axes[0]
     for tag, lab, col in (("rl2_gen_s_big", "S (0.88 M)", "#1f77b4"), ("rl2_gen_m", "M (6.7 M)", "#ff7f0e"), ("rl2_gen_l", "L (39 M)", "#2ca02c")):
         its = load_training(tag)["iterations"]
         x = [it["iteration"] for it in its]
-        ax.plot(x, [100 * it["val"]["net/score"] for it in its], "-o", color=col, ms=3, label=f"{lab}, network alone")
-        ax.plot(x, [100 * it["val"]["teacher/score"] for it in its], "--", color=col, lw=0.9, label=f"{lab}, search over the network")
+        ax.plot(x, [100 * it["val"]["net/score"] for it in its], "-o", color=col, ms=3, label=f"{lab}: network")
+        ax.plot(x, [100 * it["val"]["teacher/score"] for it in its], "--", color=col, lw=0.9, label=f"{lab}: search over it")
     ax.set_xlabel("expert-iteration round")
     ax.set_ylabel("validation score: mean paired $\\Delta$ vs NJ [%]")
-    ax.set_title("known-parts teacher, three sizes")
-    ax.legend(frameon=False, fontsize=6)
+    ax.set_title("known-parts expert, three sizes")
+    h0, l0 = ax.get_legend_handles_labels()
     ax = axes[1]
     its = load_training("rl2_gen_s_sf")["iterations"]
     x = [it["iteration"] for it in its]
     for g, col in (("real", "#1f77b4"), ("heavy", "#d62728"), ("general", "#7f7f7f")):
         y = [100 * it["val"][f"net/{g}"]["delta"] for it in its]
         h = [100 * it["val"][f"net/{g}"]["ci"] for it in its]
-        ax.errorbar(x, y, yerr=h, fmt="-o", color=col, ms=3, capsize=2, label=f"{g}: network alone")
-        ax.plot(x, [100 * it["val"][f"teacher/{g}"]["delta"] for it in its], "--", color=col, lw=0.9, label=f"{g}: teacher")
+        ax.errorbar(x, y, yerr=h, fmt="-o", color=col, ms=3, capsize=2, label=f"{g}: network")
+        ax.plot(x, [100 * it["val"][f"teacher/{g}"]["delta"] for it in its], "--", color=col, lw=0.9, label=f"{g}: expert")
     best = load_training("rl2_gen_s_big")["best"]["score"] * 100
-    ax.axhline(best, color="k", lw=0.6, ls=":", label=f"best S with the known-parts teacher (score {best:+.1f})")
-    ax.set_xlabel("expert-iteration round (continued from the best S)")
+    ax.axhline(best, color="k", lw=0.6, ls=":", label=f"best S, known-parts expert ({best:+.1f})")
+    ax.set_xlabel("expert-iteration round, continued from the best S")
     ax.set_ylabel("paired $\\Delta$ vs NJ [%]")
-    ax.set_title("sampled-future teacher, size S")
+    ax.set_title("scenario-search expert, size S")
     ax.set_xticks(x)
-    ax.legend(frameon=False, fontsize=5.5, loc="center right", ncol=2)
+    h1, l1 = ax.get_legend_handles_labels()
+    axes[0].legend(h0, l0, loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False, fontsize=6.5)
+    axes[1].legend(h1, l1, loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False, fontsize=6.5)
     fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)
@@ -349,7 +351,7 @@ def fig_training(path: Path):
 
 def fig_confirm(b: Bench, path: Path):
     plt = _rc()
-    fig, axes = plt.subplots(1, 3, figsize=(7.6, 3.4), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(7.6, 4.0), sharey=True)
     names = [regime_name(*reg) for reg in REGIMES]
     y = np.arange(len(REGIMES))[::-1]
     for ax, (title, pairs) in zip(axes, (("known-parts search vs NJ", [("search", "nearest_job")]),
@@ -386,7 +388,7 @@ def fig_confirm(b: Bench, path: Path):
 
 def fig_latency(b: Bench, path: Path):
     plt = _rc()
-    fig, ax = plt.subplots(figsize=(7.2, 2.9))
+    fig, ax = plt.subplots(figsize=(7.2, 3.4))
     for who, col in (("nearest_job", "#2ca02c"), ("search", "#7f7f7f"), ("net", "#1f77b4"), ("teacher", "#d62728")):
         xs = np.sort([x for reg in REGIMES for x in b.latency(reg, "B", who)])
         ax.plot(xs, np.linspace(0, 1, len(xs)), color=col, lw=1.3, label=f"{POL[who].replace(chr(92) + 'textsc{nj}', 'NJ')} (p50 {pct(list(xs), .5):.3g} ms, p95 {pct(list(xs), .95):.3g} ms)")
@@ -396,8 +398,9 @@ def fig_latency(b: Bench, path: Path):
     ax.set_xlabel("latency per decision [ms], one thread, machine fully loaded (log scale)")
     ax.set_ylabel("fraction of decisions")
     ax.set_title("Decision latency, treatment B, eight regimes pooled")
-    ax.legend(frameon=False, fontsize=6.5, loc="upper left")
-    fig.tight_layout()
+    fig.legend(*ax.get_legend_handles_labels(), loc="lower center", ncol=2, frameon=False, fontsize=6.5,
+               bbox_to_anchor=(0.5, 0.0))
+    fig.tight_layout(rect=(0, 0.16, 1, 1))
     fig.savefig(path)
     plt.close(fig)
 
