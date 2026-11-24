@@ -4,7 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[margin=2.4cm]{geometry}
-\usepackage{amsmath,amssymb,bm}
+\usepackage{amsmath,amssymb,amsthm,bm,mathtools}
 \usepackage{booktabs,array,tabularx,multirow}
 \usepackage{graphicx}
 \usepackage{enumitem}
@@ -15,16 +15,34 @@
 \usepackage{caption}
 \captionsetup{font=small,labelfont=bf}
 
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{counterexample}{Counterexample}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
 \setlength{\parskip}{0.4em}
 \setlength{\parindent}{0pt}
 \newcommand{\nj}{\textsc{nj}}
 \newcommand{\nh}{\textsc{nh}}
 \newcommand{\tcross}{\tau_{\mathrm{cross}}}
+\newcommand{\pred}{\operatorname{pred}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pb}{\mathcal{P}}
+\newcommand{\Psim}{\Pb^{\mathrm{sim}}}
+\newcommand{\Pd}{\Pb_\Delta}
+\newcommand{\Fpi}{\overline F_\Pi}
+\newcommand{\I}{\mathcal I}
 
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
-\large A sampled-future look-ahead and the learned dispatching policy that amortizes it}
+\large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.1 (results of versions 0.7.5--0.7.13)}
+\date{November 2026 --- draft 0.2 (results of versions 0.7.5--0.7.13)}
 
 \begin{document}
 \maketitle
@@ -34,25 +52,29 @@ A single XY laser head serves parts that arrive on several parallel conveyors. A
 be processed only inside a working zone; while it is processed its conveyor stops, and an
 unprocessed part that reaches the end of the zone stops its conveyor until the head serves
 it. The availability of every part therefore depends on the schedule itself (endogenous
-blocking), the parts keep arriving during the operation, and the controller sees only what
-is on the belts. We formulate the problem, show that it is strongly NP-hard with the number
-of conveyors in the input, and ask how to decide well in milliseconds. The method has two
-parts. A look-ahead search scores each candidate part by simulating the known parts
+blocking), parts keep arriving during the operation, and the controller sees only what is
+on the belts. We give an exact continuous-time formulation of the problem in which each
+belt is described by an odometer and each part by one entry coordinate, state the online
+problem and its information model, and prove its properties: strong NP-hardness with the
+number of conveyors in the input, the structural facts that make belt order natural but
+not dominant, valid lower bounds that account for the belt kinematics, and the light-traffic
+regime in which every reasonable rule is optimal. We then ask how to decide well in
+milliseconds. A look-ahead search scores each candidate part by simulating the known parts
 together with sampled futures of the unknown arrivals (eight Poisson futures over a 30~s
 window, common random numbers, the realized cost of every part as the objective); it is
 the best decision rule we found, but it needs about a second per decision. A
 permutation-invariant Transformer policy over the parts, the belts, the head and the cell's
-parameters, trained by expert iteration on randomized cells with one to six conveyors,
-amortizes that search: on 30 reserved realizations of eight operating regimes, used once,
-the policy alone equals its teacher in every regime (within $\pm0.8$ points, never
-significantly worse), beats the look-ahead over the known parts in every regime by
-1.5--3.9 points (significant in seven), and beats the nearest-part rule by 2--7\,\% of the
-penalized flow time in seven of the eight regimes, at 10.8~ms per decision (median, one
-thread, machine fully loaded; 17.5~ms at the 95th percentile) against 1.2~s for the
-search. Three negative results shape the method: truncating the look-ahead with a learned
-value is far worse than not truncating; sampled futures help only when the look-ahead
-counts every part, not only the known ones; and larger networks (6.7~M and 39~M
-parameters) do not raise the ceiling set by the teacher. Giving the teacher the cell's
+parameters, trained by expert iteration with that scenario search as the expert, on
+randomized cells with one to six conveyors, amortizes it: on 30 reserved realizations of
+eight operating regimes, used once, the policy alone equals its teacher in every regime
+(within $\pm0.8$ points, never significantly worse), beats the look-ahead over the known
+parts in every regime by 1.5--3.9 points (significant in seven), and beats the
+nearest-part rule by 2--7\,\% of the penalized flow time in seven of the eight regimes, at
+10.8~ms per decision (median, one thread, machine fully loaded; 17.5~ms at the 95th
+percentile) against 1.2~s for the search. Three negative results shape the method:
+truncating the look-ahead with a learned value is far worse than not truncating; sampled
+futures help only when the look-ahead counts every part; and larger networks (6.7~M and
+39~M parameters) do not raise the ceiling set by the teacher. Giving the teacher the cell's
 bursty arrival model does not improve it either. The distance to the optimum is not
 measured and is the main open question.
 \end{abstract}
@@ -73,30 +95,34 @@ blocking that propagates. Parts keep arriving while the cell runs, at rates the
 controller knows but at instants it does not, and the controller observes only the parts
 on the belts.
 
-This paper asks how to decide well, fast, in that setting. Its contributions are:
+This paper has three parts: we state the problem, we formulate it and establish what is
+known about it, and we solve its online version with a learned policy whose quality we
+measure on reserved realizations. Its contributions are:
 \begin{enumerate}[nosep]
-\item A formulation of the online problem with endogenous blocking and a partial
-  information model (Section~\ref{sec:problem}), with its complexity (strongly NP-hard
-  with the number of conveyors in the input) and the structural facts that matter for
-  dispatching: belt order is not dominant, the first part of a conveyor is not always the
-  one to serve, and a look-ahead over the known parts alone has a ceiling.
+\item An exact continuous-time formulation (Section~\ref{sec:problem}) in which each
+  conveyor is a belt odometer and each part one entry coordinate, so that the positions,
+  the interception geometry, the processing stops and the blocking are all implicit in
+  the start times; the online problem with its information model and the general
+  stochastic problem over a family of cells (Section~\ref{sec:online}); a time-indexed
+  MILP as the exact reference (Appendix~\ref{app:milp}).
+\item The properties of the problem (Section~\ref{sec:properties}): strong NP-hardness
+  with the number of conveyors in the input; the structural facts that make belt order
+  natural but not dominant; valid lower bounds that account for the belt kinematics and
+  the head's travel, with their measured quality; the light-traffic regime where every
+  non-idling rule is optimal, and counterexamples showing that outside it neither
+  first-in nor nearest-part is, and that waiting and anticipation pay.
 \item A look-ahead search for the online problem (Section~\ref{sec:search}) that
   simulates every candidate against sampled futures of the unknown arrivals and scores it
-  by the realized cost of all parts. We report which design choices matter: the
-  objective (all parts, not the known ones), the number of futures (eight), the window
-  (20--30~s), and the failure of value-based truncation.
+  by the realized cost of all parts, with the design study that fixed it.
 \item A learned dispatching policy (Section~\ref{sec:policy}) that reads the state as a
-  set of tokens (parts, conveyors, head, cell parameters), points to any candidate part,
-  and is trained by expert iteration on a distribution of cells with one to six
-  conveyors. The policy reaches its teacher's quality and decides in 10~ms.
-\item A pre-registered confirmatory evaluation on reserved realizations
-  (Section~\ref{sec:confirm}): the policy against the nearest-part rule, the known-parts
-  look-ahead and its own teacher, on eight regimes, with per-decision latencies, in the
-  two action modes of the cell.
+  set of tokens, points to any candidate part, and is trained by expert iteration with
+  the scenario search as the expert, on a distribution of cells with one to six
+  conveyors; and its pre-registered confirmatory evaluation on reserved realizations
+  (Section~\ref{sec:confirm}).
 \end{enumerate}
-A companion paper (Paper~2) uses the policy and the rule as controllers to measure the
-value of upstream visibility and of pre-positioning; this paper is about the decision
-method and uses the design mode of the cell only as a second action setting.
+A companion paper (Paper~2) uses the policy and the nearest-part rule as controllers to
+measure the value of upstream visibility and of pre-positioning; this paper is about the
+problem and the decision method.
 
 %====================================================================
 \section{Related work}\label{sec:related}
@@ -123,7 +149,8 @@ motion: a belt's odometer stops while its part is processed or blocked.
 packaging machines whose devices obstruct each other \cite{S10_Briskorn2025} and in a
 warehouse where full crane buffers stop the upstream conveyors \cite{S11_SalviaHornos2026},
 both minimised offline. Our objective charges the blocking events and their duration
-inside the online dispatching problem.
+inside the online dispatching problem. Single-machine scheduling with release dates, from
+which our complexity result is inherited, is classical \cite{Lenstra1977,Schrage1968,Baker1974}.
 
 \textbf{Rollout and learned dispatching.} The look-ahead of Section~\ref{sec:search} is a
 rollout \cite{M02_Bertsekas1997}: a base policy simulated from each candidate, with the
@@ -133,29 +160,26 @@ schedules include policy-gradient dispatching with objective-aligned rewards
 \cite{S20_VanRemmerden2025}, look-ahead-based learning for robotic flow shops
 \cite{S14_Kim2023}, action masking \cite{M04_Huang2022,S18_Wei2024}, and learned control
 of conveyor-fed robotic cells \cite{S15_Zisgen2025,S16_Drijver2023,S17_Drakaki2017,S12_Wang2004,S13_Li2020}.
-The training loop used here (a search teacher that improves on the current policy, a
-policy fitted to the teacher's choices, repeated) is the expert-iteration scheme of
-game-playing and combinatorial-optimization work; what is specific to this paper is the
-teacher (a sampled-future rollout scored on every part) and the evidence that it, not
-the network's size, sets the quality of the policy.
+The training loop used here, a search that improves on the current policy and a policy
+fitted to the search's choices, repeated, is expert iteration \cite{Anthony2017,Silver2018},
+with the state-distribution correction of \cite{Ross2011}; what is specific to this paper
+is the expert (a scenario rollout scored on every part) and the evidence that it, not the
+network's size, sets the quality of the policy. Learning directly from the reward with a
+policy-gradient method \cite{Schulman2017} on the same representation is the baseline
+that the question ``what does learning from the search add'' calls for; the project's
+earlier attempt used another representation and action space (Section~\ref{sec:rlhistory}),
+and a baseline on the present one is being run (Section~\ref{sec:ppo}).
 
 %====================================================================
-\section{Problem}\label{sec:problem}
+\section{The problem}\label{sec:problem}
 %====================================================================
 
-\subsection{The cell}
-Figure~\ref{fig:cell} shows the cell. Parts travel in the $+x$ direction on $N$ conveyors
-at $y_k$, each at its belt speed $v_k$. The belt has an entry zone $[0,a)$ that the head
-cannot reach, a laser zone $[a,b]$ and an exit zone. The head moves in the rectangle
-$[a,b]\times[\min_k y_k,\max_k y_k]$ with simultaneous axes at speeds $v_x$, $v_y$, so that
-the travel between two points takes $\max(\Delta x/v_x,\Delta y/v_y)$; it intercepts a
-moving part at the point where it catches it, inside the zone. Processing a part takes
-$p_j$ seconds, during which the part's conveyor stops. A part that reaches $b$
-unprocessed stops its conveyor until the head serves it (a \emph{blocking} event); the
-belt resumes when the part's processing starts. Parts arrive at the feed point of each
-belt as a renewal process with known mean rate (Poisson, or an on/off Poisson source with
-the same mean rate, ``bursts''), are admitted to the belt when the previous part has
-advanced a minimum spacing $\delta$, and queue upstream of the feed point otherwise.
+\subsection{System and notation}
+Figure~\ref{fig:cell} shows the cell. $K=\{1,\dots,N\}$ are the conveyors; $J$ the parts of
+an instance, $n=|J|$; $J_k\subseteq J$ the parts of conveyor $k$, indexed in arrival order,
+$m_j\in\{0,1,\dots\}$ the index of part $j$ on its conveyor $k(j)$, and $\pred(j)$ the part
+of $J_{k(j)}$ that arrived immediately before $j$. Table~\ref{tab:params} gives the
+parameters and their values in the reference cell.
 
 \begin{figure}[t]
 \centering
@@ -177,7 +201,7 @@ advanced a minimum spacing $\delta$, and queue upstream of the feed point otherw
   \fill[green!60!black] (49,-1.2) rectangle (51.4,1.2);
   \draw[very thick,gray!60!black] (34.2,-3.2) -- (34.2,27.2);
   \draw[fill=red,draw=white] (34.2,0) circle (1.0);
-  \node[above] at (34.2,27.4) {\small laser head};
+  \node[above] at (34.2,27.4) {\small laser head $(X_j,y_{k})$};
   \node[above,font=\scriptsize] at (44.7,14) {blocked at $b$};
   \draw[decorate,decoration={brace,mirror,amplitude=4pt}] (0,-5) -- (10,-5)
        node[midway,below=4pt] {\small entry zone (seen, not reachable)};
@@ -193,77 +217,400 @@ advanced a minimum spacing $\delta$, and queue upstream of the feed point otherw
   \draw[->] (60,-6) -- (60,0) node[above] {\small $y$};
 \end{tikzpicture}
 \caption{The reference cell (top view). Parts travel in $+x$; the head reaches
-$[a,b]\times[\min_k y_k,\max_k y_k]$ and is processing the part on belt~1 (red), whose
+$W=[a,b]\times[\min_k y_k,\max_k y_k]$ and is processing the part on belt~1 (red), whose
 belt is stopped; the part on belt~2 has reached $b$ unprocessed and blocks its belt. The
 controller sees the parts on the belts (entry and laser zones) but not the queue upstream
 of the feed point.}
 \label{fig:cell}
 \end{figure}
 
-\subsection{Objective and decision epochs}
-An episode generates arrivals for a horizon $T_A$ (300~s) and runs until every part has
-left. The objective is the \emph{penalized flow time}
-\begin{equation}
-J=\frac{1}{n}\sum_{j=1}^{n}(C_j-r_j)+\frac{\lambda_N N_B+\lambda_T T_B}{n},
+\begin{table}[t]
+\centering\small
+\caption{Parameters of the model and their values in the reference cell.}
+\label{tab:params}
+\begin{tabularx}{\linewidth}{@{}l X r@{}}
+\toprule
+symbol & meaning & reference cell\\
+\midrule
+$r_j$ & arrival (release) time of part $j$ at the feed point & arrival process\\
+$p_j$ & processing time & $2.5$ s\\
+$y_k$ & transverse position of conveyor $k$ & $0,12,24$ cm\\
+$v_k$ & conveyor speed & $3$ cm/s\\
+$a,\ b$ & start and end of the laser zone along the belt & $10,\ 45$ cm\\
+$L$ & belt length (exit point) & $55$ cm\\
+$\delta$ & minimum spacing between consecutive parts on a belt & $4$ cm\\
+$v_x,\ v_y$ & head axis speeds & $10,\ 10$ cm/s\\
+$P_0=(x_0,y_0)$ & initial head position & workspace centre\\
+$\sigma_{kk'}\in\{0,1\}$ & $1$ if processing a part of conveyor $k'$ stops conveyor $k$ & $\sigma=I$\\
+$\lambda_N,\ \lambda_T$ & blocking penalty per event and per blocked conveyor-second & $10$ s, $1$ s\\
+$\lambda_k$ & arrival rate of conveyor $k$ (online model) & $\tfrac1{10},\tfrac1{12},\tfrac1{14}$ s$^{-1}$\\
+$G$ & distribution of the processing time (online model) & constant $2.5$ s\\
+$T_A$ & arrival horizon of an episode & $300$ s\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+We assume $\sigma_{kk}=1$ for all $k$: a part never moves while it is processed. The
+rule $\sigma=I$ stops only the conveyor carrying the part; $\sigma\equiv1$ stops all
+conveyors. For $P=(x,y)$ and $Q=(x',y')$, with $\Delta x=|x'-x|$ and $\Delta y=|y'-y|$, the
+head's travel time is
+\begin{equation}\label{eq:tau}
+\tau(P,Q)=
+\begin{cases}
+\max\!\left(\dfrac{\Delta x}{v_x},\dfrac{\Delta y}{v_y}\right) & \text{simultaneous axes (reference cell)},\\[2ex]
+\dfrac{\Delta x}{v_x}+\dfrac{\Delta y}{v_y} & \text{sequential axes.}
+\end{cases}
 \end{equation}
-the mean flow time from arrival $r_j$ to completion $C_j$ plus a penalty for the $N_B$
-blocking events and the $T_B$ conveyor-seconds stopped by blocking, with $\lambda_N=10$~s
-per event and $\lambda_T=1$~s per conveyor-second (placeholders in equivalent seconds).
-A decision epoch occurs whenever the head is free and at least one candidate exists; the
-controller then chooses one candidate and the head commits to it. In the cell's basic
-mode (\texttt{none}) the candidates are the parts inside the laser zone. In its design
-mode (\texttt{when\_idle}) the head may also, when no part is in the zone, be sent to the
-entry point $(a,y_k)$ of a belt on which a visible part approaches, and wait there; the
-commitment is revoked at no cost if any part enters the zone, and the policy decides
-again. Both modes are evaluated.
+Both are metrics (weighted $\ell_\infty$ and $\ell_1$ norms), so $\tau$ satisfies the
+triangle inequality; with simultaneous axes the head moves diagonally until one axis
+arrives and then straight, and its path length is
+$\ell(P,Q)=\max(\Delta y+c_x\Delta x,\ \Delta x+c_y\Delta y)$ with
+$c_x=(\sqrt{v_x^2+v_y^2}-v_y)/v_x$ and $c_y$ symmetric, convex in $\Delta x$ for fixed
+$\Delta y$ (used in Appendix~\ref{app:milp}).
 
-\subsection{Information}
-The controller knows the time, the head's position and state, the state of every belt
-(running, stopped for processing, blocked), and, for every part on a belt, its belt,
-position, processing time and the instant from which it has been observed; it knows the
-mean arrival rate of each belt and the arrival horizon, but never the future arrival
-instants, and it does not see the parts queued upstream of the feed point. This is the
-reference information model of the cell (an overhead camera over the belts); its
-alternatives (no camera; a camera that also sees the upstream queue) are the subject of
-Paper~2. Every policy below, including the look-ahead searches, uses only this
-information: the simulator's look-ahead copy drops the real future arrivals and the
-hidden queue, and a test verifies that changing them does not change any search cost.
+\subsection{Belt odometer, entry coordinates and positions}
+\begin{definition}[Belt odometer]
+For each conveyor $k$ let $u_k(t)\in\{0,1\}$ be its run indicator. The odometer
+$D_k(t)=v_k\int_0^t u_k(s)\,ds$ is the total distance travelled by belt $k$ up to time
+$t$; it is continuous and non-decreasing.
+\end{definition}
+All parts on a belt move rigidly with it, so a part is fully described by one constant,
+its \emph{entry coordinate} $E_j$, the odometer reading when it is placed at $x=0$. A part
+can enter only once the previous one has moved at least $\delta$ away from the entry:
+\begin{equation}\label{eq:entry}
+E_j=\max\bigl(D_{k(j)}(r_j),\ E_{\pred(j)}+\delta\bigr),\qquad E_{\pred(j)}:=-\infty\ \text{for the first part,}
+\end{equation}
+\begin{equation}\label{eq:pos}
+x_j(t)=\max\bigl(0,\ D_{k(j)}(t)-E_j\bigr),\qquad t\ge r_j .
+\end{equation}
+The maximum in \eqref{eq:entry} models the upstream queue: the part waits until the
+odometer reaches $E_{\pred(j)}+\delta$. Its entry time is $e_j=\min\{t\ge r_j:\
+D_{k(j)}(t)\ge E_j\}$ and the time it enters the laser zone is $R_j=\min\{t:\ x_j(t)\ge a\}$.
+Iterating \eqref{eq:entry} along a belt gives, for $h\preceq_k j$ (both on $k$, $m_h\le m_j$),
+\begin{equation}\label{eq:iter}
+E_j\ \ge\ E_h+(m_j-m_h)\,\delta\ \ge\ D_k(r_h)+(m_j-m_h)\,\delta .
+\end{equation}
 
-\subsection{Properties}\label{sec:properties}
-The formal model (belt odometers, exact continuous-time constraints, a time-indexed MILP
-and a sequence-only decoder) is given in the project's formulation document; we state
-here what matters for dispatching, with the proofs there.
+\subsection{Decisions and constraints}
+The decisions are a permutation $\pi$ of $J$ (the processing order of the head), the start
+times $S_j\ge0$ with $C_j=S_j+p_j$, and the run/stop controls $u_k(\cdot)$, which the
+non-idling constraint below determines from the others. The processing position and
+point of part $j$ are
+\begin{equation}\label{eq:X}
+X_j=D_{k(j)}(S_j)-E_j,\qquad P_j=(X_j,\ y_{k(j)}).
+\end{equation}
+\begin{description}[nosep]
+\item[(C1) Reachability.] $a\le X_j\le b$ for all $j$.
+\item[(C2) One part at a time, with interception.]
+  \begin{equation}\label{eq:C2}
+  S_{\pi(1)}\ge\tau\bigl(P_0,P_{\pi(1)}\bigr),\qquad
+  S_{\pi(i+1)}\ge C_{\pi(i)}+\tau\bigl(P_{\pi(i)},P_{\pi(i+1)}\bigr),\quad i=1,\dots,n-1.
+  \end{equation}
+  Since $P_{\pi(i+1)}$ depends on $S_{\pi(i+1)}$ through $D_k$, the inequality is
+  implicit: the head, leaving $P_{\pi(i)}$ at $C_{\pi(i)}$, reaches the point where the
+  \emph{moving} part will be at $S_{\pi(i+1)}$ no later than the part (it may wait
+  there). By the triangle inequality, \eqref{eq:C2} implies $S_j\ge C_i+\tau(P_i,P_j)$ for
+  every pair with $i$ before $j$, so processing intervals are disjoint.
+\item[(C3) Conveyors stop during processing.] $u_k(t)=0$ for $t\in[S_j,C_j)$ whenever
+  $\sigma_{k\,k(j)}=1$.
+\item[(C4) Blocking.] An unprocessed part is never carried beyond $b$:
+  $D_{k(j)}(t)-E_j\le b$ for all $t\le S_j$. Since $D_k$ is non-decreasing this is
+  equivalent to $X_j\le b$, already in (C1): a conveyor \emph{must} stop when its most
+  downstream unprocessed part reaches $b$.
+\item[(C5) Non-idling conveyors.] A conveyor stops only when (C3) or (C4) forces it:
+  \begin{equation}\label{eq:C5}
+  u_k(t)=0\ \Longrightarrow\
+  \bigl(\exists j:\ \sigma_{k\,k(j)}=1,\ t\in[S_j,C_j)\bigr)\ \lor\
+  \bigl(\exists j\in J_k:\ S_j>t,\ D_k(t)-E_j=b\bigr).
+  \end{equation}
+  Dropping (C5) gives the relaxed model $\Pb^R$ in which belts may also be stopped
+  voluntarily.
+\item[(C6) Workspace.] $P_j\in W=[a,b]\times[\min_k y_k,\max_k y_k]$ follows from (C1),
+  and straight moves between points of the convex set $W$ stay in $W$.
+\end{description}
+
+\subsection{Objectives}
+All objectives are minimized: the makespan $C_{\max}=\max_jC_j$, the total flow time
+$\sum_j(C_j-r_j)$, the total waiting time $\sum_j(S_j-r_j)$, the maximum lateness
+$L_{\max}=\max_j(C_j-d_j)$ for due dates $d_j$, the head's travel distance, the conveyor
+downtime $\sum_k\bigl(T-D_k(T)/v_k\bigr)$ with $T$ the exit time of the last part, and the
+throughput $n/C_{\max}$. A part that reaches the end of the laser zone unprocessed stops
+its whole conveyor by (C4)--(C5); the delays it causes are inside the $C_j$, but a blocked
+conveyor has further costs in the cell (restart, accumulation upstream, risk for the
+upstream process), so it is penalized explicitly. Let $B_j=\min\{t:\ D_{k(j)}(t)-E_j\ge b\}$
+be the time part $j$ would reach the zone end (well defined, since by (C4) the belt stops
+exactly when $x_j=b$). Part $j$ blocks its conveyor iff it gets there before the head
+starts on it:
+\begin{equation}\label{eq:block}
+\beta_j=\mathbb 1[S_j>B_j],\qquad\text{blocked duration }(S_j-B_j)^+,\qquad
+N_B=\sum_j\beta_j,\qquad T_B=\sum_j(S_j-B_j)^+ ,
+\end{equation}
+and the blocking penalty is $\Pi=\lambda_N N_B+\lambda_T T_B$. The objective of this
+paper is the \emph{penalized flow time}
+\begin{equation}\label{eq:J}
+\Fpi=\frac1n\Bigl(\sum_j(C_j-r_j)+\Pi\Bigr),
+\end{equation}
+the total cost per part in seconds. Since $\Pi\ge0$, every lower bound of the mean flow
+time is a lower bound of $\Fpi$. The weights are placeholders in equivalent seconds until
+the cost of a stopped conveyor is known; the gains reported in Section~\ref{sec:confirm}
+are 85--95\,\% flow time, so they are insensitive to the weights.
+
+\subsection{Pre-positioning and the restricted model}
+Constraint (C2) allows the head to move towards a part \emph{before} it reaches the laser
+zone: it may pre-position at $(a,y_k)$ and wait. A cell whose controller dispatches the
+head only to parts already inside the zone satisfies in addition
+\begin{equation}\label{eq:C7}
+\textbf{(C7)}\qquad S_{\pi(i+1)}\ \ge\ \max\bigl(C_{\pi(i)},\,R_{\pi(i+1)}\bigr)+\tau\bigl(P_{\pi(i)},P_{\pi(i+1)}\bigr),
+\qquad S_{\pi(1)}\ge R_{\pi(1)}+\tau(P_0,P_{\pi(1)}).
+\end{equation}
+We write $\Psim=\Pb+\text{(C7)}$. Since (C7) only removes schedules, $\Pb$ is a relaxation
+of $\Psim$: its optimum bounds everything a non-anticipating controller can do, and the
+gap between the two measures the value of pre-positioning (a single part arriving at $t=0$
+completes at $5.83$~s in $\Pb$ and at $7.19$~s in $\Psim$). The cell's two action modes
+are, with $\mathcal R(t)$ the ready unassigned parts (inside the zone) and $\mathcal U(t)$
+the unassigned parts in the entry zone of a running belt: \texttt{none}, candidates
+$\mathcal R(t)$, which realizes $\Psim$; and \texttt{when\_idle}, candidates $\mathcal R(t)$
+if non-empty and $\mathcal U(t)$ otherwise, feasible for $\Pb$. A decision epoch is an
+instant at which the head is free and the candidate set is non-empty. Commitments are
+irrevocable until processing starts, except that under \texttt{when\_idle} a commitment to
+an entry-zone part $j$ is revoked at the first instant $t'$ with $\mathcal R(t')\ne\emptyset$,
+$j\notin\mathcal R(t')$; the head keeps its position, nothing else is charged, and a new
+epoch occurs at $t'$ with candidates $\mathcal R(t')$. Physically, \texttt{when\_idle}
+requires the camera to see the entry zone.
+
+\subsection{Problem statement}
+\begin{equation}\label{eq:P}
+(\Pb)\qquad \min_{\pi,\,S,\,u}\ \Fpi(\pi,S,u)\quad\text{s.t.}\quad
+\eqref{eq:entry},\ \eqref{eq:X},\ \text{(C1)--(C5)};\qquad
+(\Psim)=(\Pb)+\text{(C7)}.
+\end{equation}
+The offline problem with full knowledge of the arrivals is the clairvoyant benchmark; the
+cell's problem is its online version, stated next. A time-indexed MILP of $\Pb$ with the
+blocking penalty, exact up to the step, is given in Appendix~\ref{app:milp}; it is
+tractable on small instances and inside a rolling horizon. Once the order $\pi$ is fixed,
+the earliest schedule compatible with (C1)--(C5) and (C7) is obtained by a deterministic
+forward pass $\Phi:\pi\mapsto(S,u)$, which is what the cell's simulator computes for a
+fixed sequence; $\min_\pi\Fpi(\Phi(\pi))$ is a permutation problem, but $\Phi$ is a
+heuristic restriction of $\Psim$ (delaying a start can move a part closer to the head,
+Appendix~\ref{app:special}), and dynamic programming over (processed set, last part) is not
+exact, because the odometers depend on the whole history.
+
+%====================================================================
+\section{The online problem}\label{sec:online}
+%====================================================================
+
+\subsection{Policies and decision epochs}
+In the cell, $r_j$ is revealed only when the part arrives. A \emph{policy} maps the
+information available at a decision epoch to the next part. The online problem is a
+semi-Markov decision process: decision epochs are the instants at which the head is free
+and there are at least two candidates (a single candidate is taken without a decision),
+the action is any candidate part, and the cost accrued between epochs $t$ and $t'$ is
+\begin{equation}\label{eq:smdp}
+c(t,t')=\int_t^{t'}\bigl|\{j:\ r_j\le s<C_j\}\bigr|\,ds+\lambda_T\,T_B(t,t')+\lambda_N\,N_B(t,t') ,
+\end{equation}
+the work in progress integrated over the interval plus the blocking charged in it. Since
+$\int_0^\infty|\{j:r_j\le s<C_j\}|\,ds=\sum_j(C_j-r_j)$, the undiscounted return of an
+episode equals $-n\,\Fpi$: a policy that minimizes the undiscounted return minimizes the
+objective, and a discounted proxy would not. Rules that rank candidates by travel time
+compare the times rounded to $10^{-9}$~s and break exact ties by earliest arrival, then
+by part number; exact ties are frequent (equal lane moves, several parts stopped at
+$b$), so the tie rule is part of the definition of a policy.
+
+\subsection{Information model}\label{sec:info}
+A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts
+observable at $t$ and $o_j$ the instant from which part $j$ is observable. The
+information at a decision epoch is
+\begin{equation}\label{eq:info}
+\I_t=\Bigl(t,\ \text{head state},\ \text{belt states},\
+\bigl\{(k(j),x_j(t),o_j,p_j,\text{status}_j):\ j\in O(t)\bigr\},\ \theta,\ T_A\Bigr),
+\end{equation}
+where $\theta$ are the cell's parameters (Section~\ref{sec:general}) and $T_A$ the
+arrival horizon, known statistically and not observed: the controller knows the rates
+$\lambda_k$ but not the instants of the future arrivals, nor whether any part will still
+arrive before $T_A$. In the reference information model (\texttt{belts}, an overhead
+camera over the belts) $O(t)$ is the set of parts on a belt, in the laser zone or in the
+entry zone, with their positions, and $o_j=e_j$; the arrival time $r_j$ itself is not
+observed, and a part that waited in the hidden upstream queue shows no trace of it. Two
+alternatives are used by Paper~2: \texttt{zone}, $O(t)$ the parts in the laser zone only
+(no camera, incompatible with pre-positioning), and \texttt{full}, also the parts queued
+upstream of the feed point (a what-if upper bound). A policy maps $\I_t$ to a candidate; a
+look-ahead may simulate only the parts of $O(t)$ plus synthetic arrivals drawn from
+$\theta$, never the real future. Every policy of this paper, including the look-ahead
+searches, uses only $\I_t$: the simulator's look-ahead copy drops the real future arrivals
+and the hidden queue, and a test verifies that changing them changes no search cost. The
+processing time $p_j$ is assumed known once the part is observed (constant in the
+reference cell).
+
+\subsection{The general stochastic problem}\label{sec:general}
+The learned policy targets a family of cells. A cell is the parameter vector
+\begin{multline*}
+\theta=\bigl(N,\ (y_k,v_k,\lambda_k)_{k=1}^N,\ G,\ v_x,v_y,\ \text{motion model},\\
+a,b,L,\delta,\ \sigma,\ \lambda_N,\lambda_T,\ \text{pre-positioning mode},\ \text{observation level}\bigr).
+\end{multline*}
+Given $\theta$, the arrivals of conveyor $k$ form a Poisson process of rate $\lambda_k$ or
+an on/off Poisson source with the same mean rate (on a fraction $f_k$ of the time in
+periods of mean $\tau_k$, emitting at rate $\lambda_k/f_k$ while on), independent between
+conveyors; the controller knows $\lambda_k$, and $(f_k,\tau_k)$ enter $\theta$ only in the
+bursty regimes. Processing times are i.i.d.\ with distribution $G$. An instance $\omega$
+is a realization up to $T_A$, after which the system drains. For a policy $\mu$,
+\begin{equation}\label{eq:general}
+J(\mu;\theta)=\mathbb E_\omega\bigl[\Fpi(\mu;\theta,\omega)\bigr],\qquad
+\min_\mu\ \mathbb E_{\theta\sim\Theta}\Bigl[J(\mu;\theta)\,/\,J(\mu_{\nj};\theta)\Bigr],
+\end{equation}
+where the policy receives $\theta$ as input and the ratio to the nearest-part rule \nj\ on
+the same instance (common random numbers) makes cells of different scale comparable; $J$
+is estimated by the mean over realizations of the paired per-episode ratio, with a normal
+95\,\% interval. The processing load is $\rho_p=\sum_k\lambda_k\mathbb E[p]$; the effective
+head load $\rho=\sum_k\lambda_k(\mathbb E[p]+\bar\tau)$ also includes the mean travel
+$\bar\tau$ per part, which depends on the policy. If $\rho\ge1$ the queues grow without
+bound; finite episodes with drain stay well defined, a long-run average does not. The
+reference cell has $\rho_p=0.64$ and $\rho\approx0.9$; its heavy variant has $\rho_p=0.93$
+and is overloaded. The training distribution of Section~\ref{sec:dist} draws
+$\rho_p\in[0.3,0.95]$ and therefore deliberately includes overloaded cells.
+
+%====================================================================
+\section{Properties}\label{sec:properties}
+%====================================================================
+The proofs of this section are in Appendices~\ref{app:complexity}--\ref{app:special};
+the statements use only the facts (F1) $D_k$ is non-decreasing with
+$D_k(t)-D_k(s)\le v_k(t-s)$, (F2) \eqref{eq:entry}, and (C1)--(C4), so every bound holds
+for every feasible schedule of $\Pb$, hence of $\Pb^R$, of $\Psim$, of every policy and of
+the decoder $\Phi$.
+
+\subsection{Structure}
+\begin{proposition}[Rigid belts]\label{prop:rigid}
+On each conveyor the order of the parts never changes and, once two parts $i$ (earlier)
+and $j$ have entered, $x_i(t)-x_j(t)=E_j-E_i\ge\delta$. The head may nevertheless process
+them in any order.
+\end{proposition}
+\begin{proposition}[Blocking cascade]\label{prop:cascade}
+On conveyor $k$ at time $t$ the binding cap is set by the most downstream unstarted part:
+$D_k(t)\le\min\{E_j+b:\ j\in J_k,\ S_j>t\}$. Processing the parts of a conveyor out of belt
+order therefore tends to cause blocking.
+\end{proposition}
+\begin{proposition}[Feasibility]\label{prop:feasible}
+With blocking, $\Pb$ is always feasible: even if $v_k\ge v_x$, so that the head cannot
+catch a part ahead of it while it moves, the part stops at $b$ by (C4) and is then
+reachable.
+\end{proposition}
+Belt order is natural, by Proposition~\ref{prop:cascade}, but \emph{not} dominant
+(Section~\ref{sec:special}): on small instances with bursts the best order sometimes
+serves a later part of a conveyor first, and on a single conveyor a short part behind a
+long one should go first. Policies restricted to belt heads (the cell's earlier rule and
+agents) form a restricted class; the policy of Section~\ref{sec:policy} points to any
+candidate.
+
+\subsection{Complexity}
+\begin{proposition}[Complexity]\label{prop:complexity}
+With the stop rule $\sigma=I$ and the number of conveyors $N$ part of the input, the
+decision versions of $\Pb$ for $L_{\max}$ and for $\sum_jC_j$ (equivalently $\sum_jF_j$)
+are NP-hard in the strong sense.
+\end{proposition}
+The reduction (Appendix~\ref{app:complexity}) is from $1\,|\,r_j\,|\,L_{\max}$ and
+$1\,|\,r_j\,|\,\sum C_j$ \cite{Lenstra1977}, with one part per conveyor, where the head is
+the only coupling. Not covered: a \emph{fixed} number of conveyors, where parts share belts
+and their availability depends on earlier stops, and the all-conveyors stop rule; the
+makespan version is not claimed. In Graham-style notation the problem is
+\[
+1\ \big|\ r_j,\ s_{ij}(t,z),\ \text{blocking},\ \text{endogenous windows}\ \big|\ C_{\max},\ \textstyle\sum F_j,\ L_{\max},
+\]
+where the travel setup $s_{ij}(t,z)$ depends on the sequence, the time and the belt
+state $z$ (the odometers, i.e.\ all earlier stops), because the meeting point is the
+part's position at interception, and the accessibility windows of a part are induced by
+the belt state and hence by the schedule itself. Exact methods are realistic only for
+small instances or inside a rolling horizon.
+
+\subsection{Lower bounds}\label{sec:bounds}
+Appendix~\ref{app:bounds} proves a family of lower bounds valid for every feasible
+schedule. In words: (L1) part $j$ cannot start before the head can reach its belt, before
+its forced predecessors on the belt are completed, and before the belt has advanced
+$a+(m_j-m_h)\delta$ since the arrival of any earlier part $h$ of the same belt, with the
+belt stopped during every forced processing in between, which captures the upstream
+queue; (L2) two processings are separated by at least the lane change $|y_k-y_{k'}|/v_y$
+on different belts and by $(m_j-m_i)\delta/(v_x+v_k)$ or $(m_i-m_j)\delta/v_x$ on the same
+belt; (L3) a Jackson-type tail bound on the makespan that adds, to the processing of the
+parts not yet available at $t$, a lower bound on the gaps any order of them must pay;
+(L5) the preemptive SRPT optimum \cite{Schrage1968,Baker1974} of the single machine with
+release dates (L1) bounds $\sum_jC_j$; and (L6) a sequence relaxation, exact by dynamic
+programming over (processed set, last part) for $n\le10$ and applied to windows beyond,
+that recomputes the availability of each part from the parts processed before it.
+Table~\ref{tab:bounds} gives their quality on random instances of the reference cell:
+1--9\,\% on the makespan, 7--20\,\% on the mean flow time for $n\le10$ against the exact
+optimum over $\Phi$, and larger for $n\ge20$ against the best online rule. Part of every
+flow-time gap is the true difference between $\Pb$ and the non-anticipating schedules
+(up to $I^\ast$ per part, Appendix~\ref{app:special}), not looseness of the bounds; for
+large $n$ the window decomposition ignores contention between windows, and the upper
+bound is only a rule. The bounds do not enter the online method; they measure offline
+solutions and would be the pruning of an exact search over the known parts.
+
+\begin{table}[t]
+\centering\small
+\caption{Quality of the lower bounds: mean gap $100\,(\mathrm{UB}-\mathrm{LB})/\mathrm{LB}$
+over three random instances of the reference cell per size (Poisson arrivals at the
+reference rates), with the upper bound the exact optimum over $\Phi$ (all $n!$ orders) for
+$n\le8$ and the best of four online rules for $n\ge10$; and the time of one evaluation of
+all bounds.}
+\label{tab:bounds}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+$n$ & makespan & mean flow time & bound time [s]\\
+\midrule
+6 & 4.0\,\% & 11.0\,\% & 0.03\\
+8 & 4.8\,\% & 13.4\,\% & 0.03\\
+10 & 5.4\,\% & 20.4\,\% & 0.08\\
+20 & 7.1\,\% & 37.6\,\% & 0.11\\
+40 & 3.6\,\% & 45.9\,\% & 0.25\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Special cases: when the rules are optimal, and when they are not}\label{sec:special}
+Let $e^0_j=r_j+a/v_{k(j)}$ be the free-flow availability of part $j$, and
+\[
+I^\ast=\max\Bigl(\frac{b-a}{v_x+\min_kv_k},\ \frac{\max_ky_k-\min_ky_k}{v_y}\Bigr)
+\]
+the longest interception a ready part can need (2.69~s in the reference cell).
+\begin{theorem}[Light traffic]\label{thm:light}
+Assume simultaneous axes, $\sigma=I$, $a\ge\delta$, $v_k\le v_x$ and $v_kI^\ast\le b-a$ for
+all $k$. If consecutive parts $h,i$ of the same conveyor satisfy
+$r_i\ge r_h+a/v_k+I^\ast+p_h$ and, in $e^0$-order, $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$
+and $e^0_{(1)}\ge\tau(P_0,(a,y_{(1)}))$, then at every decision epoch exactly one part is
+ready, every non-idling policy produces the same schedule, and that schedule satisfies
+$e^0_j\le S_j\le e^0_j+I^\ast$; its makespan and mean flow time exceed the optimum of $\Pb$
+by at most $I^\ast$. Under the weaker conditions $r_i\ge r_h+a/v_k+p_h$ and
+$e^0_{(q+1)}\ge e^0_{(q)}+p_{(q)}+|y_{(q+1)}-y_{(q)}|/v_y$, the schedule $S_j=e^0_j$ with
+the head pre-positioned at $(a,y_{k(j)})$ is feasible for $\Pb$ and optimal for every
+regular objective, and the bound of Section~\ref{sec:bounds} is exact.
+\end{theorem}
+In the reference cell the first conditions need inter-arrivals of at least 8.5~s on each
+conveyor and 5.2~s between consecutive availabilities overall; under its Poisson arrivals
+(total rate 0.255~s$^{-1}$) a gap of 5.2~s has probability 0.27, so the light-traffic
+regime describes the uncontended stretches of the operation and the reference instances
+are contended. Outside it, none of the rules is optimal, for three distinct reasons that
+Appendix~\ref{app:special} documents with explicit instances, each reproduced by a test:
 \begin{itemize}[nosep]
-\item \emph{Complexity.} With the number of conveyors $N$ part of the input and the
-  processing stop limited to the part's own belt, the decision versions for $\sum_jC_j$
-  (equivalently $\sum_jF_j$) and for $L_{\max}$ are strongly NP-hard, by reduction from
-  $1\,|\,r_j\,|\,\sum C_j$ and $1\,|\,r_j\,|\,L_{\max}$ with one part per conveyor, where
-  the head is the only coupling. A fixed $N$ with several parts per belt is not covered,
-  nor is the makespan. In Graham notation the problem is a single machine with release
-  dates, sequence-, time- and state-dependent setups (the travel to the interception
-  point depends on the belt state, i.e.\ on every earlier stop), blocking and endogenous
-  availability windows.
-\item \emph{Belt order is not dominant.} On a conveyor the order of the parts never
-  changes and the binding cap on the belt's advance is set by its most downstream
-  unstarted part, so serving a conveyor out of belt order tends to cause blocking; yet on
-  small instances with bursts the best order sometimes serves a later part first (gaps
-  of 0.7--1.2\,\% on average and up to 3.5\,\% over all $n!$ orders of 6--7 parts), and on
-  a single conveyor a short part behind a long one should go first (a counterexample
-  with a 2~s per part difference). Policies restricted to belt heads form a restricted
-  class; the policy of this paper points to any candidate.
-\item \emph{Lower bounds.} Earliest-start bounds that account for the belt kinematics
-  (the $m$-th part of a conveyor cannot be processed before the belt has advanced
-  $a+(m-1)\delta$ after the first part's arrival, with the belt stopped during every
-  forced processing), minimum gaps between two processings on the same or different
-  conveyors, and a Jackson-type tail bound with travel are proved in the project's theory
-  notes. They are used there to measure the quality of offline solutions on small
-  instances; they do not enter the online method.
-\item \emph{Light traffic.} When consecutive parts of a belt are far enough apart that
-  no two are ever on the belt together and the head can always be in place, the schedule
-  that processes every part at $x=a$ on arrival is optimal and the nearest-part, FIFO and
-  nearest-head rules all attain it. The regimes of this paper are not in light traffic
-  (processing loads 0.64 and 0.93), which is where the rules differ.
+\item \emph{Belt order is not optimal for the flow time} (Counterexample~\ref{cex:single}):
+  on a single conveyor, a short part 1.5~s behind a long one should be served first; the
+  reverse order gains 2~s per part. With equal processing times, exhaustive enumeration
+  on 175 random single-conveyor instances found belt order optimal for both objectives in
+  every case (a conjecture, not a theorem).
+\item \emph{Waiting beats serving} (Counterexample~\ref{cex:wait}): on an instance of the
+  reference cell, every non-idling rule serves the part that enters the zone 0.2~s before
+  another on the head's own belt; waiting 0.2~s for the latter and serving the former
+  afterwards improves the makespan by 1~s and the mean flow time by 0.4~s. The
+  improvement needs deliberate idling, which no implemented rule does.
+\item \emph{Anticipation pays} (Counterexample~\ref{cex:anticipation}): for a single part
+  the optimum of $\Pb$ pre-positions the head at $(a,y_k)$ and completes at 5.83~s; every
+  non-anticipating policy completes at 7.19~s ($+23$\,\%). Whenever a part enters the zone
+  while the head is idle away from its entry point, the cell loses up to $I^\ast$ against
+  $\Pb$; this is why the cell's design mode allows pre-positioning, and why its value is
+  measured in Paper~2. Delaying a start of the \emph{same} sequence, on the other hand,
+  never relaxes the successor's travel constraint (Proposition~\ref{prop:delay}); whether
+  it can pay through the belt is open.
 \end{itemize}
+On 30 random five-part instances of the reference cell, enumerated over all 120 orders,
+first-in was optimal in 21--22 and nearest-part in 20--21; the rules are good and not
+optimal, which is the room the online method of the next sections works in.
 
 %====================================================================
 \section{The look-ahead search}\label{sec:search}
@@ -280,9 +627,9 @@ their completion times (the online counterpart of the mean flow time; blocking p
 are not scored, which was better in every variant tried). It applies the best-scoring
 first decision and re-plans at the next epoch, keeping the base choice on ties. With
 $\mu=\nj$ it is the \emph{known-parts search} of the tables below; with $\mu$ equal to the
-current network it is the teacher of the first training stage.
+current network it is the expert of the first training stage.
 
-\subsection{Sampled futures, scored on every part}
+\subsection{Scenario search: sampled futures, scored on every part}
 The known-parts rollout has a ceiling: on the validation cells no network of any size
 exceeded it by more than the noise (Section~\ref{sec:ladder}). The reason is its horizon.
 The known parts are a few; the decision that serves them best may leave the head far from
@@ -292,68 +639,68 @@ different synthetic list of arrivals over the next $W$ seconds, Poisson at the b
 known mean rates (the clone's horizon becomes $t+W$ and it drains after it), with common
 random numbers: the same scenario index gives the same future to every candidate. The
 score of a candidate is the mean over the $M$ futures of the \emph{realized cost of all
-parts} from the decision on (the integral of work in progress, i.e.\ the sum of the flow
-times of every part present or arriving), not the completion times of the known parts.
-Table~\ref{tab:variants} gives the design study that led to $M=8$, $W=30$~s and no
-penalty in the score, all variants run over the same trained S network on the same
-development realizations (30 per group).
+parts} from the decision on, the work-in-progress integral of \eqref{eq:smdp}, not the
+completion times of the known parts. Table~\ref{tab:variants} gives the design study that
+led to $M=8$, $W=30$~s and no penalty in the score, all variants run over the same trained
+S network on the same development realizations (30 per group).
 
 \begin{table}[t]
 \centering\small
-\caption{Teacher design study: paired $\Delta$ of the penalized flow time against \nj\
+\caption{Expert design study: paired $\Delta$ of the penalized flow time against \nj\
 [\%, 95\,\% CI] of each look-ahead run over the trained S network of
-Section~\ref{sec:ladder}, on the development realizations (real cell and heavy example,
-30 each; 60 general cells), score = mean of the three; and seconds per episode. ``Penalty
-in the cost'' scores the look-ahead on the penalized objective. Bold: the chosen teacher.}
+Section~\ref{sec:ladder}, on the development realizations (reference cell and heavy
+variant, 30 each; 60 general cells), score = mean of the three; and seconds per episode.
+``Penalty in the cost'' scores the look-ahead on the penalized objective. Bold: the chosen
+expert.}
 \label{tab:variants}
 \resizebox{\linewidth}{!}{\input{tables/variants}}
 \end{table}
 
 Four findings fix the design. (i) \emph{Sampled futures help only when the objective
 counts every part.} An earlier attempt added four futures to the known-parts score and
-was much worse than no futures at all ($+7.9$ against $-3.8$\,\% on the real cell): with
-synthetic arrivals in the clone and only the known parts in the score, the look-ahead
-rewards starving the new parts. With the all-parts score, four futures already beat the
-known-parts rollout in every group, and eight gain another half point. (ii) \emph{One or
-two futures are worse than none}: the sampled future is noise until it is averaged.
-(iii) \emph{Window.} 20--30~s is best; 45--60~s add noise faster than information, since
-the futures diverge from each other. (iv) \emph{Truncating the look-ahead with a learned
-value is far worse than not truncating.} Cutting each rollout at $t+20$~s and adding the
-value head's estimate of the cost-to-go gives $+18$ to $+54$\,\% against \nj: the
-cost-to-go depends mostly on the random future arrivals, so its scale (hundreds of
-part-seconds) and the value head's error (a quarter of that scale) are far larger than
-the differences between candidates (seconds). Cutting at a fixed instant, where the
-errors should be correlated across candidates, is even worse than cutting at a decision,
-because the value head was trained on decision states only. We therefore run every
-look-ahead to the end of its window and drain. The penalty in the score hurts here as it
-did in every earlier version of the cell's rollout; a flow-time look-ahead ranks the
-candidates better even though the policies are judged on the penalized objective.
+was much worse than no futures at all ($+7.9$ against $-3.8$\,\% on the reference cell):
+with synthetic arrivals in the clone and only the known parts in the score, the
+look-ahead rewards starving the new parts. With the all-parts score, four futures already
+beat the known-parts rollout in every group, and eight gain another half point. (ii)
+\emph{One or two futures are worse than none}: the sampled future is noise until it is
+averaged. (iii) \emph{Window.} 20--30~s is best; 45--60~s add noise faster than
+information. (iv) \emph{Truncating the look-ahead with a learned value is far worse than
+not truncating.} Cutting each rollout at $t+20$~s and adding the value head's estimate of
+the cost-to-go gives $+18$ to $+54$\,\% against \nj: the cost-to-go depends mostly on the
+random future arrivals, so its scale (hundreds of part-seconds) and the value head's
+error (a quarter of that scale) are far larger than the differences between candidates
+(seconds). Cutting at a fixed instant, where the errors should be correlated across
+candidates, is even worse than cutting at a decision, because the value head was trained
+on decision states only. We therefore run every look-ahead to the end of its window and
+drain. The penalty in the score hurts here as it did in every earlier version of the
+cell's rollout: a flow-time look-ahead ranks the candidates better even though the
+policies are judged on the penalized objective.
 
-The cost of the chosen teacher is about ten times that of the known-parts rollout per
-episode: 22~s on the real cell and 112~s on the heavy example on one worker, i.e.\
-0.4--1.9~s per decision (Section~\ref{sec:confirm}). It is a teacher, not a controller.
+The cost of the chosen expert is about ten times that of the known-parts rollout per
+episode: 22~s on the reference cell and 112~s on the heavy variant on one worker, i.e.\
+0.4--1.9~s per decision (Section~\ref{sec:confirm}). It is an expert, not a controller.
 
 %====================================================================
 \section{The learned policy}\label{sec:policy}
 %====================================================================
 
 \subsection{State as a set of tokens}
-The policy reads the decision state as an unordered set of tokens: one per unfinished
-part on a belt or being processed (23 features: status, position and distance to $b$,
-time to $b$ at belt speed, interception time from the head and a reachability flag,
-waiting time since the part became observable, processing time and remaining processing,
-blocking flag, rank on the belt and a head flag, candidate and committed flags, offsets
-from the head, its belt's speed and state), one per conveyor (11 features: offset from the
-head, speeds, running, stopped, blocked, queue lengths on the belt, arrival rate, offered
-load, has a candidate), one for the head (9: position, state, remaining processing,
-commitment) and one context token (21: head speeds and motion model, mean processing
-time, total offered load, geometry, pre-positioning mode, penalty weights, whether
-arrivals are still coming and the time left to the horizon, numbers of parts and
-candidates). Lengths are scaled by the belt length, speeds by 3~cm/s, times through
-$\mathrm{sign}(t)\log(1+|t|/10\,\mathrm{s})$, which keeps long waits at heavy load bounded
-and distinguishable. No token holds a list position or a conveyor index: a part is linked
-to its belt through its $y$ offset and a copy of its belt's state. Encoding takes
-0.14--0.19~ms per decision.
+The policy reads $\I_t$ as an unordered set of tokens: one per unfinished part on a belt
+or being processed (23 features: status, position and distance to $b$, time to $b$ at belt
+speed, interception time from the head and a reachability flag, waiting time since the
+part became observable, processing time and remaining processing, blocking flag, rank on
+the belt and a head flag, candidate and committed flags, offsets from the head, its belt's
+speed and state), one per conveyor (11 features: offset from the head, speeds, running,
+stopped, blocked, queue lengths on the belt, arrival rate, offered load, has a candidate),
+one for the head (9: position, state, remaining processing, commitment) and one context
+token (21: head speeds and motion model, mean processing time, total offered load,
+geometry, pre-positioning mode, penalty weights, whether arrivals are still coming and the
+time left to $T_A$, numbers of parts and candidates), i.e.\ the vector $\theta$ of
+Section~\ref{sec:general} and the scalars of \eqref{eq:info}. Lengths are scaled by the
+belt length, speeds by 3~cm/s, times through $\mathrm{sign}(t)\log(1+|t|/10\,\mathrm{s})$,
+which keeps long waits at heavy load bounded and distinguishable. No token holds a list
+position or a conveyor index: a part is linked to its belt through its $y$ offset and a
+copy of its belt's state. Encoding takes 0.14--0.19~ms per decision.
 
 \subsection{Network}
 One linear embedding per token type to width $d$, plus a learned type vector; a pre-norm
@@ -371,40 +718,47 @@ episodes. Single-state inference on one thread takes 4.1~ms (median) for S, 15~m
 and 64~ms for L on an unloaded machine; S is the size that fits a 5~ms budget, and
 Section~\ref{sec:ladder} shows that the others do not decide better.
 
-\subsection{Expert iteration}
-Training alternates data generation and fitting. In iteration 0 the known-parts rollout
-over \nj\ acts (with 10\,\% random actions for coverage) on episodes drawn from the
-training distribution of Section~\ref{sec:dist} and labels every decision with at least
-two candidates with the look-ahead costs of its candidates; the network is trained from
-scratch on them. In iteration $k\ge1$ the teacher is the search over $\mathrm{net}_{k-1}$,
-the acting policy is $\mathrm{net}_{k-1}$ except that the teacher acts with probability
-$\beta=0.3$, and $\mathrm{net}_k$ is fine-tuned from $\mathrm{net}_{k-1}$ on a replay
-buffer of the last two iterations. The policy loss is the cross-entropy to the softmin of
-the relative look-ahead costs with temperature 1~s (a candidate 1~s worse than the best
-gets $e^{-1}$ of its weight), the value loss $0.25\times$ the MSE of the normalized
-cost-to-go; AdamW, one-cycle learning rate ($10^{-3}$ from scratch, $3\cdot10^{-4}$ when
-fine-tuning), batch 256, gradient clipping at 1. After each iteration the network and
-its teacher are scored on fixed validation cells (the real cell, its heavy variant, a set
-of general cells and, from the last run on, the real cell with bursts; 50 realizations
-per group, 100 general cells), by the mean paired $\Delta$ of the penalized flow time
-against \nj; the network is kept only if the mean over the groups improves, and the run
-stops after two rejections. Seeds, arguments, machine, times, losses and validation of
-every run are logged and distributed with the models.
+\subsection{Expert iteration with scenario search}
+Training alternates data generation and fitting \cite{Anthony2017,Silver2018}. In
+iteration 0 the known-parts rollout over \nj\ acts (with 10\,\% random actions for
+coverage) on episodes drawn from the training distribution of Section~\ref{sec:dist} and
+labels every decision with at least two candidates with the look-ahead costs of its
+candidates; the network is trained from scratch on them. In iteration $k\ge1$ the expert
+is the search over $\mathrm{net}_{k-1}$ (the scenario search from the second stage on),
+the acting policy is $\mathrm{net}_{k-1}$ except that the expert acts with probability
+$\beta=0.3$ \cite{Ross2011}, and $\mathrm{net}_k$ is fine-tuned from $\mathrm{net}_{k-1}$
+on a replay buffer of the last two iterations. The policy loss is the cross-entropy to the
+softmin of the relative look-ahead costs with temperature 1~s (a candidate 1~s worse than
+the best gets $e^{-1}$ of its weight), the value loss $0.25\times$ the MSE of the
+normalized cost-to-go of \eqref{eq:smdp}; AdamW, one-cycle learning rate ($10^{-3}$ from
+scratch, $3\cdot10^{-4}$ when fine-tuning), batch 256, gradient clipping at 1. After each
+iteration the network and its expert are scored on fixed validation cells (the reference
+cell, its heavy variant, a set of general cells and, from the last run on, the reference
+cell with bursts; 50 realizations per group, 100 general cells), by the mean paired
+$\Delta$ of the penalized flow time against \nj; the network is kept only if the mean over
+the groups improves, and the run stops after two rejections. Seeds, arguments, machine,
+times, losses and validation of every run are logged and distributed with the models.
+
+This is reinforcement learning in the policy-iteration sense: the search is the
+improvement operator, the network the policy it improves, and the value head is fitted
+to realized returns. It is not policy-gradient learning from the reward; what the
+difference is worth, on the same representation and action mask, is the question of the
+baseline of Section~\ref{sec:ppo}.
 
 \subsection{Training distribution}\label{sec:dist}
-Every training episode draws one cell: the real cell (25\,\%), its heavy variant
-(10\,\%), or a general cell (65\,\%) with $N\in\{1,\dots,6\}$ conveyors, belt speeds
-$U[1.5,6]$~cm/s per belt, a processing load $\rho_p\sim U[0.3,0.95]$ split between the
-belts, mean processing time $U[1.5,4]$~s with constant, uniform or normal distributions,
-head speeds $U[5,20]$~cm/s per axis (with probability 0.3, $U[2.5,5]$), simultaneous or
-sequential axes, every geometric length scaled by $U[0.5,1.5]$ of the real value, penalty
-weights $\lambda_N\sim U[0,20]$~s and $\lambda_T\sim U[0,2]$, the stop rule (own belt or
-all belts), the pre-positioning mode (half and half), the observation level (the
-reference model 70\,\%, no camera 15\,\%, the hidden queue visible 15\,\%) and, with
-probability 0.5, bursty arrivals. All values reach the network through its tokens except
-the burst parameters, which it must infer from what it sees. Training seeds (100\,000+)
-and validation seeds (2\,000+, 2\,500+) are disjoint from each other and from the reserved
-seeds of Section~\ref{sec:confirm}.
+Every training episode draws one cell $\theta$: the reference cell (25\,\%), its heavy
+variant (10\,\%), or a general cell (65\,\%) with $N\in\{1,\dots,6\}$ conveyors, belt
+speeds $U[1.5,6]$~cm/s per belt, a processing load $\rho_p\sim U[0.3,0.95]$ split between
+the belts, mean processing time $U[1.5,4]$~s with constant, uniform or normal
+distributions, head speeds $U[5,20]$~cm/s per axis (with probability 0.3, $U[2.5,5]$),
+simultaneous or sequential axes, every geometric length scaled by $U[0.5,1.5]$ of the
+reference value, penalty weights $\lambda_N\sim U[0,20]$~s and $\lambda_T\sim U[0,2]$, the
+stop rule (own belt or all belts), the pre-positioning mode (half and half), the
+observation level (the reference model 70\,\%, no camera 15\,\%, the hidden queue visible
+15\,\%) and, with probability 0.5, bursty arrivals. All values reach the network through
+its tokens except the burst parameters, which it must infer from what it sees. Training
+seeds (100\,000+) and validation seeds (2\,000+, 2\,500+) are disjoint from each other and
+from the reserved seeds of Section~\ref{sec:confirm}.
 
 %====================================================================
 \section{Development results}\label{sec:dev}
@@ -412,27 +766,27 @@ seeds of Section~\ref{sec:confirm}.
 Everything in this section was measured on development realizations and used to make
 design decisions; nothing here is confirmatory.
 
-\subsection{Three sizes, one teacher: the ladder stops at S}\label{sec:ladder}
-With the known-parts teacher, the three sizes were trained on a 48-thread workstation
+\subsection{Three sizes, one expert: the ladder stops at S}\label{sec:ladder}
+With the known-parts expert, the three sizes were trained on a 48-thread workstation
 with one GPU, same code, same seeds, same gating, with the data scaled with the size
 (Table~\ref{tab:ladder}, Figure~\ref{fig:training} left). Every network alone beats its
-rule teacher at the real load and generalizes to the general cells, where \nh\ loses; the
-search over each network saturates from iteration 1 at $-4.7$ to $-5.1$\,\% on the real
-cell, and from iteration 2 each network is within 0.3--0.7 points of its own teacher. The
-best scores are $-2.79$\,\% (S, iteration 3), $-2.88$\,\% (M, iteration 3) and $-2.44$\,\%
-(L, iteration 1, after 14~h), all within the confidence intervals of one another. Training
-losses keep falling while validation stalls: the networks fit their teacher ever better,
-and the teacher is the ceiling. M costs $8.5\times$ more per generated episode and
-$4\times$ more per decision than S for no measurable gain; L is not under-fitted by lack
-of data (it had four times S's) but learns the same teacher more slowly. The ladder stops
-at S, and the lever is the teacher.
+rule expert at the reference load and generalizes to the general cells, where \nh\ loses;
+the search over each network saturates from iteration 1 at $-4.7$ to $-5.1$\,\% on the
+reference cell, and from iteration 2 each network is within 0.3--0.7 points of its own
+expert. The best scores are $-2.79$\,\% (S, iteration 3), $-2.88$\,\% (M, iteration 3) and
+$-2.44$\,\% (L, iteration 1, after 14~h), all within the confidence intervals of one
+another. Training losses keep falling while validation stalls: the networks fit their
+expert ever better, and the expert is the ceiling. M costs $8.5\times$ more per generated
+episode and $4\times$ more per decision than S for no measurable gain; L is not
+under-fitted by lack of data (it had four times S's) but learns the same expert more
+slowly. The ladder stops at S, and the lever is the expert.
 
 \begin{table}[t]
 \centering\small
-\caption{Scaling ladder with the known-parts teacher: best accepted iteration of each
+\caption{Scaling ladder with the known-parts expert: best accepted iteration of each
 run on the validation groups (paired $\Delta$ vs \nj\ [\%, 95\,\% CI]; 50 realizations
-for the real cell and the heavy example, 100 general cells) and the score of the search
-over that network.}
+for the reference cell and the heavy variant, 100 general cells) and the score of the
+search over that network.}
 \label{tab:ladder}
 \resizebox{\linewidth}{!}{\input{tables/ladder}}
 \end{table}
@@ -441,76 +795,96 @@ over that network.}
 \centering
 \includegraphics[width=\linewidth]{figures/training.pdf}
 \caption{Left: validation score (mean paired $\Delta$ vs \nj\ over the three groups) per
-expert-iteration round for the three sizes with the known-parts teacher (solid: network
-alone; dashed: the search over it). Right: the S network continued with the sampled-future
-teacher, per group (network alone with 95\,\% CIs; dashed: its teacher); the dotted line is
-the best S score with the known-parts teacher.}
+expert-iteration round for the three sizes with the known-parts expert (solid: network
+alone; dashed: the search over it). Right: the S network continued with the scenario
+search as expert, per group (network alone with 95\,\% CIs; dashed: its expert); the dotted
+line is the best S score with the known-parts expert.}
 \label{fig:training}
 \end{figure}
 
-\subsection{The sampled-future teacher raises the ceiling}\label{sec:sf}
-Continuing the best S network with the sampled-future teacher (Table~\ref{tab:sfruns},
+\subsection{The scenario search raises the ceiling}\label{sec:sf}
+Continuing the best S network with the scenario search as expert (Table~\ref{tab:sfruns},
 Figure~\ref{fig:training} right) moved the score from $-2.79$ to $-4.50$\,\% after one
-iteration and $-4.83$\,\% after two: $-7.6$\,\% on the real cell, $-4.4$\,\% on the heavy
-example and $-2.4$\,\% on the general cells, at the same 4~ms per decision. From the second
-iteration the network alone is at or above the search over itself on the real and heavy
-cells ($-7.6$ against $-7.2$, $-4.4$ against $-3.5$): the search is noisy (eight sampled
-futures) and the network learns its average. Two further continuations changed the
+iteration and $-4.83$\,\% after two: $-7.6$\,\% on the reference cell, $-4.4$\,\% on the
+heavy variant and $-2.4$\,\% on the general cells, at the same 4~ms per decision. From the
+second iteration the network alone is at or above the search over itself on the reference
+and heavy cells ($-7.6$ against $-7.2$, $-4.4$ against $-3.5$): the search is noisy (eight
+sampled futures) and the network learns its average. Two further continuations changed the
 training set rather than the method: the design mode with its corrected tokens and the
 three observation levels (score $-3.98$\,\% in the design mode, where the \nj\ baseline
-already pre-positions), and bursty arrivals with slow heads in the mix (score
-$-3.82$\,\% over four groups). The last network is indistinguishable from the previous
-one head to head ($+0.47\pm0.69$, $-0.36\pm0.83$, $+0.20\pm0.48$ and $+0.09\pm0.36$\,\% on
-the four groups): extending the training to the declared scope produced no detectable
-improvement, and the owner froze that network (iteration~1) for the confirmatory run.
+already pre-positions), and bursty arrivals with slow heads in the mix (score $-3.82$\,\%
+over four groups). The last network is indistinguishable from the previous one head to
+head ($+0.47\pm0.69$, $-0.36\pm0.83$, $+0.20\pm0.48$ and $+0.09\pm0.36$\,\% on the four
+groups): extending the training to the declared scope produced no detectable improvement,
+and the owner froze that network (iteration~1) for the confirmatory run.
 
 \begin{table}[t]
 \centering\small
-\caption{Expert iteration with the sampled-future teacher, size S: per iteration, the
-network alone on the validation groups (paired $\Delta$ vs \nj\ [\%, 95\,\% CI]), its
-score and its teacher's score. Bold iterations were accepted. The first run validates in
-the basic mode; the two continuations in the design mode (where \nj\ also
-pre-positions), with the fourth group added in the last.}
+\caption{Expert iteration with the scenario search, size S: per iteration, the network
+alone on the validation groups (paired $\Delta$ vs \nj\ [\%, 95\,\% CI]), its score and
+its expert's score. Bold iterations were accepted. The first run validates in the basic
+mode; the two continuations in the design mode (where \nj\ also pre-positions), with the
+fourth group added in the last.}
 \label{tab:sfruns}
 \resizebox{\linewidth}{!}{\input{tables/sf_runs}}
 \end{table}
 
-\subsection{A burst-aware teacher does not help}\label{sec:futures}
-A network trained on bursty cells cannot exceed a teacher whose futures are Poisson, so
-the natural next lever was a teacher that samples the cell's on/off arrival model
+\subsection{A burst-aware expert does not help}\label{sec:futures}
+A network trained on bursty cells cannot exceed an expert whose futures are Poisson, so
+the natural next lever was an expert that samples the cell's on/off arrival model
 (statistical knowledge of the process, started in its stationary state, not an
 observation of the source's current state). Table~\ref{tab:futures} tests it on the
 frozen network, the same realizations and the same budget. On Poisson cells the two
-teachers coincide by construction; on the bursty cell the burst-aware teacher is half a
+experts coincide by construction; on the bursty cell the burst-aware expert is half a
 point \emph{worse} ($+0.52\pm0.49$\,\% paired against the Poisson one), and with strong
 bursts the two are equal within $\pm0.4$--$0.6$ points. The stationary start adds to
 every future the uncertainty of whether the source is emitting now, which eight futures
 do not average out; the smoother Poisson future ranks the candidates with less noise. With
-strong bursts the cell alternates between an idle head and a saturated burst, no teacher
+strong bursts the cell alternates between an idle head and a saturated burst, no expert
 beats the network, and the known-parts order is close to what can be achieved without
-seeing the hidden queue. The Poisson teacher stays the teacher of record.
+seeing the hidden queue. The Poisson expert stays the expert of record.
 
 \begin{table}[t]
 \centering\small
-\caption{Teacher futures: the frozen network alone, and the sampled-future search over
-it with Poisson futures and with the cell's on/off arrival model, on the validation
-groups (design mode, 50 realizations per group, 100 general) and on two cells with
-strong bursts (on 20\,\% of the time in 40~s periods). Paired $\Delta$ vs \nj\ [\%,
-95\,\% CI].}
+\caption{Expert futures: the frozen network alone, and the scenario search over it with
+Poisson futures and with the cell's on/off arrival model, on the validation groups
+(design mode, 50 realizations per group, 100 general) and on two cells with strong
+bursts (on 20\,\% of the time in 40~s periods). Paired $\Delta$ vs \nj\ [\%, 95\,\% CI].}
 \label{tab:futures}
 \resizebox{\linewidth}{!}{\input{tables/futures}}
 \end{table}
+
+\subsection{Learning from the reward: the earlier agents and the pending baseline}\label{sec:rlhistory}
+Before the representation of Section~\ref{sec:policy}, the project trained agents on 87
+hand-made features with three slots per belt and an action restricted to the head of a
+conveyor: behaviour cloning of the known-parts rollout, DAgger, and PPO fine-tuning with
+action masks. On 30 development realizations of the reference cell in the basic mode the
+cloned agent gave $-1.4$\,\% against \nj\ (not significant) and the PPO-tuned one
+$+1.9$\,\%, worse than the rule; at the heavy load $-1.8$ and $-1.0$\,\%; longer PPO
+training always made the cloned policy worse. Those results explain why the project
+changed representation, action space and training scheme, but they do not answer the
+question that matters now, since both the features and the actions differed.
+
+\label{sec:ppo}\textbf{PPO on the present representation (pending).} A policy-gradient
+baseline \cite{Schulman2017} with the same tokens, the same action mask, the same
+simulator and the same cell distribution, with a budget fixed before training (40\,000
+episodes per run, three training seeds), checkpoint selection on the validation groups,
+and the same paired evaluation on the development realizations, is being run at the
+time of this draft; its results, with the training cost of both schemes (including the
+expert's scenario generation), will be reported here. If it matches the policy learned
+from the search, that is a result worth stating; the reserved realizations are not used
+for it.
 
 %====================================================================
 \section{Confirmatory evaluation}\label{sec:confirm}
 %====================================================================
 
 \subsection{Protocol}
-The frozen network, the known-parts search over \nj, the sampled-future search over the
-network (the teacher), \nj\ and \nh\ were run on 30 realizations reserved for this
+The frozen network, the known-parts search over \nj, the scenario search over the
+network (its expert), \nj\ and \nh\ were run on 30 realizations reserved for this
 evaluation (seeds 7000--7029), never seen by any design decision and used once, on eight
-regimes: the real cell and its heavy variant, Poisson and bursty arrivals, nominal head
-and a head twice as slow (Table~\ref{tab:regimes}), in the basic mode (B) and in the
+regimes: the reference cell and its heavy variant, Poisson and bursty arrivals, nominal
+head and a head twice as slow (Table~\ref{tab:regimes}), in the basic mode (B) and in the
 design mode (C). Every policy runs on the same realizations (common random numbers), so
 every contrast is a paired difference; we report $\Delta=100\,(\frac{1}{30}\sum_\omega
 J_X(\omega)/J_Y(\omega)-1)$ for ``X vs Y'', negative favouring $X$, with a normal 95\,\%
@@ -559,9 +933,9 @@ pre-position the idle head.}
 \includegraphics[width=\linewidth]{figures/confirm.pdf}
 \caption{Confirmatory evaluation on the eight regimes (paired $\Delta$ of the penalized
 flow time, 95\,\% CI; filled markers: basic mode B, hollow: design mode C). Left: the
-known-parts search against \nj. Middle: the sampled-future search (teacher) and the
-network against \nj. Right: the two searches against the network (positive = the network
-is better).}
+known-parts search against \nj. Middle: the scenario search (expert) and the network
+against \nj. Right: the two searches against the network (positive = the network is
+better).}
 \label{fig:confirm}
 \end{figure}
 
@@ -574,7 +948,7 @@ fully loaded), pooled over the eight regimes: 16\,215 decisions in B, 17\,147 in
 \end{table}
 
 \textbf{The network alone beats \nj\ in seven of the eight regimes}, by 2.0--7.3\,\% in B
-($-7.2$ and $-7.3$\,\% on the real cell with Poisson arrivals, $-2.0$ and $-6.2$ with
+($-7.2$ and $-7.3$\,\% on the reference cell with Poisson arrivals, $-2.0$ and $-6.2$ with
 bursts, $-2.8$ to $-4.2$ at the heavy load) and by 2.0--7.1\,\% in C; the exception is the
 heavy load with Poisson arrivals and a slow head ($-1.3\pm2.3$ and $-1.6\pm2.7$), where
 with every belt queueing and a head at 2.5~cm/s the nearest-part rule is close to the
@@ -587,7 +961,7 @@ latency. The known-parts search is not a competitive reference at the heavy load
 parts in view, without the sampled future, ranks the candidates worse than the rule when
 every belt is queueing.
 
-\textbf{It equals its teacher.} The sampled-future search over the network is within
+\textbf{It equals its expert.} The scenario search over the network is within
 $\pm0.8$ points of the network alone in every regime and mode, never significantly
 better (it is cheaper in 12--18 of the 30 realizations), at 0.4--1.9~s per decision
 (median by regime; 1.2~s pooled, 3.6~s at the 95th percentile, 12~s at most; 2\,600
@@ -613,21 +987,33 @@ scale). The dotted line is the 5~ms budget of the design.}
 \end{figure}
 
 \textbf{Design mode.} With pre-positioning allowed to every policy, the picture is the
-same; the network's margin over \nj\ is smaller at the real load, because \nj\ itself
+same; the network's margin over \nj\ is smaller at the reference load, because \nj\ itself
 gains 7.4\,\% from pre-positioning there (Paper~2), and larger at the heavy load with
 bursts. The network's level in the design mode against \nj\ in the basic mode, the
-plan's original target, is $-14.1$\,\% on the real cell with Poisson arrivals (target:
-at least $-10$\,\%).
+plan's original target, is $-14.1$\,\% on the reference cell with Poisson arrivals
+(target: at least $-10$\,\%).
 
 %====================================================================
 \section{Discussion}\label{sec:discussion}
 %====================================================================
 
+\subsection{What the formulation buys}
+The odometer formulation makes the endogenous part of the problem explicit and cheap: a
+part is one number, the belt is one monotone function, and interception, stops and
+blocking are all consequences of the start times. It is what the exact simulator
+implements event by event, what the MILP of Appendix~\ref{app:milp} discretizes, and what
+the lower bounds exploit (the belt has advanced at most $v_k$ times the running time).
+Its properties set the terms of the online problem: the problem is strongly NP-hard, so
+exactness is for small windows; belt order is natural but not dominant, so the policy must
+be free to point at any part; and in light traffic every rule is optimal, so the value of
+a better decision rule is concentrated in the contended regimes, which is where the
+confirmatory evaluation measures it.
+
 \subsection{What sets the quality of the policy}
 Three facts of Section~\ref{sec:dev} point the same way. Networks of 0.88, 6.7 and 39
-million parameters reach the same quality with the same teacher; every network reaches
-its teacher within one or two iterations and then trades one validation group against
-another; and changing the teacher moved the score by two points where changing the size
+million parameters reach the same quality with the same expert; every network reaches
+its expert within one or two iterations and then trades one validation group against
+another; and changing the expert moved the score by two points where changing the size
 moved it by none. The quality of the amortized policy is the quality of the search that
 labels its data, and the search's quality is set by what it scores (every part, not the
 known ones), by how many futures it averages, and by not truncating. The learned value
@@ -642,42 +1028,375 @@ heavy load with a slow head, no policy beats the nearest-part rule by more than 
 with every belt queueing, the order in which the visible parts are served matters little
 and the hidden queue, which none of the policies sees, is what would matter (Paper~2
 measures it at 2.7--3.7\,\%). With bursts the gain of deciding better falls to 2\,\% on
-the real cell, and a teacher that knows the burst model does not raise it: the
+the reference cell, and an expert that knows the burst model does not raise it: the
 information that would help, whether the source is on now, is not in the state.
 
 \subsection{Limits}\label{sec:limits}
-The distance to the optimum is not measured. The project's exact models (a time-indexed
-MILP and a CP-SAT model) support the makespan and the flow-time objectives but not the
-penalized one, and a hindsight reference on the realized instances was deferred to a
-second confirmatory run on new reserved realizations; the lower bounds of
-Section~\ref{sec:properties} have been compared with offline solutions on small instances
-only. The known-parts look-ahead is a rollout with $K=6$, not the exact search with
-pruning that the project's plan foresaw; since its ceiling was found low before the exact
-version was built, that search remains a verification tool for the known-parts
-sub-problem rather than a method. The confirmatory regimes are eight variants of one
-3-belt cell; the general cells with one to six conveyors appear only in the validation
-of training, on development realizations. Latencies are for one CPU thread of a loaded
-workstation and a 0.88~M-parameter model; a controller would run alone. Parts are points
-with a minimum spacing, the head has no acceleration, processing times are constant in
-the confirmatory regimes, and the penalty weights are placeholders. The reserved
-realizations have been used once.
+The distance to the optimum is not measured. The MILP of Appendix~\ref{app:milp} and the
+project's CP-SAT model support the makespan and the flow-time objectives but the blocking
+penalty is implemented only in the former, and a hindsight reference on the realized
+instances was deferred to a second confirmatory run on new reserved realizations; the
+lower bounds of Section~\ref{sec:bounds} have been compared with offline solutions on
+small instances only, where part of the gap is the anticipation the rules cannot do. The
+known-parts look-ahead is a rollout with $K=6$, not an exact search with the bounds as
+pruning; since its ceiling was found low before the exact version was built, that search
+remains a verification tool for the known-parts sub-problem. The policy-gradient baseline
+on the present representation is pending (Section~\ref{sec:ppo}). The confirmatory
+regimes are eight variants of one 3-belt cell; the general cells with one to six
+conveyors appear only in the validation of training, on development realizations.
+Latencies are for one CPU thread of a loaded workstation and a 0.88~M-parameter model.
+Parts are points with a minimum spacing, the head has no acceleration, processing times
+are constant in the confirmatory regimes, and the penalty weights are placeholders. The
+reserved realizations have been used once.
 
 %====================================================================
 \section{Conclusions}
 %====================================================================
-For a shared head over parallel conveyors whose belts stop for the head, the decision
-that serves the parts in view best is not the best decision: a look-ahead that samples
-the unknown arrivals and scores the realized cost of every part decides better than the
+For a shared head over parallel conveyors whose belts stop for the head, the schedule
+determines the availability of every part, and the problem this creates is strongly
+NP-hard, naturally but not dominantly ordered by belt, and solved by every reasonable
+rule only in light traffic. In the contended regimes of a real cell, the decision that
+serves the parts in view best is not the best decision: a look-ahead that samples the
+unknown arrivals and scores the realized cost of every part decides better than the
 nearest-part rule by 3--8\,\% of the penalized flow time and than a look-ahead over the
 known parts by 2--4 points, and a permutation-invariant pointer policy trained by expert
-iteration on randomized cells reproduces that search within the noise at a hundredth of
-its latency, 10~ms per decision on a loaded machine. The size of the network does not
-matter beyond 0.88~M parameters; the teacher does. On reserved realizations of eight
-regimes the policy beats the rule in seven and equals its teacher in all. What remains
-open is how far all of this is from the optimum, which needs an exact reference for the
-penalized objective and a new set of reserved realizations.
+iteration with that search as expert, on randomized cells, reproduces it within the noise
+at a hundredth of its latency, 10~ms per decision on a loaded machine. The size of the
+network does not matter beyond 0.88~M parameters; the expert does. On reserved
+realizations of eight regimes the policy beats the rule in seven and equals its expert in
+all. What remains open is how far all of this is from the optimum, which needs the exact
+reference of Appendix~\ref{app:milp} with the penalized objective on the realized
+instances and a new set of reserved realizations, and what learning from the reward alone
+would give on the same representation.
 
 \bibliographystyle{plain}
-\bibliography{../../literature/references}
+\bibliography{../../literature/references,extra}
+
+\clearpage
+\appendix
+%====================================================================
+\section{Time-indexed MILP}\label{app:milp}
+%====================================================================
+Discretize time in steps of length $\Delta$ (e.g.\ $0.1$~s), $t\in\mathcal T=\{0,\dots,H-1\}$,
+with $p_j=\Delta\bar p_j$, $r_j=\Delta\bar r_j$, $\bar p_j,\bar r_j\in\mathbb Z_{\ge0}$, and
+$M$ a sufficiently large constant (each big-$M$ can be tightened, e.g.\ to $L+v_kH\Delta$
+for positions). Variables: $s_{jt}\in\{0,1\}$ (processing of $j$ starts at step $t$),
+$u_{kt}\in\{0,1\}$ (conveyor $k$ runs during step $t$), $D_{kt}\ge0$ (odometer at the start
+of step $t$), $E_j,X_j\in\R$, $\lambda_j\in\{0,1\}$ (which term of the maximum defines
+$E_j$), $w_{ij}\in\{0,1\}$ ($i$ before $j$), $\tau_{ij},\tau_{0j}\ge0$ (travel times),
+$\beta_{jt}\in\{0,1\}$ (part $j$ blocks its conveyor at step $t$); $S_j:=\Delta\sum_tt\,s_{jt}$
+and $C_j:=S_j+p_j$ are linear.
+\begin{align}
+&\textstyle\sum_{t}s_{jt}=1 && \forall j \tag{M1}\\
+&D_{k0}=0,\qquad D_{k,t+1}=D_{kt}+v_k\Delta\,u_{kt} && \forall k,t \tag{M2}\\
+&E_j\ge D_{k(j),\bar r_j},\qquad E_j\ge E_{\pred(j)}+\delta && \forall j \tag{M3a}\\
+&E_j\le D_{k(j),\bar r_j}+M\lambda_j,\qquad E_j\le E_{\pred(j)}+\delta+M(1-\lambda_j) && \forall j \tag{M3b}\\
+&\bigl|X_j-(D_{k(j),t}-E_j)\bigr|\le M(1-s_{jt}) && \forall j,t \tag{M4}\\
+&a\le X_j\le b && \forall j \tag{M5}\\
+&u_{kt}+\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}\le 1 && \forall k,t \tag{M6}\\
+&w_{ij}+w_{ji}=1 && \forall i<j \tag{M7}\\
+&S_j\ge S_i+p_i+\tau_{ij}-M(1-w_{ij}),\qquad S_j\ge\tau_{0j} && \forall i\neq j \tag{M8}\\
+&\tau_{ij}\ge\pm\frac{X_j-X_i}{v_x},\quad \tau_{ij}\ge\frac{|y_{k(i)}-y_{k(j)}|}{v_y},\quad
+ \tau_{0j}\ge\pm\frac{X_j-x_0}{v_x},\quad \tau_{0j}\ge\frac{|y_{k(j)}-y_0|}{v_y} \tag{M9}
+\end{align}
+(M5) encodes (C1) and (C4); (M6) encodes (C3). Only lower bounds on the travel times are
+needed: a larger $\tau$ only tightens (M8), so any feasible solution remains feasible when
+$\tau$ is lowered to the true travel time, and by the triangle inequality imposing (M8)
+for all ordered pairs is equivalent to imposing it between consecutive parts. The
+non-idling constraint (C5), omitted for the relaxed model, is
+\begin{align}
+&u_{kt}\ge 1-\sum_{j:\ \sigma_{k\,k(j)}=1}\ \sum_{t'=\max(0,\,t-\bar p_j+1)}^{t}s_{jt'}-\sum_{j\in J_k}\beta_{jt} && \forall k,t \tag{M10}\\
+&\beta_{jt}\le 1-\textstyle\sum_{t'\le t}s_{jt'},\qquad
+ D_{k(j),t}-E_j\ge b-v_{k(j)}\Delta-M(1-\beta_{jt}) && \forall j,t \tag{M11}\\
+&D_{k(j),t}-E_j\le b-v_{k(j)}\Delta-\varepsilon+M\Bigl(\beta_{jt}+\textstyle\sum_{t'\le t}s_{jt'}\Bigr) && \forall j,t \tag{M12}
+\end{align}
+(M11) allows the blocking witness only for parts not yet started and at the end of the
+zone, with the discretization slack $v_k\Delta$ (a conveyor may stop one step early
+instead of overshooting $b$); (M12), with a small $\varepsilon>0$, forces it: an unstarted
+part inside the last step of the zone \emph{is} blocking, whatever the reason the belt is
+stopped, so that $T_B=\Delta\sum_{j,t}\beta_{jt}$ and $N_B=\sum_j\gamma_j$ with
+$\gamma_j\ge\beta_{jt}$ match the continuous definition \eqref{eq:block} up to $O(\Delta)$.
+(Without (M12) a penalized objective could set $\beta_{jt}=0$ while the belt is stopped by
+a processing operation, which an external audit of the project found.) The objectives are
+linear: $C_{\max}\ge C_j$, $L_{\max}\ge C_j-d_j$, $\sum_j(C_j-r_j)$, $\sum_j(S_j-r_j)$,
+$\Delta\sum_{k,t}(1-u_{kt})$, $\Pi=\lambda_NN_B+\lambda_TT_B$; the travel distance needs
+immediate-successor binaries and is exact because $\ell$ is convex in $\Delta x$. The
+model has $O(nH)$ binaries $s_{jt}$, $O(NH)$ binaries $u_{kt}$ and $O(n^2)$ order binaries:
+a few thousand for 10--15 parts in a 60~s window at $\Delta=0.1$~s, tractable for CP-SAT or
+a MILP solver on small instances and inside a rolling horizon.
+
+%====================================================================
+\section{Proof of Proposition~\ref{prop:complexity}}\label{app:complexity}
+%====================================================================
+Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, strongly NP-hard with
+integer data \cite{Lenstra1977}. Given $n$ jobs $(r_j,p_j,d_j)$, build $N=n$ conveyors of
+equal speed $v$, one part per conveyor, and scale by an integer $M$: $r'_j=Mr_j$,
+$p'_j=Mp_j$, $d'_j=Md_j+c$ with $c=a/v$. Part $j$ reaches $x=a$ at $Mr_j+c$. With one part
+per conveyor and $\sigma=I$ no belt stop delays another part, and blocking only makes an
+unprocessed part wait at $b$, so the head is the only coupling. Every travel time is at
+most $\tau_{\max}=\max\bigl((b-a)/v_x,\,(\max_ky_k-\min_ky_k)/v_y\bigr)$, polynomial in
+$n$. Following an order $\pi$ and starting as early as possible gives
+$C'_j\le M\,C_j(\pi)+c+n\tau_{\max}$; conversely every feasible schedule with order $\pi$
+has $C'_j\ge M\,C_j(\pi)+c$, where $C_j(\pi)$ is the non-delay schedule of $\pi$ in the
+source instance. With $M>n^2\tau_{\max}$ the thresholds $ML+n\tau_{\max}$ and
+$MK+nc+n^2\tau_{\max}$ separate the integer-valued source answers, and all numbers stay
+polynomially bounded. \qed
+
+The three structural propositions are immediate: Proposition~\ref{prop:rigid} from
+\eqref{eq:pos} with a common odometer; Proposition~\ref{prop:cascade} from (C4) applied to
+every unstarted part of the belt; Proposition~\ref{prop:feasible} because a part that
+cannot be caught while moving stops at $b$ by (C4), where $\tau$ is finite.
+
+%====================================================================
+\section{Lower bounds}\label{app:bounds}
+%====================================================================
+Notation: $\tau^0_j=\min_{X\in[a,b]}\tau(P_0,(X,y_{k(j)}))$ is the head's minimum first
+move to the belt of $j$; $F_j=\{i\in J_k:\ m_i<m_j,\ a+(m_j-m_i)\delta>b\}$ are the forced
+predecessors of $j$ (parts so far ahead of $j$ on its belt that $j$ cannot reach $a$ before
+they reach $b$); $\underline s_j$ denotes the earliest-start bound below.
+
+\begin{lemma}[Earliest start]\label{lem:L1}
+For every feasible schedule and every part $j$, $S_j\ge\underline s_j$, where
+\[
+\underline s_j=\max\Big\{\tau^0_j,\
+\max_{h\preceq_k j}\Big[r_h+\frac{a+(m_j-m_h)\delta}{v_k}+\sum_{i\in F_j,\ m_i\ge m_h}p_i\Big],\
+\max_{i\in F_j}\bigl(\underline s_i+p_i+s_{ij}\bigr)\Big\}
+\]
+with $s_{ij}$ from Lemma~\ref{lem:L2}.
+\end{lemma}
+\begin{proof}
+(i) $S_j\ge\tau^0_j$: let $i_1$ be the first processed part; by (C2) and the triangle
+inequality $S_j\ge\tau(P_0,P_{i_1})+p_{i_1}+\tau(P_{i_1},P_j)\ge\tau(P_0,P_j)\ge\tau^0_j$
+(for $j=i_1$ directly), because $P_j=(X_j,y_k)$ with $X_j\in[a,b]$. (ii) Forced
+predecessors complete before $S_j$: for $i\in F_j$, by \eqref{eq:iter} and (C1)
+$D_k(S_j)-E_i\ge D_k(S_j)-E_j+(m_j-m_i)\delta\ge a+(m_j-m_i)\delta>b$. If $S_i\ge S_j$,
+(C4) fails at $t=S_j$. So $S_i<S_j$ and, the processing intervals being disjoint,
+$C_i\le S_j$; with Lemma~\ref{lem:L2}, $S_j\ge C_i+s_{ij}\ge\underline s_i+p_i+s_{ij}$.
+(iii) Belt kinematics. Fix $h\preceq_k j$. By (C1) and \eqref{eq:iter},
+$D_k(S_j)-D_k(r_h)\ge X_j+(m_j-m_h)\delta\ge a+(m_j-m_h)\delta$. For $i\in F_j$ with
+$m_i\ge m_h$: $S_i\ge r_i\ge r_h$ and $C_i\le S_j$, so $[S_i,C_i)\subset[r_h,S_j)$ and, by
+(C3) with $\sigma_{kk}=1$, $u_k=0$ there; these intervals are pairwise disjoint. By (F1),
+$v_k\bigl(S_j-r_h-\sum p_i\bigr)\ge D_k(S_j)-D_k(r_h)$, which is the claim.
+\end{proof}
+With $h=j$ this gives the trivial availability $r_j+a/v_k$; with $h$ the first part of a
+burst it captures the upstream queue: the $m$-th part of a conveyor cannot be processed
+before the belt has moved $a+(m-1)\delta$ after the arrival of the first one.
+
+\begin{lemma}[Minimum gap between two processings]\label{lem:L2}
+If $i$ is processed before $j$ (not necessarily consecutively), $S_j-C_i\ge s_{ij}$ with
+\[
+s_{ij}=\begin{cases}
+|y_{k(i)}-y_{k(j)}|/v_y & k(i)\ne k(j)\\[0.3ex]
+(m_j-m_i)\,\delta/(v_x+v_k) & k(i)=k(j)=k,\ m_j>m_i\ (j\text{ behind } i)\\[0.3ex]
+(m_i-m_j)\,\delta/v_x & k(i)=k(j)=k,\ m_j<m_i\ (j\text{ ahead of } i).
+\end{cases}
+\]
+\end{lemma}
+\begin{proof}
+Different conveyors: (C2) and $\tau\ge|\Delta y|/v_y$. Same conveyor: let $g=S_j-C_i$ and
+$z_j(t)=D_k(t)-E_j$, non-decreasing with slope $\le v_k$ (F1), with $X_j=z_j(S_j)$. By
+(C3) $D_k(C_i)=D_k(S_i)$, so $z_j(C_i)=X_i+E_i-E_j$. From (C2), $|X_j-X_i|\le v_xg$. If $j$
+is behind, $E_j-E_i\ge(m_j-m_i)\delta=:d$ by \eqref{eq:iter}, so
+$X_j\le z_j(C_i)+v_kg\le X_i-d+v_kg$ and $X_j\ge X_i-v_xg$, hence $d\le(v_x+v_k)g$. If $j$
+is ahead, $E_i-E_j\ge(m_i-m_j)\delta=:d$ and $X_j\ge z_j(C_i)\ge X_i+d$, so $d\le v_xg$.
+\end{proof}
+
+\begin{lemma}[Gaps along a whole sequence]\label{lem:H}
+For a set $U$ with $n_k$ parts on conveyor $k$, $K'$ conveyors present, span
+$Y=\max y_k-\min y_k$ and minimum distance $g_{\min}$ between present conveyors,
+$c_k=\delta/(v_x+v_k)$, $c_{\max}=\max_kc_k$: in any processing order of $U$ the sum of
+the $|U|-1$ gaps between consecutive $U$-parts is at least
+\[
+H(U)=\min_{T=K'-1}^{|U|-1}\Big[\sum_k(n_k-1)c_k-(T-K'+1)\,c_{\max}+\frac{\max(Y,\ Tg_{\min})}{v_y}\Big].
+\]
+\end{lemma}
+\begin{proof}
+Let $T$ be the number of changes of conveyor and $w_k\ge1$ the number of maximal runs on
+conveyor $k$, $\sum_kw_k=T+1$. Within-conveyor transitions: $n_k-w_k$ on $k$, each
+$\ge c_k$ (Lemma~\ref{lem:L2}, $|\Delta m|\ge1$); their total is
+$\sum_k(n_k-1)c_k-\sum_k(w_k-1)c_k\ge\sum_k(n_k-1)c_k-(T-K'+1)c_{\max}$. Changes of
+conveyor: each $\ge g_{\min}/v_y$, and together they visit every present conveyor, so their
+$y$-length is $\ge Y$. Minimizing over the unknown $T$ gives $H$.
+\end{proof}
+
+\begin{proposition}[Jackson tail bound with travel]\label{prop:L3}
+For every $t$, with $U_t=\{j:\underline s_j\ge t\}$:
+$C_{\max}\ge t+\sum_{j\in U_t}p_j+H(U_t)$.
+\end{proposition}
+\begin{proof}
+List $U_t$ in processing order $u_1,\dots,u_m$. Then
+$C_{u_m}=S_{u_1}+\sum_{U_t}p+\sum_{l<m}(S_{u_{l+1}}-C_{u_l})$, $S_{u_1}\ge\underline s_{u_1}\ge t$,
+and every difference is $\ge s_{u_lu_{l+1}}$ (Lemma~\ref{lem:L2}), whose sum is $\ge H(U_t)$.
+\end{proof}
+Without $H$ this is the optimum of the relaxation $1\mid r_j{=}\underline s_j\mid C_{\max}$,
+which already dominates the trivial bounds $\max_j(r_j+a/v_{k(j)}+p_j)$ and
+$\min_j(r_j+a/v_{k(j)})+\sum_jp_j$.
+
+\begin{proposition}[Per-conveyor bounds]\label{prop:L4}
+(a) For each conveyor $k$ with last part $\ell$ and each $h\in J_k$:
+$C_{\max}\ge r_h+\bigl(a+(m_\ell-m_h)\delta\bigr)/v_k+\sum_{i\in J_k,\,m_i\ge m_h}p_i$.
+(b) Let $C^k_{(l)}$ be the $l$-th smallest completion time among the parts of $J_k$. Then
+$C^k_{(l)}\ge\max_{h\le l}\bigl[r_h+(a+(l-h)\delta)/v_k+\text{(sum of the }l-h+1\text{ smallest }p_i,\ i\ge h)\bigr]$,
+and $\sum_jC_j\ge\sum_k\sum_l(\text{that bound})$.
+\end{proposition}
+\begin{proof}
+(a) Split the parts $i\succeq h$ of $J_k$, $i\ne\ell$, into $B$ (processed before $\ell$)
+and $A$ (after). As in Lemma~\ref{lem:L1}(iii), the belt is stopped on the disjoint
+intervals $[S_i,C_i)\subset[r_h,S_\ell)$, $i\in B$, so
+$S_\ell\ge r_h+(a+(m_\ell-m_h)\delta)/v_k+\sum_Bp_i$; and $C_{\max}\ge C_\ell+\sum_Ap_i$.
+(b) Let $Q$ be the first $l$ completed parts of $J_k$ and $j$ the one of largest belt
+index, $j\ge l$. The same argument with $B=Q\cap\{i\ge h\}$ processed before $j$ and the
+rest of $Q$ after $j$ gives $C^k_{(l)}\ge r_h+(a+(j-h)\delta)/v_k+\sum_{i\in Q,i\ge h}p_i$;
+at least $l-h+1$ members of $Q$ have index $\ge h$.
+\end{proof}
+
+\begin{proposition}[Preemptive SRPT bound]\label{prop:L5}
+$\sum_jC_j\ge\mathrm{OPT}\bigl(1\mid r_j{=}\underline s_j,\ \mathrm{pmtn}\mid\sum C_j\bigr)$,
+computed exactly by SRPT \cite{Schrage1968,Baker1974}. Moreover, with
+$g_j=\min_{i\ne j}s_{ij}$, also
+$\sum_jC_j\ge\mathrm{OPT}\bigl(1\mid r_j{=}\underline s_j-g_j,\ p_j{+}g_j,\ \mathrm{pmtn}\mid\sum C_j\bigr)$.
+\end{proposition}
+\begin{proof}
+The processing intervals of a feasible schedule are disjoint and start after
+$\underline s_j$ (Lemma~\ref{lem:L1}): a non-preemptive, hence preemptive, single-machine
+schedule. For the second version, the intervals $[S_j-g_j,C_j)$ are still disjoint: if $i$
+immediately precedes $j$, $S_j-g_j\ge C_i+s_{ij}-g_j\ge C_i$ (Lemma~\ref{lem:L2}); and
+$S_j-g_j\ge\underline s_j-g_j$.
+\end{proof}
+
+\begin{theorem}[Sequence relaxation]\label{thm:L6}
+For a set $B$ of parts processed before $j$, define $\hat e_j(B)=+\infty$ if
+$F_j\not\subset B$, otherwise
+\[
+\hat e_j(B)=\max\Big\{\tau^0_j,\ \max_{h\preceq_kj}\Big[r_h+\frac{a+(m_j-m_h)\delta}{v_k}+\sum_{i\in B\cap M_h}p_i\Big]\Big\},
+\]
+with $M_h=\{i\in J_k:\ m_i\ge m_h\}$ for $\sigma=I$ and $M_h=\{i\in J:\ r_i\ge r_h\}$ for
+$\sigma\equiv1$. For an order $\pi$ define $\hat C_{\pi(1)}=\hat e_{\pi(1)}(\emptyset)+p_{\pi(1)}$
+and $\hat C_{\pi(q)}=\max\bigl(\hat e_{\pi(q)}(\{\pi(1..q{-}1)\}),\ \hat C_{\pi(q-1)}+s_{\pi(q-1)\pi(q)}\bigr)+p_{\pi(q)}$.
+Then every feasible schedule with order $\pi$ has $C_{\pi(q)}\ge\hat C_{\pi(q)}$ for all
+$q$; consequently $C_{\max}\ge\min_\pi\max_q\hat C$ and $\sum C\ge\min_\pi\sum_q\hat C$.
+\end{theorem}
+\begin{proof}
+Induction on $q$. $S_{\pi(q)}\ge C_{\pi(q-1)}+s\ge\hat C_{\pi(q-1)}+s$ by Lemma~\ref{lem:L2};
+the release part is Lemma~\ref{lem:L1}(ii)--(iii) with the parts of $B\cap M_h$ in place of
+$F_j$: they complete before $S_j$ (they are processed before $j$), start after
+$r_i\ge r_h$, and stop belt $k$ during processing ($\sigma_{kk}=1$, resp.\
+$\sigma_{k\,k(i)}=1$).
+\end{proof}
+The recursion depends on the past only through (processed set, last part,
+$\hat C_{\text{last}}$) and is non-decreasing in $\hat C_{\text{last}}$, so
+$\min_\pi\max_q\hat C$ is computed exactly by dynamic programming over (set, last) in
+$O(2^nn^2)$; for $\sum C$ the DP keeps two labels per state, $\min\hat C_{\text{last}}$ and
+$\min\sum\hat C$, which is a valid (possibly weaker) bound. For any $U\subset J$ the
+restriction of a feasible schedule to $U$ satisfies the recursion built on $U$ alone, so
+for a partition $J=U_1\cup\dots\cup U_q$, $\sum_jC_j\ge\sum_b\mathrm{DP}_\Sigma(U_b)$; the
+implementation uses the exact DP for $n\le10$ and, beyond, windows of 8 consecutive parts
+in availability order (four shifted partitions, the best kept). The bound reported in
+Table~\ref{tab:bounds} is the maximum of all the above.
+
+%====================================================================
+\section{Special cases}\label{app:special}
+%====================================================================
+\begin{counterexample}[Belt order is not optimal for the flow time]\label{cex:single}
+One conveyor ($N=1$, $y_1=0$, the other parameters of the reference cell,
+$P_0=(27.5,0)$). Parts $A$: $r=0$, $p=10$; $B$: $r=1.5$, $p=1$. Any schedule in belt order
+($A$ then $B$) has $C_A\ge a/v+10=13.33$ by Lemma~\ref{lem:L1} and, since $B$ is behind $A$
+and the belt stops while $A$ is processed, $S_B\ge r_A+(a+\delta)/v+p_A=14.67$ by
+Theorem~\ref{thm:L6}, so $C_A+C_B\ge29.0$ and the mean flow is $\ge13.75$~s. The reverse
+order, simulated and verified against the model's constraints, gives a mean flow of
+$11.77$~s. Hence belt order is strictly suboptimal for $\sum F_j$ in $\Pb$ by at least
+$1.98$~s per part, whatever the start times (its makespan is better: 16.16 against
+17.84~s). The mechanism is SPT-like: when parts have different $p_j$ and are close
+together, a short part behind a long one should go first; the stopped belt keeps the long
+part inside the zone. With equal processing times, exhaustive enumeration of all orders
+on random single-conveyor instances found belt order optimal (within 0.06~s) for both the
+makespan and the flow time in 100/100 instances with $n=3$, 25/25 with $n=4$, 40/40 with
+$n=5$ and 10/10 with $n=6$; with $p_j\in\{1,2.5,6,10\}$~s it was makespan-optimal in 65/65
+and flow-optimal in only 25/65. Both statements are conjectures over $\Phi$.
+\end{counterexample}
+
+\begin{theorem}[Light traffic, model $\Pb$]\label{thm:LTP}
+Assume $\sigma=I$, $a\ge\delta$, that consecutive parts $h,i$ of the same conveyor satisfy
+$r_i\ge r_h+a/v_k+p_h$, and that in $e^0$-order $e^0_{(1)}\ge\tau(P_0,(a,y_{(1)}))$ and
+$e^0_{(q+1)}\ge e^0_{(q)}+p_{(q)}+|y_{(q+1)}-y_{(q)}|/v_y$. Then the schedule $S_j=e^0_j$,
+$X_j=a$ (head pre-positioned at $(a,y_{k(j)})$, belts stopped only while processing) is
+feasible for $\Pb$ and simultaneously optimal for every regular objective, and the bound
+of Appendix~\ref{app:bounds} is exact.
+\end{theorem}
+\begin{proof}
+Feasibility: when $i$ arrives its predecessor $h$ on the belt has been completed
+($C_h=e^0_h+p_h\le r_i$) at position $a\ge\delta$ and the belt is running, so
+$E_i=D_k(r_i)$; no other part of $k$ is processed during $[r_i,e^0_i)$, so $x_i(e^0_i)=a$.
+(C1) holds with $X=a$, (C2) is the third condition (both points are at $x=a$), (C3) by
+construction, (C4) since unprocessed parts are at $x\le a<b$, (C5) since belts stop only
+for processing. Optimality: every feasible schedule has $S_j\ge\underline s_j\ge e^0_j$.
+\end{proof}
+
+\begin{theorem}[Light traffic, policies]\label{thm:LTPhi}
+Simultaneous axes, $\sigma=I$, $P_0\in W$, $v_k\le v_x$ for all $k$, $v_kI^\ast\le b-a$. If
+$a\ge\delta$ and the conditions of Theorem~\ref{thm:LTP} are strengthened to
+$r_i\ge r_h+a/v_k+I^\ast+p_h$ and $e^0_{(q+1)}\ge e^0_{(q)}+I^\ast+p_{(q)}$, then at every
+decision epoch of the cell exactly one part is ready, so all non-idling policies produce
+the same schedule, and it satisfies $e^0_j\le S_j\le e^0_j+I^\ast$; hence its makespan and
+mean flow and waiting times exceed the optimum of $\Pb$ by at most $I^\ast$.
+\end{theorem}
+\begin{proof}
+Interception lemma: a head at $(x_L,y_L)\in W$ meets a part entering at $(a,y)$ with speed
+$v\le v_x$ within $t^\ast=\max\bigl((x_L-a)/(v_x+v),|y_L-y|/v_y\bigr)\le I^\ast$: at
+$x_m=a+vt^\ast\le b$, if $x_L\ge x_m$ then $x_L-x_m\le v_xt^\ast$ by the choice of $t^\ast$,
+otherwise $x_m-x_L\le vt^\ast\le v_xt^\ast$ (as $x_L\ge a$). Induction in $e^0$-order: part
+$(q)$ reaches $a$ at $e^0_{(q)}$ exactly as in Theorem~\ref{thm:LTP}; the head finished
+$(q-1)$ by $e^0_{(q-1)}+I^\ast+p\le e^0_{(q)}$, no other part is ready (earlier ones are
+done, later ones are upstream of $a$), so every policy selects $(q)$ and intercepts it
+within $I^\ast$, before $b$, so without blocking.
+\end{proof}
+In the reference cell $I^\ast=\max(35/13,24/10)=2.69$~s and $vI^\ast=8.1\le35$. A test
+instance (6 parts, one every 6~s cycling over the three conveyors) has all rules giving
+identical start times with $S_j-e^0_j\le I^\ast$, a bound equal to the $\Pb$-optimum
+(35.83~s makespan, 5.83~s mean flow) and the rules at 37.04 and 7.27~s. Under light
+traffic no non-anticipating policy is optimal for $\Pb$: the optimum pre-positions the
+head.
+
+\begin{counterexample}[Waiting beats serving]\label{cex:wait}
+Reference cell, five parts: three on conveyor~2 at $r\approx0.56,0.74,2.41$~s, one on
+conveyor~1 at $r=19.678$~s, one on conveyor~2 at $r=19.881$~s. After the third part the
+head sits on conveyor~2. The fourth part enters the zone 0.2~s before the fifth, so every
+non-idling rule (one candidate at that epoch) serves it first: makespan 30.42~s, mean flow
+9.27~s. Serving the fifth part first (waiting 0.2~s for it on the head's own conveyor) and
+then the fourth gives 29.45~s and 8.88~s, feasible and verified. Hence neither first-in nor
+nearest-part is optimal, over $\Phi$ and hence over $\Pb$; the improvement needs
+deliberate idling, which no implemented rule does. On 30 random five-part instances of
+the reference cell with all 120 orders enumerated, first-in was optimal in 22 (makespan)
+and 21 (flow) instances and nearest-part in 20 and 21.
+\end{counterexample}
+
+\begin{counterexample}[Anticipation]\label{cex:anticipation}
+Reference cell, one part on conveyor~1 ($y=0$) at $r=0$, $p=2.5$. In $\Pb$ the head leaves
+$P_0=(27.5,12)$ at $t=0$, reaches $(10,0)$ after $\max(17.5,12)/10=1.75$~s, and starts at
+$S=a/v=3.33$~s when the part arrives there: $C=5.83$~s, equal to the lower bound, hence
+optimal. A controller that dispatches only parts already in the zone keeps the head at
+$P_0$ until $t=3.33$ and intercepts the moving part 1.35~s later: $C=7.19$~s for every
+policy and for $\Phi$ ($+23$\,\%). In general, whenever a part enters the zone while the
+head is idle away from $(a,y_k)$, the non-anticipating cell loses up to $I^\ast$ against
+$\Pb$ (about 1.2--1.4~s per part in light traffic): a structural part of every gap between
+the bounds and the rules, not looseness of the bounds.
+\end{counterexample}
+
+\begin{proposition}[Delays cannot pay through travel alone]\label{prop:delay}
+Assume $v_k\le v_x$. Delaying the start of $j$ by $\varepsilon$ (same sequence, everything
+else unchanged) delays $C_j$ by $\varepsilon$ and moves $X_j$ by at most $v_k\varepsilon$,
+so $\tau(P_j,P_l)$ for the successor $l$ decreases by at most $v_k\varepsilon/v_x\le\varepsilon$:
+the travel constraint (C2) of the successor is never relaxed.
+\end{proposition}
+\begin{proof}
+$\tau$ is $1/v_x$-Lipschitz in the $x$ coordinate of either end point.
+\end{proof}
+What a delay does change is the belt: delaying a stop of conveyor $k$ makes $D_k$
+pointwise larger, so parts behind $j$ advance earlier. Whether this can strictly improve a
+regular objective with the same sequence is open; combined with
+Counterexamples~\ref{cex:wait} and \ref{cex:anticipation}, the non-idling,
+non-anticipating schedules of the cell are not dominant in $\Pb$: what pays is
+anticipative head motion and deliberate idling for a part about to enter, rather than
+later starts of the same sequence.
 
 \end{document}

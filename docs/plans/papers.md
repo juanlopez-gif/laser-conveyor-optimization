@@ -468,6 +468,14 @@ the phase-4 confirmatory comparison (network vs NJ, vs known-parts search, vs te
 latencies, B and C). Stated limits: no optimality gap, rollout instead of the exact
 pruned search, one 3-belt cell in the confirmatory run. Open: the owner's reading;
 the hindsight reference and the generalization bench on new reserved seeds.
+**Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
+properties) with the MILP, the proofs, the lower bounds and the special cases in
+appendices A–D, per the owner's decision (a); the method is called "expert iteration
+with scenario search"; §8.4 records the earlier PPO/BC agents and the pending PPO
+baseline on the new representation (session `ppo-baseline`, protocol frozen: 40 000
+episodes per run, three seeds, validation groups of rl2.md §8.8, same realizations,
+training cost of both schemes reported). Open: the PPO results, the owner's reading of
+0.2, verification of the seven classical references in `extra.bib`.
 
 **Where the plan's steps already stand.**
 

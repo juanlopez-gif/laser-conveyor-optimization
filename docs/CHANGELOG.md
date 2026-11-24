@@ -6,6 +6,36 @@ summarized from the git history.
 
 ---
 
+## 0.7.25 — 2026-11-23 — Paper 1 draft 0.2: the formulation in the body, proofs and MILP in appendices
+
+* **Why.** The owner's reading of draft 0.1 (2026-11-23): the paper left the formal
+  formulation out, although it is the plan's first contribution; it should read "this is
+  the problem, this is how we formulate it, these are its properties, and this is how we
+  solve it and with what result". Decision (a): formulation complete in the body, long
+  proofs, the detailed MILP and the special cases in appendices. The owner also asked
+  for a PPO baseline on the new representation, run in parallel in its own session
+  (branch `ppo-baseline`), and to call the method "expert iteration with scenario
+  search".
+* **What.** `docs/papers/paper1/paper1.tex` draft 0.2 (26 pages): §3 The problem
+  (system and notation, belt odometer and entry coordinates, decisions and constraints
+  C1–C6, objectives with the blocking penalty, pre-positioning and P^sim, problem
+  statement), §4 The online problem (SMDP and the return identity, information model
+  with the three levels, the general stochastic problem over θ, load and stability),
+  §5 Properties (structure, strong NP-hardness, the lower bounds in words with their
+  measured quality, the light-traffic theorem and the three counterexamples), §6–§7 the
+  method renamed (expert = scenario search; the RL relation stated), §8 development
+  results plus §8.4 on the earlier PPO/BC agents and the pending PPO baseline, §9
+  confirmatory, §10 discussion ("what the formulation buys"), §11 conclusions;
+  Appendix A time-indexed MILP (M1–M12 with the blocking witness), B proof of the
+  complexity proposition, C lower bounds with proofs (L1, L2, H, L3, L4, L5, L6), D
+  special cases (counterexamples, light-traffic theorems with proofs, the delay
+  proposition). Ported from `docs/formulation/formal_formulation.tex` and
+  `docs/methods/theory.md`; the earliest-start bound is written $\underline s_j$ to keep
+  $e_j$ for the entry time. New `docs/papers/paper1/extra.bib` with seven classical
+  references added from memory (Lenstra 1977, Schrage 1968, Baker 1974, Ross 2011,
+  Anthony 2017, Silver 2018, Schulman 2017), kept apart from the verified
+  `references.bib` and flagged for checking before submission.
+
 ## 0.7.24 — 2026-11-23 — Paper 1 draft 0.1 in LaTeX (`docs/papers/paper1/`)
 
 * **Why.** The owner closed Paper 2 at draft 0.6 and asked for Paper 1 (2026-11-23).
