@@ -451,9 +451,12 @@ nominal load only. **Draft 0.5 (0.7.22)** rewritten around the bench on the owne
 decisions 1(a), 2(b), 3(a): the phase-4 study is the reference cell (seeing against
 acting), the bench the central result, the headline is the practical cost of 3.33 s of
 anticipation, 1.7 × the mean move is reported as the best predictor with its small margin
-over a constant, the threshold is kept and 38 cells stay undetermined. Open: the owner's
-reading of draft 0.5 and decisions 4–6 (network's role, high-load mechanism, high-load
-precision); economic translation deferred.
+over a constant, the threshold is kept and 38 cells stay undetermined. Draft 0.6
+(0.7.23) applies the owner's three text corrections ("3.33 s is enough" removed; §7.1
+matched to Table 7, 2–5 s at v_x = 10 and 5–7.5 s at v_x = 5 plus one unresolved; queue
+traces "compatible with", not "confirm"); the owner considers it ready to share with
+co-authors. Decisions 4–6 are answered by the draft's structure (§6.7, §6.5, §§6.1 and
+7.4). Open: co-authors' reading; economic translation deferred.
 
 **Where the plan's steps already stand.**
 

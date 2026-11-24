@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 0.5 (results of versions 0.7.13 and 0.7.21)}
+\date{November 2026 --- draft 0.6 (results of versions 0.7.13 and 0.7.21)}
 
 \begin{document}
 \maketitle
@@ -52,16 +52,20 @@ head speed 5 and 10~cm/s, two loads, Poisson and bursty arrivals; 60 realization
 measures the gain of acting on a common grid of 0--10~s of anticipation. Pre-positioning
 is worth at least 1~s per part in 18 of the 56 distinct cells, almost all with Poisson
 arrivals; in those cells, giving the controller 3.33~s of anticipation (10~cm at 3~cm/s)
-instead of 10~s costs a median of 0.05 and at most 0.44~s per part, and retaining 90\,\%
-of the gain conservatively needs 2.0--7.5~s. Halving the along-belt head speed doubles
-the gain and moves that requirement from 1.5--3.3 to 3.3--5~s. The head's transverse
-crossing time, the natural design reference, is the worst predictor of the required
-anticipation among those tested (leave-one-out error 1.5~s); the mean duration of the
-pre-positioning moves the head actually makes is the best (1.0~s; required anticipation
-$\approx1.7$ times the mean move), and a constant of 2.8~s does nearly as well (1.1~s).
-Cells with the same crossing time are identical by the model's structure. The results
-support specifying the camera in seconds of anticipation at the belt speed: in every
-condition tested where pre-positioning pays, 3.33~s is enough.
+instead of 10~s costs a median of 0.05 and at most 0.44~s per part, retaining 71--109\,\%
+of the estimated gain (71\,\% in one cell). Under the conservative criterion of retaining
+90\,\% of the gain, the certified anticipations are 2--7.5~s, with one cell unresolved
+within the grid. In the nominal-load cells with Poisson arrivals, halving the along-belt
+head speed roughly doubles the gain and moves the point-estimate requirement from
+1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
+is the worst predictor of the required anticipation among those tested (leave-one-out
+error 1.5~s); the mean duration of the pre-positioning moves the head actually makes is
+the best (1.0~s; required anticipation $\approx1.7$ times the mean move), and a constant
+of 2.8~s does nearly as well (1.1~s). Cells with the same crossing time are identical by
+the model's structure. The results support specifying the camera in seconds of
+anticipation at the belt speed, with the cost of a shorter view measured and bounded in
+the conditions where pre-positioning pays, and left undetermined where the data do not
+resolve it.
 \end{abstract}
 
 %====================================================================
@@ -120,10 +124,12 @@ test that reference, and rejects it in favour of a measured quantity.
   the worst of the candidates and the duration of the moves the head actually makes the
   best, with a constant close behind; cells with the same crossing time are identical by
   the model's structure (Section~\ref{sec:predict}).
-\item A measured mechanism (the saving of a move is transmitted to the parts queued
-  behind it) that holds at the nominal load and not at the high load, and a check that
-  lengthening the physical entry zone changes the installation's flow time but not the
-  camera's value (Sections~\ref{sec:mechanism} and \ref{sec:entry}).
+\item A trace-based reading of the mechanism: at the nominal load the aggregate gain per
+  pre-positioning move is compatible with the saving being transmitted to the parts
+  queued behind it; at the high load the queue count does not explain the size of the
+  effect and the alternative (a cascade of belt stops avoided) remains a hypothesis. And
+  a check that lengthening the physical entry zone changes the installation's flow time
+  but not the camera's value (Sections~\ref{sec:mechanism} and \ref{sec:entry}).
 \end{enumerate}
 
 The companion paper (Paper~1) presents the learned policy used here and its comparison with
@@ -804,13 +810,15 @@ ratio (seconds saved summed over all parts, divided by the number of moves), exc
 move's own duration several times over. With the number of unfinished parts recorded at
 each move, the implied saving per part (aggregate gain per move divided by the parts in
 the system at the move) is 1.0--2.0 times the move's duration in all ten cells worth sizing
-for at the nominal load: the saving of a move is transmitted to the parts queued behind
-it, as hypothesised. At the high load the ratio is 2.1--9.5 (2.5--6.8 moves per episode,
+for at the nominal load: the aggregate ratio is compatible with the saving of a move being
+transmitted to the parts queued behind it, which is what the pre-registered check asked
+for; it does not show the transmission itself, which would need the delay of each queued
+part to be traced. At the high load the ratio is 2.1--9.5 (2.5--6.8 moves per episode,
 head idle 6--10\,\%): there the aggregate gain per move (17--87~s) is more than the queue
-at the move explains, the transmission mechanism is not supported, and we keep the
-measured effect without the interpretation. A plausible alternative, not tested, is that
-one early service at high load prevents a cascade of belt stops that delays parts
-arriving later than the count at the move sees.
+at the move explains, the transmission reading is not supported, and we keep the measured
+effect without an interpretation. That one early service at high load prevents a cascade
+of belt stops which delays parts arriving later than the count at the move sees is a
+hypothesis, not tested here.
 
 \subsection{Physical entry length}\label{sec:entry}
 The bench's 35~cm entry zone is 25~cm longer than the reference cell's. On the reference
@@ -869,11 +877,12 @@ part], with the number of cells in which it is significantly positive.}
 
 \subsection{A specification in seconds}
 The results support specifying the camera's reach in seconds of anticipation at the belt
-speed, and they give the number. Where pre-positioning is worth at least 1~s per part,
-3.33~s of anticipation costs a median 0.05 and at most 0.44~s per part against a view
-three times longer, with the head at 10~cm/s on both axes or at 5~cm/s along the belt;
-the conservative requirement to retain 90\,\% of the gain is 2.0--3.33~s for the fast head
-and 3.33--7.5~s for the slow one. A specification in centimetres transfers between cells
+speed, and they give the numbers. Where pre-positioning is worth at least 1~s per part
+(18 cells), 3.33~s of anticipation costs a median 0.05 and at most 0.44~s per part against
+a view three times longer, and retains 71--109\,\% of the estimated gain; the
+conservative requirement to retain 90\,\% of the gain (Table~\ref{tab:sufficient}) is
+2--5~s in the cells with $v_x=10$~cm/s and 5--7.5~s in those with $v_x=5$~cm/s, plus one
+cell with $v_x=5$ unresolved within the grid. A specification in centimetres transfers between cells
 only through $\vb$: the same 10~cm on a belt at 5~cm/s is 2~s. The pilot's reference, the
 transverse crossing time, is rejected as a predictor: it misses the along-belt part of
 every move, and it would mis-size the coverage by 1.5~s on average over the cells tested,
@@ -900,8 +909,9 @@ the head's idle time, which falls with the load and with slower heads, and burst
 the opportunities on the first part of each burst. This is why the cells worth sizing for
 are concentrated at Poisson arrivals, why the high-load cells are mostly undetermined by
 precision, and why the gain per opportunity grows with the load: a second saved on the
-head's cycle is saved by every part queued behind it, as long as the queue is the
-mechanism, which the traces confirm at the nominal load and not at the high one.
+head's cycle can be saved by every part queued behind it. The traces are compatible with
+that reading at the nominal load; at the high load the queue count does not account for
+the size of the effect, and the mechanism there is open.
 
 \subsection{Limits}\label{sec:limits}
 The results are for one family of cells (three belts, a belt at 3~cm/s, a 35~cm laser

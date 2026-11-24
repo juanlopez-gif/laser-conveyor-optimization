@@ -6,6 +6,22 @@ summarized from the git history.
 
 ---
 
+## 0.7.23 — 2026-11-23 — Paper 2 draft 0.6: three text corrections before sharing
+
+* **Why.** The owner's reading of draft 0.5 (2026-11-23): (1) "3.33 s is enough" in the
+  abstract overstated the result; the practical result is the measured cost (median
+  0.05, max 0.44 s/part in the 18 cells), one cell retained only 71 %, and the
+  conservative 90 % criterion certified 2–7.5 s with one cell unresolved; (2) §7.1 did
+  not match Table 7: summarized over the cells that qualified, the conservative range is
+  2–5 s with v_x = 10 and 5–7.5 s with v_x = 5 plus the unresolved case, and the
+  abstract had to say that the doubling of the gain with v_x halved was observed in the
+  nominal-load Poisson subset of §6.4; (3) the queue traces are compatible with the
+  transmission of the saving at the nominal load, they do not confirm it, and at the
+  high load the stop cascade is a hypothesis.
+* **What.** `paper2.tex` draft 0.6: abstract, contribution 5, §6.5, §7.1 and §7.3
+  reworded accordingly; no number changed. PDF rebuilt. The owner would share this
+  version with co-authors.
+
 ## 0.7.22 — 2026-11-23 — Paper 2 draft 0.5: rewritten around the geometry bench
 
 * **Why.** Owner's decisions on the bench results (2026-11-23): 1(a) rewrite Paper 2
