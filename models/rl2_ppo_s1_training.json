@@ -1,0 +1,4378 @@
+{
+  "tag": "rl2_ppo_s1",
+  "args": {
+    "tag": "rl2_ppo_s1",
+    "seed": 1,
+    "size": "S",
+    "episodes": 40000,
+    "batch_episodes": 1000,
+    "val_every": 4000,
+    "val": 50,
+    "val_mode": "design",
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "init": null,
+    "workers": 40,
+    "threads": 8,
+    "device": "auto",
+    "horizon": null
+  },
+  "ppo": {
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "gamma": 1.0
+  },
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "started": "2026-11-23 20:39:25",
+  "machine": {
+    "host": "isecapstone",
+    "cpus": 48,
+    "workers": 40,
+    "device": "cuda",
+    "cuda": "NVIDIA GeForce RTX 3080"
+  },
+  "seed_base": 300000,
+  "updates": [
+    {
+      "update": 1,
+      "episodes": 1000,
+      "episodes_total": 1000,
+      "decisions": 58153,
+      "seeds": [
+        300000,
+        300999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 46,
+        "general/none/belts/regular": 85,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 39,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 77,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 80,
+        "general/when_idle/belts/slow": 32,
+        "general/when_idle/full/burst": 20,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 13,
+        "heavy/none/belts/burst": 10,
+        "heavy/none/belts/regular": 23,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 14,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 50,
+        "real/none/belts/regular": 34,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 10,
+        "real/when_idle/belts/burst": 43,
+        "real/when_idle/belts/regular": 36,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 92.13954812028454,
+      "empty_episodes": 80,
+      "mc_cost_to_go_mean": 6885.8275701407565,
+      "all_decisions": 79572,
+      "gen_s": 9.270768871996552,
+      "gen_cpu_s": 331.40559278056026,
+      "train_s": 24.727174257859588,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.00037835315176088224,
+            "value": 0.029704268043566916,
+            "entropy": 1.796262270596227,
+            "kl": 0.0018182284425442615,
+            "clipfrac": 0.008099324196516086
+          },
+          {
+            "policy": -0.0011215901681229437,
+            "value": 0.013767907577313204,
+            "entropy": 1.7962627205978168,
+            "kl": 0.0018948227593858244,
+            "clipfrac": 0.010420786545835984
+          },
+          {
+            "policy": -0.0017417657169676965,
+            "value": 0.012109720186918563,
+            "entropy": 1.7955018672570358,
+            "kl": 0.0026612381980913673,
+            "clipfrac": 0.014771378948635496
+          },
+          {
+            "policy": -0.0019526245064508526,
+            "value": 0.010875141162074166,
+            "entropy": 1.7954901219062083,
+            "kl": 0.002728270428886225,
+            "clipfrac": 0.018674874898332795
+          }
+        ],
+        "device": "cuda",
+        "samples": 58153
+      },
+      "scale": [
+        58153,
+        6885.827570140716,
+        11305.44026575667
+      ]
+    },
+    {
+      "update": 2,
+      "episodes": 1000,
+      "episodes_total": 2000,
+      "decisions": 55704,
+      "seeds": [
+        301000,
+        301999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 85,
+        "general/none/belts/burst+slow": 39,
+        "general/none/belts/regular": 62,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 14,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 16,
+        "general/none/full/slow": 11,
+        "general/none/zone/burst": 36,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 38,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 46,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 33,
+        "general/when_idle/full/burst": 20,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 17,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 12,
+        "heavy/none/belts/regular": 21,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 12,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 51,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 23,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 48,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 91.23268905019093,
+      "empty_episodes": 71,
+      "mc_cost_to_go_mean": 6646.13090603525,
+      "all_decisions": 77112,
+      "gen_s": 9.800361068919301,
+      "gen_cpu_s": 335.901687358506,
+      "train_s": 24.49824778502807,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.0006881288228561596,
+            "value": 0.03211292996360587,
+            "entropy": 1.7972969942765384,
+            "kl": 0.0032021566579028085,
+            "clipfrac": 0.0217219589260179
+          },
+          {
+            "policy": -0.0016175671185670562,
+            "value": 0.022287842015487426,
+            "entropy": 1.7971380393292462,
+            "kl": 0.0038819648351525117,
+            "clipfrac": 0.0306441189145286
+          },
+          {
+            "policy": -0.002008650672858634,
+            "value": 0.01887320788689819,
+            "entropy": 1.7965472144983323,
+            "kl": 0.0036809918888391527,
+            "clipfrac": 0.025976590550184017
+          },
+          {
+            "policy": -0.0029453542658639986,
+            "value": 0.01733709154972914,
+            "entropy": 1.795453685942385,
+            "kl": 0.004533146053244193,
+            "clipfrac": 0.03793264397556551
+          }
+        ],
+        "device": "cuda",
+        "samples": 55704
+      },
+      "scale": [
+        113857,
+        6768.557108268982,
+        11279.50125925527
+      ]
+    },
+    {
+      "update": 3,
+      "episodes": 1000,
+      "episodes_total": 3000,
+      "decisions": 56103,
+      "seeds": [
+        302000,
+        302999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 93,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 79,
+        "general/none/belts/slow": 38,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 44,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 41,
+        "general/none/zone/slow": 9,
+        "general/when_idle/belts/burst": 77,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 93,
+        "general/when_idle/belts/slow": 30,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 13,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 16,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 32,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 14,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 39,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 82.81917806776235,
+      "empty_episodes": 93,
+      "mc_cost_to_go_mean": 6267.135622945896,
+      "all_decisions": 78188,
+      "gen_s": 9.357653568033129,
+      "gen_cpu_s": 327.65046236570925,
+      "train_s": 23.205090842209756,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.0016938849000159538,
+            "value": 0.03217754320143918,
+            "entropy": 1.767181269991171,
+            "kl": 0.0034475863163189106,
+            "clipfrac": 0.028019891984618264
+          },
+          {
+            "policy": -0.0024096497610253073,
+            "value": 0.02450775832729023,
+            "entropy": 1.766360960155367,
+            "kl": 0.003937328599893433,
+            "clipfrac": 0.03268987398224831
+          },
+          {
+            "policy": -0.003352436442929806,
+            "value": 0.02133559679033402,
+            "entropy": 1.76648862914831,
+            "kl": 0.003916418355192956,
+            "clipfrac": 0.03575566369046356
+          },
+          {
+            "policy": -0.004171532812049346,
+            "value": 0.02024448523800063,
+            "entropy": 1.7652873493797556,
+            "kl": 0.004499165914306209,
+            "clipfrac": 0.04399051744113505
+          }
+        ],
+        "device": "cuda",
+        "samples": 56103
+      },
+      "scale": [
+        169960,
+        6603.040224348861,
+        10974.58715803707
+      ]
+    },
+    {
+      "update": 4,
+      "episodes": 1000,
+      "episodes_total": 4000,
+      "decisions": 55739,
+      "seeds": [
+        303000,
+        303999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 88,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 84,
+        "general/none/belts/slow": 43,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 3,
+        "general/none/full/regular": 20,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 45,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 66,
+        "general/when_idle/belts/burst+slow": 39,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 17,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 34,
+        "real/none/belts/regular": 49,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 6,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 20,
+        "real/when_idle/belts/burst": 43,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 86.73591765109009,
+      "empty_episodes": 91,
+      "mc_cost_to_go_mean": 6538.718893607658,
+      "all_decisions": 77903,
+      "gen_s": 8.954255892895162,
+      "gen_cpu_s": 315.33704770263284,
+      "train_s": 22.413703538943082,
+      "train": {
+        "epochs": [
+          {
+            "policy": 6.70833336730916e-05,
+            "value": 0.0425360547656858,
+            "entropy": 1.7755794473047626,
+            "kl": 0.003910511170311253,
+            "clipfrac": 0.032598360214922364
+          },
+          {
+            "policy": -0.0016983761182711695,
+            "value": 0.03133951740441956,
+            "entropy": 1.7738324836807848,
+            "kl": 0.004273342523119088,
+            "clipfrac": 0.03961319722210207
+          },
+          {
+            "policy": -0.0027105606266706645,
+            "value": 0.026762285494878864,
+            "entropy": 1.7738331199776645,
+            "kl": 0.0045128704601740625,
+            "clipfrac": 0.044600728392768366
+          },
+          {
+            "policy": -0.004042231013380537,
+            "value": 0.02535883923658843,
+            "entropy": 1.773032132606015,
+            "kl": 0.005029713262113334,
+            "clipfrac": 0.05208202515922742
+          }
+        ],
+        "device": "cuda",
+        "samples": 55739
+      },
+      "scale": [
+        225699,
+        6587.155321650307,
+        10877.179296299726
+      ]
+    },
+    {
+      "update": 5,
+      "episodes": 1000,
+      "episodes_total": 5000,
+      "decisions": 55728,
+      "seeds": [
+        304000,
+        304999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 73,
+        "general/none/belts/burst+slow": 31,
+        "general/none/belts/regular": 78,
+        "general/none/belts/slow": 47,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 78,
+        "general/when_idle/belts/burst+slow": 28,
+        "general/when_idle/belts/regular": 71,
+        "general/when_idle/belts/slow": 26,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 12,
+        "general/when_idle/full/regular": 11,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 26,
+        "heavy/none/belts/regular": 24,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 2,
+        "heavy/when_idle/belts/burst": 22,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 8,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 6,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 25,
+        "real/none/zone/regular": 24,
+        "real/when_idle/belts/burst": 55,
+        "real/when_idle/belts/regular": 49,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 4
+      },
+      "cost_mean": 82.17638996045635,
+      "empty_episodes": 89,
+      "mc_cost_to_go_mean": 6140.448564811807,
+      "all_decisions": 77779,
+      "gen_s": 9.51977766584605,
+      "gen_cpu_s": 333.4381309906021,
+      "train_s": 27.20546359103173,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00035757407601660706,
+            "value": 0.031215759607081676,
+            "entropy": 1.7468164787872955,
+            "kl": 0.004093249169704595,
+            "clipfrac": 0.039854292287468535
+          },
+          {
+            "policy": -0.001914925874883917,
+            "value": 0.024583334325161126,
+            "entropy": 1.7408713681445258,
+            "kl": 0.005541140507872449,
+            "clipfrac": 0.06276916451335056
+          },
+          {
+            "policy": -0.003260629557494524,
+            "value": 0.021435596332266316,
+            "entropy": 1.741658705115284,
+            "kl": 0.0054701037774867334,
+            "clipfrac": 0.06294860752439006
+          },
+          {
+            "policy": -0.00538909729455707,
+            "value": 0.020581017420799645,
+            "entropy": 1.7402867148602246,
+            "kl": 0.005870424366646754,
+            "clipfrac": 0.06985716336063705
+          }
+        ],
+        "device": "cuda",
+        "samples": 55728
+      },
+      "scale": [
+        281427,
+        6498.698726707091,
+        10558.376649115375
+      ]
+    },
+    {
+      "update": 6,
+      "episodes": 1000,
+      "episodes_total": 6000,
+      "decisions": 57037,
+      "seeds": [
+        305000,
+        305999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 67,
+        "general/none/belts/burst+slow": 29,
+        "general/none/belts/regular": 79,
+        "general/none/belts/slow": 31,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 28,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 103,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 66,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 22,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 14,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 4,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 18,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 1,
+        "real/none/belts/burst": 52,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 23,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 47,
+        "real/when_idle/belts/regular": 49,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 5
+      },
+      "cost_mean": 78.5526810084799,
+      "empty_episodes": 71,
+      "mc_cost_to_go_mean": 5862.256696576889,
+      "all_decisions": 79180,
+      "gen_s": 9.687704844400287,
+      "gen_cpu_s": 326.0978402518667,
+      "train_s": 23.18456724099815,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.000676225489122521,
+            "value": 0.030034066883634098,
+            "entropy": 1.686506566552487,
+            "kl": 0.005440537235505783,
+            "clipfrac": 0.06401108050394655
+          },
+          {
+            "policy": -0.0019676550633150264,
+            "value": 0.02261190166553249,
+            "entropy": 1.6822731136086466,
+            "kl": 0.00589118468141775,
+            "clipfrac": 0.0713045917566203
+          },
+          {
+            "policy": -0.004521388954309059,
+            "value": 0.019221061967525037,
+            "entropy": 1.6807667082735513,
+            "kl": 0.006599480558532866,
+            "clipfrac": 0.08254291075246938
+          },
+          {
+            "policy": -0.005399069975865185,
+            "value": 0.018195852864124996,
+            "entropy": 1.6796677175405779,
+            "kl": 0.00699167352232845,
+            "clipfrac": 0.08936304504786158
+          }
+        ],
+        "device": "cuda",
+        "samples": 57037
+      },
+      "scale": [
+        338464,
+        6391.447308321236,
+        10389.566690169511
+      ]
+    },
+    {
+      "update": 7,
+      "episodes": 1000,
+      "episodes_total": 7000,
+      "decisions": 56027,
+      "seeds": [
+        306000,
+        306999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 22,
+        "general/none/belts/regular": 68,
+        "general/none/belts/slow": 46,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 3,
+        "general/none/full/regular": 14,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 35,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 28,
+        "general/none/zone/slow": 19,
+        "general/when_idle/belts/burst": 72,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 88,
+        "general/when_idle/belts/slow": 31,
+        "general/when_idle/full/burst": 21,
+        "general/when_idle/full/burst+slow": 15,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 13,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 7,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 14,
+        "heavy/when_idle/belts/regular": 14,
+        "heavy/when_idle/full/burst": 7,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 51,
+        "real/none/belts/regular": 53,
+        "real/none/full/burst": 8,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 40,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 6
+      },
+      "cost_mean": 76.79506758090069,
+      "empty_episodes": 74,
+      "mc_cost_to_go_mean": 5770.901742079993,
+      "all_decisions": 77838,
+      "gen_s": 8.897696845699102,
+      "gen_cpu_s": 313.9966666214168,
+      "train_s": 21.812409003730863,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0009081317815158157,
+            "value": 0.03106440214501498,
+            "entropy": 1.6666405437942753,
+            "kl": 0.0058857991560283245,
+            "clipfrac": 0.0709657843531743
+          },
+          {
+            "policy": -0.0015680848535374432,
+            "value": 0.02344526605135392,
+            "entropy": 1.6669289206914653,
+            "kl": 0.007184176242144333,
+            "clipfrac": 0.09125957127534114
+          },
+          {
+            "policy": -0.004856908778785384,
+            "value": 0.02106961950900183,
+            "entropy": 1.6640854499212692,
+            "kl": 0.007140250709736653,
+            "clipfrac": 0.09241972618216052
+          },
+          {
+            "policy": -0.005831173781544187,
+            "value": 0.018921675273844488,
+            "entropy": 1.6623902568038056,
+            "kl": 0.007740829859621356,
+            "clipfrac": 0.10087993287766431
+          }
+        ],
+        "device": "cuda",
+        "samples": 56027
+      },
+      "scale": [
+        394491,
+        6303.31524335696,
+        10195.569779999474
+      ]
+    },
+    {
+      "update": 8,
+      "episodes": 1000,
+      "episodes_total": 8000,
+      "decisions": 56217,
+      "seeds": [
+        307000,
+        307999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 85,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 72,
+        "general/none/belts/slow": 32,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 14,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 37,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 90,
+        "general/when_idle/belts/burst+slow": 22,
+        "general/when_idle/belts/regular": 80,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 21,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 17,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 15,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 6,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 14,
+        "heavy/when_idle/belts/burst": 20,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 37,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 45,
+        "real/when_idle/belts/regular": 52,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 74.91069128396555,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 5910.380360314059,
+      "all_decisions": 78895,
+      "gen_s": 8.762130272109061,
+      "gen_cpu_s": 311.1174446796067,
+      "train_s": 23.104665802326053,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0013345148746566156,
+            "value": 0.030393096263250003,
+            "entropy": 1.631114232664605,
+            "kl": 0.0054765296960955605,
+            "clipfrac": 0.06302364053743764
+          },
+          {
+            "policy": -0.0013305791445202505,
+            "value": 0.02224325843677297,
+            "entropy": 1.6268080763584678,
+            "kl": 0.0063134557820176945,
+            "clipfrac": 0.07490616718224537
+          },
+          {
+            "policy": -0.004016646676501467,
+            "value": 0.02072048062834331,
+            "entropy": 1.6240567274718078,
+            "kl": 0.007093865415713728,
+            "clipfrac": 0.08730455201577018
+          },
+          {
+            "policy": -0.005202946599875667,
+            "value": 0.019198229159127198,
+            "entropy": 1.6245695986483863,
+            "kl": 0.007372480075959322,
+            "clipfrac": 0.09128911184311307
+          }
+        ],
+        "device": "cuda",
+        "samples": 56217
+      },
+      "scale": [
+        450708,
+        6254.304308738423,
+        10135.620572726677
+      ]
+    },
+    {
+      "update": 9,
+      "episodes": 1000,
+      "episodes_total": 9000,
+      "decisions": 53797,
+      "seeds": [
+        308000,
+        308999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 79,
+        "general/none/belts/burst+slow": 32,
+        "general/none/belts/regular": 80,
+        "general/none/belts/slow": 40,
+        "general/none/full/burst": 21,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 34,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 27,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 38,
+        "general/when_idle/belts/regular": 76,
+        "general/when_idle/belts/slow": 32,
+        "general/when_idle/full/burst": 22,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 23,
+        "general/when_idle/full/slow": 6,
+        "heavy/none/belts/burst": 22,
+        "heavy/none/belts/regular": 13,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 6,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 7,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 43,
+        "real/none/belts/regular": 40,
+        "real/none/full/burst": 1,
+        "real/none/full/regular": 14,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 37,
+        "real/when_idle/belts/regular": 50,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 71.92386136379565,
+      "empty_episodes": 102,
+      "mc_cost_to_go_mean": 5393.236877868787,
+      "all_decisions": 76344,
+      "gen_s": 8.656112030148506,
+      "gen_cpu_s": 285.4377656248398,
+      "train_s": 23.366783302742988,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0017568889843242476,
+            "value": 0.029823378062787582,
+            "entropy": 1.5959981526309528,
+            "kl": 0.006435128864261311,
+            "clipfrac": 0.07907504136029156
+          },
+          {
+            "policy": -0.002742648288395147,
+            "value": 0.019919955538377727,
+            "entropy": 1.5926063291481007,
+            "kl": 0.006784535659475072,
+            "clipfrac": 0.08284848598031716
+          },
+          {
+            "policy": -0.004823408243531935,
+            "value": 0.01722557612557327,
+            "entropy": 1.589866599981312,
+            "kl": 0.008198343060060623,
+            "clipfrac": 0.10630704314547015
+          },
+          {
+            "policy": -0.006910921484306736,
+            "value": 0.01682886319134178,
+            "entropy": 1.5899658532209737,
+            "kl": 0.008898939596882083,
+            "clipfrac": 0.11402122795560767
+          }
+        ],
+        "device": "cuda",
+        "samples": 53797
+      },
+      "scale": [
+        504505,
+        6162.48590341347,
+        9978.650389974162
+      ]
+    },
+    {
+      "update": 10,
+      "episodes": 1000,
+      "episodes_total": 10000,
+      "decisions": 53685,
+      "seeds": [
+        309000,
+        309999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 88,
+        "general/none/belts/burst+slow": 38,
+        "general/none/belts/regular": 73,
+        "general/none/belts/slow": 27,
+        "general/none/full/burst": 15,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 28,
+        "general/none/zone/slow": 9,
+        "general/when_idle/belts/burst": 72,
+        "general/when_idle/belts/burst+slow": 34,
+        "general/when_idle/belts/regular": 77,
+        "general/when_idle/belts/slow": 41,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 13,
+        "heavy/none/belts/regular": 11,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 15,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 61,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 13,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 53,
+        "real/when_idle/belts/regular": 48,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 68.18338867200812,
+      "empty_episodes": 93,
+      "mc_cost_to_go_mean": 5380.464647020911,
+      "all_decisions": 76033,
+      "gen_s": 8.473843041807413,
+      "gen_cpu_s": 296.0287229199894,
+      "train_s": 21.706444662064314,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0017188879070478944,
+            "value": 0.031566138580390125,
+            "entropy": 1.5843787059755512,
+            "kl": 0.006723631662167181,
+            "clipfrac": 0.08421346746621723
+          },
+          {
+            "policy": -0.003386930814291319,
+            "value": 0.022419445870099475,
+            "entropy": 1.580821839319968,
+            "kl": 0.007499839834361655,
+            "clipfrac": 0.09427214306143838
+          },
+          {
+            "policy": -0.005670598542333882,
+            "value": 0.019427922346434125,
+            "entropy": 1.5762053943295447,
+            "kl": 0.007805807494805688,
+            "clipfrac": 0.09892893732648839
+          },
+          {
+            "policy": -0.007876048231187052,
+            "value": 0.018035021244187512,
+            "entropy": 1.5792389766257535,
+            "kl": 0.008608674621840099,
+            "clipfrac": 0.1154884977308001
+          }
+        ],
+        "device": "cuda",
+        "samples": 53685
+      },
+      "scale": [
+        558190,
+        6087.2735005588265,
+        9898.368889137035
+      ]
+    },
+    {
+      "update": 11,
+      "episodes": 1000,
+      "episodes_total": 11000,
+      "decisions": 55951,
+      "seeds": [
+        310000,
+        310999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 83,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 64,
+        "general/none/belts/slow": 28,
+        "general/none/full/burst": 23,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 41,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 46,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 81,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 71,
+        "general/when_idle/belts/slow": 34,
+        "general/when_idle/full/burst": 11,
+        "general/when_idle/full/burst+slow": 13,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 24,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 4,
+        "heavy/when_idle/belts/burst": 22,
+        "heavy/when_idle/belts/regular": 14,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 9,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 12,
+        "real/when_idle/belts/burst": 50,
+        "real/when_idle/belts/regular": 46,
+        "real/when_idle/full/burst": 5,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 71.69127273848548,
+      "empty_episodes": 82,
+      "mc_cost_to_go_mean": 5503.914292423937,
+      "all_decisions": 78510,
+      "gen_s": 8.698382336180657,
+      "gen_cpu_s": 303.22580460226163,
+      "train_s": 34.30921294493601,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.001820474681951233,
+            "value": 0.028539347616441862,
+            "entropy": 1.5909893349053017,
+            "kl": 0.006528813175534847,
+            "clipfrac": 0.07953387785461453
+          },
+          {
+            "policy": -0.003099525720606794,
+            "value": 0.021412653224628795,
+            "entropy": 1.5838559640725645,
+            "kl": 0.007260408554665197,
+            "clipfrac": 0.09120480419116093
+          },
+          {
+            "policy": -0.005643350778183232,
+            "value": 0.020038765008269337,
+            "entropy": 1.5852130178267385,
+            "kl": 0.008077841775700532,
+            "clipfrac": 0.10548515665253327
+          },
+          {
+            "policy": -0.008877848676174794,
+            "value": 0.017902924279032822,
+            "entropy": 1.5834512169334567,
+            "kl": 0.008664151684374692,
+            "clipfrac": 0.11594073386253555
+          }
+        ],
+        "device": "cuda",
+        "samples": 55951
+      },
+      "scale": [
+        614141,
+        6034.126859877998,
+        9797.015724657404
+      ]
+    },
+    {
+      "update": 12,
+      "episodes": 1000,
+      "episodes_total": 12000,
+      "decisions": 54972,
+      "seeds": [
+        311000,
+        311999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 70,
+        "general/none/belts/burst+slow": 25,
+        "general/none/belts/regular": 86,
+        "general/none/belts/slow": 38,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 11,
+        "general/none/full/slow": 10,
+        "general/none/zone/burst": 36,
+        "general/none/zone/burst+slow": 12,
+        "general/none/zone/regular": 43,
+        "general/none/zone/slow": 19,
+        "general/when_idle/belts/burst": 95,
+        "general/when_idle/belts/burst+slow": 31,
+        "general/when_idle/belts/regular": 75,
+        "general/when_idle/belts/slow": 34,
+        "general/when_idle/full/burst": 21,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 13,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 7,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 11,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 50,
+        "real/none/belts/regular": 37,
+        "real/none/full/burst": 12,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 51,
+        "real/when_idle/belts/regular": 41,
+        "real/when_idle/full/burst": 3,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 68.35704428828048,
+      "empty_episodes": 77,
+      "mc_cost_to_go_mean": 5347.543691542011,
+      "all_decisions": 78066,
+      "gen_s": 8.874042576178908,
+      "gen_cpu_s": 303.76813049660996,
+      "train_s": 24.018971308134496,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.001157584840317012,
+            "value": 0.028587805533490655,
+            "entropy": 1.5507504870292532,
+            "kl": 0.006411823883334614,
+            "clipfrac": 0.07884013678336138
+          },
+          {
+            "policy": -0.003019378759698265,
+            "value": 0.023420886704004946,
+            "entropy": 1.5476279616711537,
+            "kl": 0.00735727332451492,
+            "clipfrac": 0.09091901330909319
+          },
+          {
+            "policy": -0.006530236939656407,
+            "value": 0.020164636450373155,
+            "entropy": 1.545289983640442,
+            "kl": 0.007608819998045017,
+            "clipfrac": 0.09797715200194623
+          },
+          {
+            "policy": -0.00787320368646283,
+            "value": 0.01892060258160193,
+            "entropy": 1.5461761609163294,
+            "kl": 0.008532937691805643,
+            "clipfrac": 0.11182056317574973
+          }
+        ],
+        "device": "cuda",
+        "samples": 54972
+      },
+      "scale": [
+        669113,
+        5977.719571527888,
+        9674.437300376405
+      ]
+    },
+    {
+      "update": 13,
+      "episodes": 1000,
+      "episodes_total": 13000,
+      "decisions": 56971,
+      "seeds": [
+        312000,
+        312999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 78,
+        "general/none/belts/burst+slow": 40,
+        "general/none/belts/regular": 75,
+        "general/none/belts/slow": 39,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 22,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 29,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 69,
+        "general/when_idle/belts/burst+slow": 31,
+        "general/when_idle/belts/regular": 90,
+        "general/when_idle/belts/slow": 21,
+        "general/when_idle/full/burst": 22,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 26,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 27,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 23,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 38,
+        "real/none/belts/regular": 40,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 22,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 38,
+        "real/when_idle/belts/regular": 37,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 11
+      },
+      "cost_mean": 72.58514313129628,
+      "empty_episodes": 86,
+      "mc_cost_to_go_mean": 5885.215280886561,
+      "all_decisions": 79700,
+      "gen_s": 9.988370240665972,
+      "gen_cpu_s": 361.2421263647266,
+      "train_s": 25.312089627142996,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0018521459954866867,
+            "value": 0.03319191629125031,
+            "entropy": 1.551519041708305,
+            "kl": 0.006735489993209491,
+            "clipfrac": 0.08579803759833778
+          },
+          {
+            "policy": -0.004084693365420482,
+            "value": 0.023252289232456865,
+            "entropy": 1.5448936486231228,
+            "kl": 0.007817577934747735,
+            "clipfrac": 0.09836583525919051
+          },
+          {
+            "policy": -0.00661654741616111,
+            "value": 0.02193243179179776,
+            "entropy": 1.546342241590604,
+            "kl": 0.008625649732511951,
+            "clipfrac": 0.1083007144019539
+          },
+          {
+            "policy": -0.00990781151994777,
+            "value": 0.02028907889311972,
+            "entropy": 1.5446153093092845,
+            "kl": 0.010064456315151703,
+            "clipfrac": 0.12234294642990262
+          }
+        ],
+        "device": "cuda",
+        "samples": 56971
+      },
+      "scale": [
+        726084,
+        5970.461372831784,
+        9637.723937611909
+      ]
+    },
+    {
+      "update": 14,
+      "episodes": 1000,
+      "episodes_total": 14000,
+      "decisions": 57310,
+      "seeds": [
+        313000,
+        313999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 78,
+        "general/none/belts/burst+slow": 29,
+        "general/none/belts/regular": 102,
+        "general/none/belts/slow": 24,
+        "general/none/full/burst": 26,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 13,
+        "general/none/full/slow": 12,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 23,
+        "general/none/zone/regular": 29,
+        "general/none/zone/slow": 17,
+        "general/when_idle/belts/burst": 86,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 77,
+        "general/when_idle/belts/slow": 19,
+        "general/when_idle/full/burst": 18,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 19,
+        "general/when_idle/full/slow": 14,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 13,
+        "heavy/none/full/burst": 7,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 12,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 22,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 6,
+        "real/none/belts/burst": 38,
+        "real/none/belts/regular": 35,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 37,
+        "real/when_idle/full/burst": 6,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 72.06334698728884,
+      "empty_episodes": 88,
+      "mc_cost_to_go_mean": 6384.41144191731,
+      "all_decisions": 80688,
+      "gen_s": 9.644550888799131,
+      "gen_cpu_s": 339.5314634228125,
+      "train_s": 29.827813209034503,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0018777898613371955,
+            "value": 0.036516015906334756,
+            "entropy": 1.4876974654060409,
+            "kl": 0.007657413984855667,
+            "clipfrac": 0.09411969987993735
+          },
+          {
+            "policy": -0.003624350702787565,
+            "value": 0.02563907940631667,
+            "entropy": 1.4845925478177262,
+            "kl": 0.008175379494352998,
+            "clipfrac": 0.10294887455678531
+          },
+          {
+            "policy": -0.006217266501681049,
+            "value": 0.023603840096627953,
+            "entropy": 1.4829033618571559,
+            "kl": 0.009023253732190106,
+            "clipfrac": 0.11519804571367978
+          },
+          {
+            "policy": -0.0099588144568964,
+            "value": 0.022930351648394548,
+            "entropy": 1.4819336754305161,
+            "kl": 0.010753219289784136,
+            "clipfrac": 0.13529924970478355
+          }
+        ],
+        "device": "cuda",
+        "samples": 57310
+      },
+      "scale": [
+        783394,
+        6000.744319164314,
+        10055.50116799022
+      ]
+    },
+    {
+      "update": 15,
+      "episodes": 1000,
+      "episodes_total": 15000,
+      "decisions": 54582,
+      "seeds": [
+        314000,
+        314999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 84,
+        "general/none/belts/burst+slow": 35,
+        "general/none/belts/regular": 91,
+        "general/none/belts/slow": 43,
+        "general/none/full/burst": 17,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 32,
+        "general/none/zone/burst+slow": 19,
+        "general/none/zone/regular": 22,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 59,
+        "general/when_idle/belts/burst+slow": 39,
+        "general/when_idle/belts/regular": 68,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 11,
+        "general/when_idle/full/regular": 25,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 23,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 14,
+        "heavy/when_idle/belts/burst": 23,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 6,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 14,
+        "real/none/full/regular": 11,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 11,
+        "real/when_idle/belts/burst": 39,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 67.20663021469768,
+      "empty_episodes": 76,
+      "mc_cost_to_go_mean": 4989.6451690468775,
+      "all_decisions": 76908,
+      "gen_s": 8.763499326072633,
+      "gen_cpu_s": 309.5942436098121,
+      "train_s": 23.677438606973737,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0025183257675285343,
+            "value": 0.028809119593747254,
+            "entropy": 1.470315430946311,
+            "kl": 0.00776956516569319,
+            "clipfrac": 0.09253966509542375
+          },
+          {
+            "policy": -0.0026444527263744617,
+            "value": 0.020896556743136632,
+            "entropy": 1.4661777168321242,
+            "kl": 0.00880197533372021,
+            "clipfrac": 0.10714154849666013
+          },
+          {
+            "policy": -0.00595384261125429,
+            "value": 0.018332196284361384,
+            "entropy": 1.4653401380320676,
+            "kl": 0.00900384378151459,
+            "clipfrac": 0.11082408120384414
+          },
+          {
+            "policy": -0.008589645144894955,
+            "value": 0.01779025898687562,
+            "entropy": 1.4653401425748716,
+            "kl": 0.009449950376248626,
+            "clipfrac": 0.11710820417028237
+          }
+        ],
+        "device": "cuda",
+        "samples": 54582
+      },
+      "scale": [
+        837976,
+        5934.885853275401,
+        9924.429487140374
+      ]
+    },
+    {
+      "update": 16,
+      "episodes": 1000,
+      "episodes_total": 16000,
+      "decisions": 55451,
+      "seeds": [
+        315000,
+        315999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 86,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 72,
+        "general/none/belts/slow": 29,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 16,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 30,
+        "general/none/zone/slow": 17,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 35,
+        "general/when_idle/belts/regular": 94,
+        "general/when_idle/belts/slow": 25,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 11,
+        "general/when_idle/full/regular": 27,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 23,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 9,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 6,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 36,
+        "real/none/belts/regular": 55,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 35,
+        "real/when_idle/belts/regular": 38,
+        "real/when_idle/full/burst": 6,
+        "real/when_idle/full/regular": 15
+      },
+      "cost_mean": 67.84463275383757,
+      "empty_episodes": 69,
+      "mc_cost_to_go_mean": 5158.559256510994,
+      "all_decisions": 78422,
+      "gen_s": 9.105800225865096,
+      "gen_cpu_s": 315.1295215948485,
+      "train_s": 26.40254041273147,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0025740037450102293,
+            "value": 0.030388400574834322,
+            "entropy": 1.4650393150333925,
+            "kl": 0.006609946048034878,
+            "clipfrac": 0.07817712935886154
+          },
+          {
+            "policy": -0.002551011264415085,
+            "value": 0.02267306576545951,
+            "entropy": 1.4583973594465234,
+            "kl": 0.0083382961960033,
+            "clipfrac": 0.09967358568920585
+          },
+          {
+            "policy": -0.006248257824293613,
+            "value": 0.02054605832281208,
+            "entropy": 1.4613412566160147,
+            "kl": 0.008148477571527318,
+            "clipfrac": 0.10122450450137833
+          },
+          {
+            "policy": -0.00852910249152112,
+            "value": 0.018866505827966694,
+            "entropy": 1.4579476607987192,
+            "kl": 0.008931099870414919,
+            "clipfrac": 0.11251375086477769
+          }
+        ],
+        "device": "cuda",
+        "samples": 55451
+      },
+      "scale": [
+        893427,
+        5886.702749208402,
+        9813.052661219954
+      ]
+    },
+    {
+      "update": 17,
+      "episodes": 1000,
+      "episodes_total": 17000,
+      "decisions": 54249,
+      "seeds": [
+        316000,
+        316999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 84,
+        "general/none/belts/burst+slow": 32,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 29,
+        "general/none/full/burst": 23,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 19,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 39,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 87,
+        "general/when_idle/belts/burst+slow": 40,
+        "general/when_idle/belts/regular": 86,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 12,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 22,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 36,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 4,
+        "real/none/zone/burst": 11,
+        "real/none/zone/regular": 17,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 53,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 65.2376423076549,
+      "empty_episodes": 95,
+      "mc_cost_to_go_mean": 5053.015466532459,
+      "all_decisions": 78498,
+      "gen_s": 9.231385862920433,
+      "gen_cpu_s": 317.61427835421637,
+      "train_s": 23.205220552626997,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.004685589274660616,
+            "value": 0.025410436108914667,
+            "entropy": 1.4145893751789334,
+            "kl": 0.008387459505960374,
+            "clipfrac": 0.09777138749060164
+          },
+          {
+            "policy": -0.001790920440539863,
+            "value": 0.02005596310745614,
+            "entropy": 1.4102423334981344,
+            "kl": 0.009855820071840084,
+            "clipfrac": 0.11937547236607919
+          },
+          {
+            "policy": -0.005920115441758627,
+            "value": 0.017874470844262746,
+            "entropy": 1.408493309555503,
+            "kl": 0.010002224268151897,
+            "clipfrac": 0.11823259412393027
+          },
+          {
+            "policy": -0.007201401592298056,
+            "value": 0.017151647430225663,
+            "entropy": 1.4112926715354102,
+            "kl": 0.010601872042103439,
+            "clipfrac": 0.12796549244254662
+          }
+        ],
+        "device": "cuda",
+        "samples": 54249
+      },
+      "scale": [
+        947676,
+        5838.978947616007,
+        9721.57462396433
+      ]
+    },
+    {
+      "update": 18,
+      "episodes": 1000,
+      "episodes_total": 18000,
+      "decisions": 54279,
+      "seeds": [
+        317000,
+        317999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 91,
+        "general/none/belts/burst+slow": 42,
+        "general/none/belts/regular": 69,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 9,
+        "general/none/full/burst+slow": 1,
+        "general/none/full/regular": 18,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 28,
+        "general/none/zone/burst+slow": 19,
+        "general/none/zone/regular": 27,
+        "general/none/zone/slow": 20,
+        "general/when_idle/belts/burst": 104,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 84,
+        "general/when_idle/belts/slow": 33,
+        "general/when_idle/full/burst": 10,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 16,
+        "general/when_idle/full/slow": 10,
+        "heavy/none/belts/burst": 8,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 7,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 12,
+        "heavy/when_idle/belts/regular": 13,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 48,
+        "real/none/full/burst": 9,
+        "real/none/full/regular": 11,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 47,
+        "real/when_idle/full/burst": 13,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 60.82437452152821,
+      "empty_episodes": 80,
+      "mc_cost_to_go_mean": 4769.426259493083,
+      "all_decisions": 77215,
+      "gen_s": 8.725490172859281,
+      "gen_cpu_s": 293.2731937756762,
+      "train_s": 20.012689218856394,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.004836576721658975,
+            "value": 0.02105144864756474,
+            "entropy": 1.3619613285434016,
+            "kl": 0.009318901323013747,
+            "clipfrac": 0.10370493192661441
+          },
+          {
+            "policy": -0.0017132177390559674,
+            "value": 0.016633218487636606,
+            "entropy": 1.3566624408806716,
+            "kl": 0.011123951467668569,
+            "clipfrac": 0.1275262993070876
+          },
+          {
+            "policy": -0.0055045844813841295,
+            "value": 0.014943741285823799,
+            "entropy": 1.3583332363459608,
+            "kl": 0.011891991728568283,
+            "clipfrac": 0.13463770518985244
+          },
+          {
+            "policy": -0.008966364628217222,
+            "value": 0.01450313714608317,
+            "entropy": 1.3575553874232953,
+            "kl": 0.01207643120034311,
+            "clipfrac": 0.13585364505774622
+          }
+        ],
+        "device": "cuda",
+        "samples": 54279
+      },
+      "scale": [
+        1001955,
+        5781.037971865056,
+        9617.855671525449
+      ]
+    },
+    {
+      "update": 19,
+      "episodes": 1000,
+      "episodes_total": 19000,
+      "decisions": 53209,
+      "seeds": [
+        318000,
+        318999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 78,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 98,
+        "general/none/belts/slow": 41,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 12,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 39,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 27,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 45,
+        "general/when_idle/belts/regular": 81,
+        "general/when_idle/belts/slow": 33,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 25,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 11,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 26,
+        "real/none/belts/regular": 47,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 31,
+        "real/when_idle/belts/regular": 34,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 6
+      },
+      "cost_mean": 64.51491366551957,
+      "empty_episodes": 103,
+      "mc_cost_to_go_mean": 4992.993953186582,
+      "all_decisions": 77977,
+      "gen_s": 8.376654278952628,
+      "gen_cpu_s": 289.11877265712246,
+      "train_s": 23.077835999894887,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.005741022049593207,
+            "value": 0.021748527128734384,
+            "entropy": 1.3292465372434537,
+            "kl": 0.010235911173742932,
+            "clipfrac": 0.11077073427385684
+          },
+          {
+            "policy": -0.0006961712634390488,
+            "value": 0.01794487021567448,
+            "entropy": 1.3271528352583717,
+            "kl": 0.011331978256698188,
+            "clipfrac": 0.12426469207793532
+          },
+          {
+            "policy": -0.005914799837975006,
+            "value": 0.01509376777779425,
+            "entropy": 1.3271675347950282,
+            "kl": 0.012271618283878996,
+            "clipfrac": 0.1353342479574483
+          },
+          {
+            "policy": -0.009479978420332522,
+            "value": 0.014650546611199727,
+            "entropy": 1.3262270433381311,
+            "kl": 0.01231014403065452,
+            "clipfrac": 0.1370632787795513
+          }
+        ],
+        "device": "cuda",
+        "samples": 53209
+      },
+      "scale": [
+        1055164,
+        5741.299093179035,
+        9507.49546231396
+      ]
+    },
+    {
+      "update": 20,
+      "episodes": 1000,
+      "episodes_total": 20000,
+      "decisions": 53619,
+      "seeds": [
+        319000,
+        319999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 82,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 76,
+        "general/none/belts/slow": 37,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 12,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 10,
+        "general/none/zone/burst": 30,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 35,
+        "general/none/zone/slow": 17,
+        "general/when_idle/belts/burst": 75,
+        "general/when_idle/belts/burst+slow": 42,
+        "general/when_idle/belts/regular": 86,
+        "general/when_idle/belts/slow": 32,
+        "general/when_idle/full/burst": 14,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 19,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 18,
+        "heavy/none/belts/regular": 16,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 11,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 12,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 14,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 49,
+        "real/when_idle/belts/regular": 59,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 5
+      },
+      "cost_mean": 62.09498391179111,
+      "empty_episodes": 106,
+      "mc_cost_to_go_mean": 4656.657014702252,
+      "all_decisions": 78599,
+      "gen_s": 8.512232366017997,
+      "gen_cpu_s": 294.1650942279957,
+      "train_s": 21.7269412628375,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.004883646338621713,
+            "value": 0.020861294493294564,
+            "entropy": 1.3159705444687675,
+            "kl": 0.008825940229884402,
+            "clipfrac": 0.09921856057180561
+          },
+          {
+            "policy": -0.0017030209791464885,
+            "value": 0.016784142946022353,
+            "entropy": 1.3129450821414532,
+            "kl": 0.01103763860386365,
+            "clipfrac": 0.1245454036679133
+          },
+          {
+            "policy": -0.006027134506268753,
+            "value": 0.015221047342949384,
+            "entropy": 1.3131462631125272,
+            "kl": 0.011328336059306247,
+            "clipfrac": 0.1252168074505063
+          },
+          {
+            "policy": -0.009039171340928529,
+            "value": 0.014203249592650917,
+            "entropy": 1.3114422944096353,
+            "kl": 0.012840886628332195,
+            "clipfrac": 0.14278520672905348
+          }
+        ],
+        "device": "cuda",
+        "samples": 53619
+      },
+      "scale": [
+        1108783,
+        5688.847510131803,
+        9389.872449028122
+      ]
+    },
+    {
+      "update": 21,
+      "episodes": 1000,
+      "episodes_total": 21000,
+      "decisions": 56675,
+      "seeds": [
+        320000,
+        320999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 76,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 22,
+        "general/when_idle/belts/burst": 78,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 80,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 15,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 21,
+        "heavy/none/belts/regular": 23,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 12,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 33,
+        "real/none/belts/regular": 46,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 48,
+        "real/when_idle/belts/regular": 46,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 62.01929560781023,
+      "empty_episodes": 75,
+      "mc_cost_to_go_mean": 5018.3530845764235,
+      "all_decisions": 79258,
+      "gen_s": 9.301124169956893,
+      "gen_cpu_s": 328.44997748732567,
+      "train_s": 23.411490626633167,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.002651139562173094,
+            "value": 0.02162352760023728,
+            "entropy": 1.3130233882164504,
+            "kl": 0.011331020830274425,
+            "clipfrac": 0.10729598587601523
+          },
+          {
+            "policy": -0.005739952844042162,
+            "value": 0.01643796525829865,
+            "entropy": 1.3177145520842544,
+            "kl": 0.014952380151660841,
+            "clipfrac": 0.11537715041064249
+          },
+          {
+            "policy": -0.00977835044757774,
+            "value": 0.015240667761719642,
+            "entropy": 1.312745207686439,
+            "kl": 0.017410126604948294,
+            "clipfrac": 0.1338509042850927
+          },
+          {
+            "policy": -0.009953134943327295,
+            "value": 0.015203241433407642,
+            "entropy": 1.314452632301223,
+            "kl": 0.02050298458049883,
+            "clipfrac": 0.13540361711644475
+          }
+        ],
+        "device": "cuda",
+        "samples": 56675
+      },
+      "scale": [
+        1165458,
+        5656.242069551083,
+        9371.342517111336
+      ]
+    },
+    {
+      "update": 22,
+      "episodes": 1000,
+      "episodes_total": 22000,
+      "decisions": 52043,
+      "seeds": [
+        321000,
+        321999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 83,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 84,
+        "general/none/belts/slow": 37,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 23,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 30,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 74,
+        "general/when_idle/belts/burst+slow": 39,
+        "general/when_idle/belts/regular": 64,
+        "general/when_idle/belts/slow": 32,
+        "general/when_idle/full/burst": 20,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 9,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 12,
+        "heavy/none/full/burst": 6,
+        "heavy/none/full/regular": 9,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 15,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 14,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 6,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 45,
+        "real/when_idle/belts/regular": 49,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 62.61225982411328,
+      "empty_episodes": 88,
+      "mc_cost_to_go_mean": 5366.514392504266,
+      "all_decisions": 76304,
+      "gen_s": 8.633945586159825,
+      "gen_cpu_s": 310.29141477122903,
+      "train_s": 23.368190304841846,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.021343335100357946,
+            "value": 0.04020324105750584,
+            "entropy": 1.2808324560187174,
+            "kl": 0.033792742031428895,
+            "clipfrac": 0.13304382915445792
+          },
+          {
+            "policy": 0.007737409957017388,
+            "value": 0.025433077998153687,
+            "entropy": 1.2921222911964858,
+            "kl": 0.025419608399279408,
+            "clipfrac": 0.15127875026162768
+          },
+          {
+            "policy": 0.0031272471074199654,
+            "value": 0.02218740840961602,
+            "entropy": 1.2886888134881063,
+            "kl": 0.02454442684018,
+            "clipfrac": 0.14561036066759253
+          },
+          {
+            "policy": 0.0031226608958263885,
+            "value": 0.020333292925901032,
+            "entropy": 1.288415504565185,
+            "kl": 0.024740987600586482,
+            "clipfrac": 0.1550832965154073
+          }
+        ],
+        "device": "cuda",
+        "samples": 52043
+      },
+      "scale": [
+        1217501,
+        5643.857441122358,
+        9425.802697792078
+      ]
+    },
+    {
+      "update": 23,
+      "episodes": 1000,
+      "episodes_total": 23000,
+      "decisions": 52533,
+      "seeds": [
+        322000,
+        322999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 87,
+        "general/none/belts/burst+slow": 23,
+        "general/none/belts/regular": 70,
+        "general/none/belts/slow": 39,
+        "general/none/full/burst": 14,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 35,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 25,
+        "general/when_idle/belts/burst": 94,
+        "general/when_idle/belts/burst+slow": 28,
+        "general/when_idle/belts/regular": 64,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 13,
+        "heavy/none/zone/regular": 6,
+        "heavy/when_idle/belts/burst": 12,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 51,
+        "real/when_idle/belts/regular": 54,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 56.6676221495164,
+      "empty_episodes": 76,
+      "mc_cost_to_go_mean": 4054.5428358265294,
+      "all_decisions": 76042,
+      "gen_s": 8.322638478130102,
+      "gen_cpu_s": 290.0139542641118,
+      "train_s": 18.985738415271044,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.009778583371245597,
+            "value": 0.019358542201319683,
+            "entropy": 1.2394051572899965,
+            "kl": 0.01724682893452568,
+            "clipfrac": 0.14421411303626502
+          },
+          {
+            "policy": 0.0024523106381577077,
+            "value": 0.016049289694100768,
+            "entropy": 1.2460156636514672,
+            "kl": 0.017054670225144074,
+            "clipfrac": 0.14526107399357183
+          },
+          {
+            "policy": -0.0017360560837803704,
+            "value": 0.015394668883565136,
+            "entropy": 1.2415201052618565,
+            "kl": 0.017865723604541143,
+            "clipfrac": 0.15835760379530608
+          },
+          {
+            "policy": -0.006069889142103771,
+            "value": 0.014188556624645413,
+            "entropy": 1.2383447573086166,
+            "kl": 0.016886390581900907,
+            "clipfrac": 0.15081948489691063
+          }
+        ],
+        "device": "cuda",
+        "samples": 52533
+      },
+      "scale": [
+        1270034,
+        5578.117890716642,
+        9312.350852130276
+      ]
+    },
+    {
+      "update": 24,
+      "episodes": 1000,
+      "episodes_total": 24000,
+      "decisions": 53491,
+      "seeds": [
+        323000,
+        323999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 81,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 74,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 14,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 26,
+        "general/none/zone/burst+slow": 6,
+        "general/none/zone/regular": 49,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 70,
+        "general/when_idle/belts/burst+slow": 35,
+        "general/when_idle/belts/regular": 87,
+        "general/when_idle/belts/slow": 30,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 16,
+        "general/when_idle/full/slow": 9,
+        "heavy/none/belts/burst": 22,
+        "heavy/none/belts/regular": 24,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 23,
+        "heavy/when_idle/belts/regular": 14,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 8,
+        "real/none/belts/burst": 39,
+        "real/none/belts/regular": 40,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 43,
+        "real/when_idle/belts/regular": 49,
+        "real/when_idle/full/burst": 13,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 59.00001705887787,
+      "empty_episodes": 92,
+      "mc_cost_to_go_mean": 4576.497294804315,
+      "all_decisions": 78750,
+      "gen_s": 8.819814697373658,
+      "gen_cpu_s": 296.74227278260514,
+      "train_s": 23.11784694902599,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.009264701707051662,
+            "value": 0.02088179573836241,
+            "entropy": 1.2290713172212002,
+            "kl": 0.012954079025982274,
+            "clipfrac": 0.12880671512898187
+          },
+          {
+            "policy": 0.001420869683287143,
+            "value": 0.016607802053008634,
+            "entropy": 1.2235317739768494,
+            "kl": 0.014090985904824905,
+            "clipfrac": 0.14125740778084386
+          },
+          {
+            "policy": -0.003126051991253657,
+            "value": 0.01592731578921329,
+            "entropy": 1.2223667636731275,
+            "kl": 0.013489284453026417,
+            "clipfrac": 0.14357555471552202
+          },
+          {
+            "policy": -0.006229107274300643,
+            "value": 0.014474782767868568,
+            "entropy": 1.2248206107143207,
+            "kl": 0.014151552747213204,
+            "clipfrac": 0.1504926062266956
+          }
+        ],
+        "device": "cuda",
+        "samples": 53491
+      },
+      "scale": [
+        1323525,
+        5537.636836489579,
+        9220.200132987362
+      ]
+    },
+    {
+      "update": 25,
+      "episodes": 1000,
+      "episodes_total": 25000,
+      "decisions": 53741,
+      "seeds": [
+        324000,
+        324999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 67,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 86,
+        "general/none/belts/slow": 25,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 22,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 83,
+        "general/when_idle/belts/burst+slow": 29,
+        "general/when_idle/belts/regular": 86,
+        "general/when_idle/belts/slow": 31,
+        "general/when_idle/full/burst": 26,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 15,
+        "general/when_idle/full/slow": 12,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 3,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 17,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 39,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 29,
+        "real/when_idle/belts/burst": 49,
+        "real/when_idle/belts/regular": 42,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 16
+      },
+      "cost_mean": 57.4413088716067,
+      "empty_episodes": 86,
+      "mc_cost_to_go_mean": 4612.096430856921,
+      "all_decisions": 78792,
+      "gen_s": 9.169681845232844,
+      "gen_cpu_s": 309.83720338717103,
+      "train_s": 23.030290595721453,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00653961809341885,
+            "value": 0.02384728453906445,
+            "entropy": 1.182533646530036,
+            "kl": 0.012265348066820825,
+            "clipfrac": 0.12820751381848514
+          },
+          {
+            "policy": 0.0005308892316206097,
+            "value": 0.018334596007941746,
+            "entropy": 1.1848438021832393,
+            "kl": 0.014108352711075313,
+            "clipfrac": 0.14750376805296825
+          },
+          {
+            "policy": -0.005398085600146473,
+            "value": 0.01672620064298571,
+            "entropy": 1.1804791581268916,
+            "kl": 0.014038359441158572,
+            "clipfrac": 0.1464989486633894
+          },
+          {
+            "policy": -0.008690245333710394,
+            "value": 0.015447959020253173,
+            "entropy": 1.1818185221534228,
+            "kl": 0.014035105576933814,
+            "clipfrac": 0.1521371019592847
+          }
+        ],
+        "device": "cuda",
+        "samples": 53741
+      },
+      "scale": [
+        1377266,
+        5501.522195643802,
+        9177.273038418214
+      ]
+    },
+    {
+      "update": 26,
+      "episodes": 1000,
+      "episodes_total": 26000,
+      "decisions": 52405,
+      "seeds": [
+        325000,
+        325999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 83,
+        "general/none/belts/burst+slow": 25,
+        "general/none/belts/regular": 89,
+        "general/none/belts/slow": 41,
+        "general/none/full/burst": 15,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 8,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 43,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 29,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 78,
+        "general/when_idle/belts/burst+slow": 29,
+        "general/when_idle/belts/regular": 78,
+        "general/when_idle/belts/slow": 34,
+        "general/when_idle/full/burst": 14,
+        "general/when_idle/full/burst+slow": 9,
+        "general/when_idle/full/regular": 15,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 13,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 44,
+        "real/none/belts/regular": 61,
+        "real/none/full/burst": 14,
+        "real/none/full/regular": 16,
+        "real/none/zone/burst": 26,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 34,
+        "real/when_idle/belts/regular": 44,
+        "real/when_idle/full/burst": 6,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 55.079010077240476,
+      "empty_episodes": 88,
+      "mc_cost_to_go_mean": 4217.018573733577,
+      "all_decisions": 77718,
+      "gen_s": 8.617692184168845,
+      "gen_cpu_s": 298.4085882077925,
+      "train_s": 27.4048140370287,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.005907343654250805,
+            "value": 0.01638384967864302,
+            "entropy": 1.1781378711501715,
+            "kl": 0.011579093017792388,
+            "clipfrac": 0.12924339281200123
+          },
+          {
+            "policy": -0.0014381376083653433,
+            "value": 0.013902962676627714,
+            "entropy": 1.178141496698088,
+            "kl": 0.012584467616201288,
+            "clipfrac": 0.14332601850399726
+          },
+          {
+            "policy": -0.005639601020358717,
+            "value": 0.012774907809375364,
+            "entropy": 1.1789957978481806,
+            "kl": 0.012074308138503855,
+            "clipfrac": 0.13487262668249977
+          },
+          {
+            "policy": -0.009181252571587726,
+            "value": 0.012431556976017959,
+            "entropy": 1.179626331840259,
+            "kl": 0.012720539913952703,
+            "clipfrac": 0.14702795535260604
+          }
+        ],
+        "device": "cuda",
+        "samples": 52405
+      },
+      "scale": [
+        1429671,
+        5454.438347467383,
+        9089.05910130436
+      ]
+    },
+    {
+      "update": 27,
+      "episodes": 1000,
+      "episodes_total": 27000,
+      "decisions": 52864,
+      "seeds": [
+        326000,
+        326999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 76,
+        "general/none/belts/burst+slow": 43,
+        "general/none/belts/regular": 89,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 17,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 24,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 26,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 79,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 62,
+        "general/when_idle/belts/slow": 44,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 23,
+        "general/when_idle/full/slow": 4,
+        "heavy/none/belts/burst": 18,
+        "heavy/none/belts/regular": 13,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 3,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/regular": 6,
+        "real/none/belts/burst": 37,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 9,
+        "real/none/full/regular": 21,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 40,
+        "real/when_idle/belts/regular": 46,
+        "real/when_idle/full/burst": 5,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 58.31351787619761,
+      "empty_episodes": 94,
+      "mc_cost_to_go_mean": 4813.2529428798125,
+      "all_decisions": 76987,
+      "gen_s": 8.565272741019726,
+      "gen_cpu_s": 305.439329248853,
+      "train_s": 25.77968951780349,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00565983460580177,
+            "value": 0.02489530396609416,
+            "entropy": 1.226494569755351,
+            "kl": 0.011449389264679793,
+            "clipfrac": 0.12530266343825666
+          },
+          {
+            "policy": -0.0010284389037702043,
+            "value": 0.019667724363920763,
+            "entropy": 1.224574187188691,
+            "kl": 0.012953359608878957,
+            "clipfrac": 0.14045475181598063
+          },
+          {
+            "policy": -0.007256338350276393,
+            "value": 0.017282502062745012,
+            "entropy": 1.2254260128981842,
+            "kl": 0.012675373754114563,
+            "clipfrac": 0.1393008474576271
+          },
+          {
+            "policy": -0.011489405364393466,
+            "value": 0.016812575142154104,
+            "entropy": 1.2252566462278944,
+            "kl": 0.014930955035111373,
+            "clipfrac": 0.15534200968523001
+          }
+        ],
+        "device": "cuda",
+        "samples": 52864
+      },
+      "scale": [
+        1482535,
+        5431.575059094417,
+        9055.050584832105
+      ]
+    },
+    {
+      "update": 28,
+      "episodes": 1000,
+      "episodes_total": 28000,
+      "decisions": 54330,
+      "seeds": [
+        327000,
+        327999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 78,
+        "general/none/belts/burst+slow": 26,
+        "general/none/belts/regular": 78,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 11,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 10,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 66,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 79,
+        "general/when_idle/belts/slow": 34,
+        "general/when_idle/full/burst": 10,
+        "general/when_idle/full/burst+slow": 14,
+        "general/when_idle/full/regular": 26,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 15,
+        "heavy/none/belts/regular": 23,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 6,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 18,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 44,
+        "real/none/belts/regular": 46,
+        "real/none/full/burst": 15,
+        "real/none/full/regular": 15,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 38,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 16
+      },
+      "cost_mean": 57.92541984604299,
+      "empty_episodes": 88,
+      "mc_cost_to_go_mean": 4378.691783263158,
+      "all_decisions": 78749,
+      "gen_s": 8.537920326925814,
+      "gen_cpu_s": 293.527679794468,
+      "train_s": 20.411463445052505,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.006213900184208422,
+            "value": 0.022935707496742112,
+            "entropy": 1.2070287100983088,
+            "kl": 0.011201076227596399,
+            "clipfrac": 0.12424075096796258
+          },
+          {
+            "policy": -0.0019808169313772113,
+            "value": 0.01770538359986042,
+            "entropy": 1.2121193186872115,
+            "kl": 0.012304475826029398,
+            "clipfrac": 0.13189766242888978
+          },
+          {
+            "policy": -0.005916837088732173,
+            "value": 0.016651220539454135,
+            "entropy": 1.2070743752254343,
+            "kl": 0.01308642592820732,
+            "clipfrac": 0.14189214061554153
+          },
+          {
+            "policy": -0.009947249507258966,
+            "value": 0.01529081934991351,
+            "entropy": 1.2071379869611316,
+            "kl": 0.013654890179753403,
+            "clipfrac": 0.1465120559499647
+          }
+        ],
+        "device": "cuda",
+        "samples": 54330
+      },
+      "scale": [
+        1536865,
+        5394.354386897564,
+        8990.515630965878
+      ]
+    },
+    {
+      "update": 29,
+      "episodes": 1000,
+      "episodes_total": 29000,
+      "decisions": 55570,
+      "seeds": [
+        328000,
+        328999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 80,
+        "general/none/belts/burst+slow": 31,
+        "general/none/belts/regular": 82,
+        "general/none/belts/slow": 21,
+        "general/none/full/burst": 12,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 25,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 40,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 41,
+        "general/none/zone/slow": 21,
+        "general/when_idle/belts/burst": 73,
+        "general/when_idle/belts/burst+slow": 37,
+        "general/when_idle/belts/regular": 93,
+        "general/when_idle/belts/slow": 20,
+        "general/when_idle/full/burst": 18,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 20,
+        "general/when_idle/full/slow": 2,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 14,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 26,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 58,
+        "real/none/belts/regular": 43,
+        "real/none/full/burst": 12,
+        "real/none/full/regular": 14,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 10,
+        "real/when_idle/belts/burst": 50,
+        "real/when_idle/belts/regular": 34,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 4
+      },
+      "cost_mean": 56.52238178733995,
+      "empty_episodes": 76,
+      "mc_cost_to_go_mean": 4138.242268890227,
+      "all_decisions": 79822,
+      "gen_s": 8.882279878016561,
+      "gen_cpu_s": 309.71003582002595,
+      "train_s": 18.894908448681235,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.006887445865785215,
+            "value": 0.01954556571891867,
+            "entropy": 1.2196400013591224,
+            "kl": 0.011450542677318666,
+            "clipfrac": 0.12008277847786397
+          },
+          {
+            "policy": -0.002777462142265077,
+            "value": 0.01600872921293666,
+            "entropy": 1.2166303875893811,
+            "kl": 0.012227365167451855,
+            "clipfrac": 0.12987223322097188
+          },
+          {
+            "policy": -0.006780821150271009,
+            "value": 0.014836474159148898,
+            "entropy": 1.2178056923331,
+            "kl": 0.01252520149960827,
+            "clipfrac": 0.13577469857863778
+          },
+          {
+            "policy": -0.01157557576176115,
+            "value": 0.014260267222758374,
+            "entropy": 1.2112898976248934,
+            "kl": 0.013066754268811818,
+            "clipfrac": 0.14052546337978947
+          }
+        ],
+        "device": "cuda",
+        "samples": 55570
+      },
+      "scale": [
+        1592435,
+        5350.520792184022,
+        8901.078805628676
+      ]
+    },
+    {
+      "update": 30,
+      "episodes": 1000,
+      "episodes_total": 30000,
+      "decisions": 52554,
+      "seeds": [
+        329000,
+        329999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 75,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 23,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 42,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 10,
+        "general/when_idle/belts/burst": 76,
+        "general/when_idle/belts/burst+slow": 24,
+        "general/when_idle/belts/regular": 84,
+        "general/when_idle/belts/slow": 40,
+        "general/when_idle/full/burst": 12,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 15,
+        "heavy/none/full/burst": 7,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 10,
+        "heavy/when_idle/belts/regular": 21,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 54,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 15,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 52,
+        "real/when_idle/belts/regular": 53,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 54.690652397347975,
+      "empty_episodes": 98,
+      "mc_cost_to_go_mean": 4141.240323904023,
+      "all_decisions": 77299,
+      "gen_s": 7.959081484004855,
+      "gen_cpu_s": 276.57296791952103,
+      "train_s": 18.497523189987987,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.005756667140217301,
+            "value": 0.018877353894891778,
+            "entropy": 1.2045121802928744,
+            "kl": 0.01002170110218066,
+            "clipfrac": 0.10758457967326962
+          },
+          {
+            "policy": -0.00219451850318798,
+            "value": 0.01559786302889823,
+            "entropy": 1.2008273137025411,
+            "kl": 0.012010885141384452,
+            "clipfrac": 0.12743083304734554
+          },
+          {
+            "policy": -0.007414295598844708,
+            "value": 0.014438709815181604,
+            "entropy": 1.204637855768848,
+            "kl": 0.012258201131950381,
+            "clipfrac": 0.12901016098011592
+          },
+          {
+            "policy": -0.011325614342212442,
+            "value": 0.013502529453723386,
+            "entropy": 1.2041284687039913,
+            "kl": 0.01292425850068522,
+            "clipfrac": 0.13557483731303063
+          }
+        ],
+        "device": "cuda",
+        "samples": 52554
+      },
+      "scale": [
+        1644989,
+        5311.886779597965,
+        8829.571445419759
+      ]
+    },
+    {
+      "update": 31,
+      "episodes": 1000,
+      "episodes_total": 31000,
+      "decisions": 55375,
+      "seeds": [
+        330000,
+        330999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 80,
+        "general/none/belts/burst+slow": 40,
+        "general/none/belts/regular": 60,
+        "general/none/belts/slow": 31,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 35,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 47,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 70,
+        "general/when_idle/belts/burst+slow": 35,
+        "general/when_idle/belts/regular": 84,
+        "general/when_idle/belts/slow": 30,
+        "general/when_idle/full/burst": 19,
+        "general/when_idle/full/burst+slow": 2,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 10,
+        "heavy/none/belts/burst": 21,
+        "heavy/none/belts/regular": 13,
+        "heavy/none/full/burst": 8,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 18,
+        "heavy/when_idle/full/burst": 7,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 34,
+        "real/none/belts/regular": 39,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 17,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 20,
+        "real/when_idle/belts/burst": 44,
+        "real/when_idle/belts/regular": 51,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 9
+      },
+      "cost_mean": 60.45464854507909,
+      "empty_episodes": 86,
+      "mc_cost_to_go_mean": 4656.74977126371,
+      "all_decisions": 78887,
+      "gen_s": 9.00302729010582,
+      "gen_cpu_s": 306.76081471098587,
+      "train_s": 22.288862793240696,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.007256659523762645,
+            "value": 0.022903455642726837,
+            "entropy": 1.1898798783993345,
+            "kl": 0.01195593400208823,
+            "clipfrac": 0.12232957110178928
+          },
+          {
+            "policy": 0.000749495169917294,
+            "value": 0.018629050257395002,
+            "entropy": 1.1862352104617564,
+            "kl": 0.014349588243959316,
+            "clipfrac": 0.14517381489411435
+          },
+          {
+            "policy": -0.0060704917630546515,
+            "value": 0.01789850666912159,
+            "entropy": 1.184552383517573,
+            "kl": 0.01420074503971411,
+            "clipfrac": 0.14889390519550638
+          },
+          {
+            "policy": -0.009837155417045136,
+            "value": 0.016106724646522685,
+            "entropy": 1.1888745205795255,
+            "kl": 0.014012802233990979,
+            "clipfrac": 0.1458239277670534
+          }
+        ],
+        "device": "cuda",
+        "samples": 55375
+      },
+      "scale": [
+        1700364,
+        5290.551223307277,
+        8776.661720274686
+      ]
+    },
+    {
+      "update": 32,
+      "episodes": 1000,
+      "episodes_total": 32000,
+      "decisions": 52418,
+      "seeds": [
+        331000,
+        331999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 79,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 74,
+        "general/none/belts/slow": 41,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 18,
+        "general/none/full/slow": 12,
+        "general/none/zone/burst": 22,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 39,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 84,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 75,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 28,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 10,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 26,
+        "heavy/none/belts/regular": 10,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 63,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 11,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 21,
+        "real/when_idle/belts/burst": 46,
+        "real/when_idle/belts/regular": 35,
+        "real/when_idle/full/burst": 4,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 57.71605859572855,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 4407.837290707275,
+      "all_decisions": 77158,
+      "gen_s": 8.23596490174532,
+      "gen_cpu_s": 279.5443523810245,
+      "train_s": 18.776017318945378,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.005406399859967811,
+            "value": 0.023746696878204,
+            "entropy": 1.2511539343380502,
+            "kl": 0.010765703285812446,
+            "clipfrac": 0.1127856843054961
+          },
+          {
+            "policy": -0.0025956104789721644,
+            "value": 0.019833005785875556,
+            "entropy": 1.249649928532988,
+            "kl": 0.011188855247572847,
+            "clipfrac": 0.12459460488567503
+          },
+          {
+            "policy": -0.0072508522451607315,
+            "value": 0.018486975266545327,
+            "entropy": 1.2469889906735472,
+            "kl": 0.012442747999025736,
+            "clipfrac": 0.13628906100474417
+          },
+          {
+            "policy": -0.012031604018034067,
+            "value": 0.016765353120665866,
+            "entropy": 1.2515449276492252,
+            "kl": 0.013222839866048008,
+            "clipfrac": 0.14319508563087663
+          }
+        ],
+        "device": "cuda",
+        "samples": 52418
+      },
+      "scale": [
+        1752782,
+        5264.153132204623,
+        8714.98496752563
+      ]
+    },
+    {
+      "update": 33,
+      "episodes": 1000,
+      "episodes_total": 33000,
+      "decisions": 54670,
+      "seeds": [
+        332000,
+        332999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 76,
+        "general/none/belts/burst+slow": 34,
+        "general/none/belts/regular": 86,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 31,
+        "general/none/zone/burst+slow": 8,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 7,
+        "general/when_idle/belts/burst": 89,
+        "general/when_idle/belts/burst+slow": 31,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 46,
+        "general/when_idle/full/burst": 10,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 9,
+        "heavy/none/belts/burst": 21,
+        "heavy/none/belts/regular": 12,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 49,
+        "real/none/full/burst": 8,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 21,
+        "real/when_idle/belts/burst": 47,
+        "real/when_idle/belts/regular": 43,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 11
+      },
+      "cost_mean": 58.48536488149264,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 4395.990705498283,
+      "all_decisions": 78866,
+      "gen_s": 8.307959257159382,
+      "gen_cpu_s": 293.2255132207647,
+      "train_s": 18.166544902138412,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.005958506731868052,
+            "value": 0.022848290343499226,
+            "entropy": 1.2216656256969307,
+            "kl": 0.01190211087242562,
+            "clipfrac": 0.13261386501313738
+          },
+          {
+            "policy": -0.004176255592332585,
+            "value": 0.01870101259638715,
+            "entropy": 1.2188965538639636,
+            "kl": 0.014044528081927953,
+            "clipfrac": 0.14569233583808708
+          },
+          {
+            "policy": -0.010679056724792035,
+            "value": 0.01728739604859514,
+            "entropy": 1.2204179739284846,
+            "kl": 0.015308835679600133,
+            "clipfrac": 0.14852752878795883
+          },
+          {
+            "policy": -0.014556111359652946,
+            "value": 0.015936652611881815,
+            "entropy": 1.2182503523328567,
+            "kl": 0.015659654790711713,
+            "clipfrac": 0.15920980427995424
+          }
+        ],
+        "device": "cuda",
+        "samples": 54670
+      },
+      "scale": [
+        1807452,
+        5237.893823593396,
+        8662.277121813418
+      ]
+    },
+    {
+      "update": 34,
+      "episodes": 1000,
+      "episodes_total": 34000,
+      "decisions": 54333,
+      "seeds": [
+        333000,
+        333999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 90,
+        "general/none/belts/burst+slow": 40,
+        "general/none/belts/regular": 68,
+        "general/none/belts/slow": 38,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 17,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 39,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 66,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 83,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 18,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 6,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 21,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 34,
+        "real/none/belts/regular": 59,
+        "real/none/full/burst": 5,
+        "real/none/full/regular": 11,
+        "real/none/zone/burst": 14,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 50,
+        "real/when_idle/belts/regular": 51,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 56.97527280878648,
+      "empty_episodes": 85,
+      "mc_cost_to_go_mean": 4067.684404719772,
+      "all_decisions": 77700,
+      "gen_s": 8.45243499102071,
+      "gen_cpu_s": 294.8610010575503,
+      "train_s": 17.3454094203189,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.006469729147638782,
+            "value": 0.020290381661972886,
+            "entropy": 1.233119080786022,
+            "kl": 0.01058406317706261,
+            "clipfrac": 0.11315406842163998
+          },
+          {
+            "policy": -0.0016740994624302747,
+            "value": 0.01679115037167792,
+            "entropy": 1.232502294085219,
+            "kl": 0.012606983787235985,
+            "clipfrac": 0.13419100730377648
+          },
+          {
+            "policy": -0.008138073675506275,
+            "value": 0.016194389622598223,
+            "entropy": 1.23188573767843,
+            "kl": 0.012565153640980537,
+            "clipfrac": 0.13730145582371384
+          },
+          {
+            "policy": -0.012425470996098944,
+            "value": 0.015251883231474351,
+            "entropy": 1.2347871181270809,
+            "kl": 0.014363349526761314,
+            "clipfrac": 0.15047945079115985
+          }
+        ],
+        "device": "cuda",
+        "samples": 54333
+      },
+      "scale": [
+        1861785,
+        5203.743270035639,
+        8586.320412936886
+      ]
+    },
+    {
+      "update": 35,
+      "episodes": 1000,
+      "episodes_total": 35000,
+      "decisions": 55370,
+      "seeds": [
+        334000,
+        334999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 82,
+        "general/none/belts/burst+slow": 38,
+        "general/none/belts/regular": 68,
+        "general/none/belts/slow": 36,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 32,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 41,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 64,
+        "general/when_idle/belts/burst+slow": 37,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 29,
+        "general/when_idle/full/burst": 21,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 11,
+        "general/when_idle/full/slow": 11,
+        "heavy/none/belts/burst": 26,
+        "heavy/none/belts/regular": 28,
+        "heavy/none/full/burst": 6,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 23,
+        "heavy/when_idle/belts/regular": 25,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 54,
+        "real/none/full/burst": 8,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 12,
+        "real/none/zone/regular": 20,
+        "real/when_idle/belts/burst": 48,
+        "real/when_idle/belts/regular": 42,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 5
+      },
+      "cost_mean": 60.37480381428188,
+      "empty_episodes": 78,
+      "mc_cost_to_go_mean": 4347.809117744456,
+      "all_decisions": 78834,
+      "gen_s": 8.653869131114334,
+      "gen_cpu_s": 297.58202894730493,
+      "train_s": 23.931396448984742,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0076531725273098735,
+            "value": 0.02267439753572035,
+            "entropy": 1.1961905883110795,
+            "kl": 0.011230773688358085,
+            "clipfrac": 0.11659743543542721
+          },
+          {
+            "policy": 0.0004190127798069335,
+            "value": 0.01805050947917203,
+            "entropy": 1.193424250262727,
+            "kl": 0.012031550667318806,
+            "clipfrac": 0.1288603937185067
+          },
+          {
+            "policy": -0.007214989840004749,
+            "value": 0.01726555650636987,
+            "entropy": 1.1966206122202543,
+            "kl": 0.012187266525460405,
+            "clipfrac": 0.13431461080182153
+          },
+          {
+            "policy": -0.007942203529608342,
+            "value": 0.016465482342613504,
+            "entropy": 1.19595239916411,
+            "kl": 0.014760092152889797,
+            "clipfrac": 0.1572150984282138
+          }
+        ],
+        "device": "cuda",
+        "samples": 55370
+      },
+      "scale": [
+        1917155,
+        5179.022747171081,
+        8534.481816839128
+      ]
+    },
+    {
+      "update": 36,
+      "episodes": 1000,
+      "episodes_total": 36000,
+      "decisions": 54913,
+      "seeds": [
+        335000,
+        335999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 74,
+        "general/none/belts/burst+slow": 44,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 32,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 19,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 28,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 66,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 79,
+        "general/when_idle/belts/slow": 36,
+        "general/when_idle/full/burst": 24,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 14,
+        "heavy/when_idle/belts/regular": 27,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 50,
+        "real/none/belts/regular": 40,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 15,
+        "real/none/zone/burst": 23,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 41,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 11
+      },
+      "cost_mean": 58.200478108623635,
+      "empty_episodes": 86,
+      "mc_cost_to_go_mean": 4677.813489057742,
+      "all_decisions": 79237,
+      "gen_s": 8.682030259165913,
+      "gen_cpu_s": 303.24593592854217,
+      "train_s": 21.344349157065153,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00512677652237379,
+            "value": 0.02557834155977029,
+            "entropy": 1.1800008722584072,
+            "kl": 0.011493990887998441,
+            "clipfrac": 0.11933421958207698
+          },
+          {
+            "policy": -0.00356936630843253,
+            "value": 0.01940359139402744,
+            "entropy": 1.1790106286944038,
+            "kl": 0.011879960748280533,
+            "clipfrac": 0.1261449929878243
+          },
+          {
+            "policy": -0.009196246859198603,
+            "value": 0.017513270522858636,
+            "entropy": 1.1803351096593044,
+            "kl": 0.013675608291925292,
+            "clipfrac": 0.1437000346072411
+          },
+          {
+            "policy": -0.012136388209772763,
+            "value": 0.016365002750123314,
+            "entropy": 1.1791271231282274,
+            "kl": 0.015057977143767148,
+            "clipfrac": 0.14992806803380612
+          }
+        ],
+        "device": "cuda",
+        "samples": 54913
+      },
+      "scale": [
+        1972068,
+        5165.066380559596,
+        8540.750717961508
+      ]
+    },
+    {
+      "update": 37,
+      "episodes": 1000,
+      "episodes_total": 37000,
+      "decisions": 54978,
+      "seeds": [
+        336000,
+        336999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 33,
+        "general/none/belts/regular": 69,
+        "general/none/belts/slow": 41,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 20,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 15,
+        "general/none/zone/regular": 37,
+        "general/none/zone/slow": 21,
+        "general/when_idle/belts/burst": 94,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 31,
+        "general/when_idle/full/burst": 16,
+        "general/when_idle/full/burst+slow": 9,
+        "general/when_idle/full/regular": 11,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 23,
+        "heavy/none/belts/regular": 24,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 11,
+        "heavy/when_idle/belts/burst": 21,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 1,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 37,
+        "real/none/full/burst": 6,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 22,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 5,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 57.425298560042236,
+      "empty_episodes": 89,
+      "mc_cost_to_go_mean": 4152.278012855812,
+      "all_decisions": 78317,
+      "gen_s": 8.378638265654445,
+      "gen_cpu_s": 296.89552282122895,
+      "train_s": 23.664611741900444,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.004400256634010068,
+            "value": 0.022812543133118347,
+            "entropy": 1.1334504385106219,
+            "kl": 0.010693180056026902,
+            "clipfrac": 0.11892029538627596
+          },
+          {
+            "policy": -0.0035609579103867014,
+            "value": 0.018824266890752523,
+            "entropy": 1.1295176016429647,
+            "kl": 0.012253374444994532,
+            "clipfrac": 0.1363636363435795
+          },
+          {
+            "policy": -0.007764295601510651,
+            "value": 0.016957476976271663,
+            "entropy": 1.1333831698043917,
+            "kl": 0.01231802473433348,
+            "clipfrac": 0.133944486883224
+          },
+          {
+            "policy": -0.011088040807191956,
+            "value": 0.016162248745253287,
+            "entropy": 1.134812902882107,
+            "kl": 0.013459376474195527,
+            "clipfrac": 0.1442577030622598
+          }
+        ],
+        "device": "cuda",
+        "samples": 54978
+      },
+      "scale": [
+        2027046,
+        5137.597305422836,
+        8477.198337036103
+      ]
+    },
+    {
+      "update": 38,
+      "episodes": 1000,
+      "episodes_total": 38000,
+      "decisions": 52505,
+      "seeds": [
+        337000,
+        337999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 73,
+        "general/none/belts/burst+slow": 40,
+        "general/none/belts/regular": 75,
+        "general/none/belts/slow": 40,
+        "general/none/full/burst": 28,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 11,
+        "general/none/full/slow": 14,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 92,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 85,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 9,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 14,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 9,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 5,
+        "heavy/none/zone/regular": 9,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 13,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 5,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 48,
+        "real/none/full/burst": 2,
+        "real/none/full/regular": 15,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 30,
+        "real/when_idle/belts/regular": 45,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 13
+      },
+      "cost_mean": 52.424063375950354,
+      "empty_episodes": 91,
+      "mc_cost_to_go_mean": 3936.5286408083575,
+      "all_decisions": 76399,
+      "gen_s": 8.094922837801278,
+      "gen_cpu_s": 279.75705540459603,
+      "train_s": 18.202456736005843,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0059591425204774265,
+            "value": 0.022030404724592924,
+            "entropy": 1.1121615429444944,
+            "kl": 0.010097505851698782,
+            "clipfrac": 0.10692315017532228
+          },
+          {
+            "policy": -0.0037948911768540283,
+            "value": 0.017529032871949454,
+            "entropy": 1.1156455720110106,
+            "kl": 0.010901015406920931,
+            "clipfrac": 0.12109322921583941
+          },
+          {
+            "policy": -0.007969502741895753,
+            "value": 0.015945139024702893,
+            "entropy": 1.1134496326185888,
+            "kl": 0.012283437140374658,
+            "clipfrac": 0.13402533091958757
+          },
+          {
+            "policy": -0.011883869016525826,
+            "value": 0.014636867331853,
+            "entropy": 1.1183393833512592,
+            "kl": 0.012268040728087556,
+            "clipfrac": 0.12977811636419345
+          }
+        ],
+        "device": "cuda",
+        "samples": 52505
+      },
+      "scale": [
+        2079551,
+        5107.272437104795,
+        8417.491257213278
+      ]
+    },
+    {
+      "update": 39,
+      "episodes": 1000,
+      "episodes_total": 39000,
+      "decisions": 53332,
+      "seeds": [
+        338000,
+        338999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 34,
+        "general/none/belts/regular": 98,
+        "general/none/belts/slow": 31,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 22,
+        "general/none/full/slow": 13,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 79,
+        "general/when_idle/belts/burst+slow": 31,
+        "general/when_idle/belts/regular": 80,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 22,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 1,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 14,
+        "heavy/when_idle/belts/regular": 15,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 9,
+        "real/none/belts/burst": 40,
+        "real/none/belts/regular": 39,
+        "real/none/full/burst": 16,
+        "real/none/full/regular": 15,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 45,
+        "real/when_idle/belts/regular": 33,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 56.08916542313596,
+      "empty_episodes": 83,
+      "mc_cost_to_go_mean": 4593.5301796287495,
+      "all_decisions": 78691,
+      "gen_s": 8.369482077192515,
+      "gen_cpu_s": 289.18199107190594,
+      "train_s": 22.69746647030115,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.008030002089708357,
+            "value": 0.02703428423739196,
+            "entropy": 1.1053477635773787,
+            "kl": 0.012718021039045952,
+            "clipfrac": 0.12810320258174093
+          },
+          {
+            "policy": -0.0017074855314248465,
+            "value": 0.0218183392885007,
+            "entropy": 1.1041756626689352,
+            "kl": 0.013720064352171563,
+            "clipfrac": 0.14422860572631904
+          },
+          {
+            "policy": -0.006315044665885582,
+            "value": 0.019414913657652296,
+            "entropy": 1.1011423326652674,
+            "kl": 0.014841433647322358,
+            "clipfrac": 0.15330383260028535
+          },
+          {
+            "policy": -0.011079691693009059,
+            "value": 0.01715152727007343,
+            "entropy": 1.1032975758578516,
+            "kl": 0.015415167597079952,
+            "clipfrac": 0.15765394135076893
+          }
+        ],
+        "device": "cuda",
+        "samples": 53332
+      },
+      "scale": [
+        2132883,
+        5094.426490057687,
+        8382.362091468842
+      ]
+    },
+    {
+      "update": 40,
+      "episodes": 1000,
+      "episodes_total": 40000,
+      "decisions": 52189,
+      "seeds": [
+        339000,
+        339999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 74,
+        "general/none/belts/burst+slow": 35,
+        "general/none/belts/regular": 63,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 40,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 40,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 33,
+        "general/when_idle/belts/regular": 70,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 22,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 6,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 20,
+        "heavy/when_idle/belts/regular": 17,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 46,
+        "real/none/belts/regular": 45,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 37,
+        "real/when_idle/belts/regular": 40,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 15
+      },
+      "cost_mean": 51.508132586424516,
+      "empty_episodes": 87,
+      "mc_cost_to_go_mean": 3923.3406916103954,
+      "all_decisions": 77125,
+      "gen_s": 8.791074065957218,
+      "gen_cpu_s": 281.4108764696866,
+      "train_s": 38.61583359912038,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00854933812688083,
+            "value": 0.019348406329418096,
+            "entropy": 1.0303200506552297,
+            "kl": 0.012870892584102216,
+            "clipfrac": 0.12914598864256066
+          },
+          {
+            "policy": 0.0009835012089068852,
+            "value": 0.016552909728345288,
+            "entropy": 1.0285446530510967,
+            "kl": 0.014095233698271146,
+            "clipfrac": 0.14344018857545884
+          },
+          {
+            "policy": -0.0029261197838634976,
+            "value": 0.01484746587134354,
+            "entropy": 1.029904004860012,
+            "kl": 0.013985447611172734,
+            "clipfrac": 0.14460901724783745
+          },
+          {
+            "policy": -0.007406043608671186,
+            "value": 0.014116334127817112,
+            "entropy": 1.0308082155808649,
+            "kl": 0.015329424892732344,
+            "clipfrac": 0.15432370808535512
+          }
+        ],
+        "device": "cuda",
+        "samples": 52189
+      },
+      "scale": [
+        2185072,
+        5066.45588005722,
+        8373.222156894983
+      ]
+    }
+  ],
+  "validations": [
+    {
+      "update": 0,
+      "episodes": 0,
+      "model": "results/experiments/rl2_ppo_s1/act_u0.pt",
+      "val": {
+        "real": {
+          "delta": 0.4030940989069952,
+          "ci": 0.05704043230290323,
+          "n": 50,
+          "wins": 0
+        },
+        "heavy": {
+          "delta": 0.5276529930062646,
+          "ci": 0.030152542857960773,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.3274427619240761,
+          "ci": 0.08254360853919124,
+          "n": 100,
+          "wins": 1
+        },
+        "real_burst": {
+          "delta": 0.24160214860848186,
+          "ci": 0.033978976284910464,
+          "n": 50,
+          "wins": 0
+        },
+        "score": 0.37494800061145445
+      },
+      "val_s": 2.22141069220379,
+      "val_cpu_s": 77.71656720293686,
+      "candidate": false,
+      "accepted": false
+    },
+    {
+      "update": 4,
+      "episodes": 4000,
+      "model": "models/rl2_ppo_s1_it4.pt",
+      "val": {
+        "real": {
+          "delta": 0.031227800012496046,
+          "ci": 0.019448109600206317,
+          "n": 50,
+          "wins": 14
+        },
+        "heavy": {
+          "delta": 0.2625304949650139,
+          "ci": 0.02095502554794941,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.11346322725789192,
+          "ci": 0.030975598974810902,
+          "n": 100,
+          "wins": 3
+        },
+        "real_burst": {
+          "delta": 0.025387442675180685,
+          "ci": 0.01348997590417221,
+          "n": 50,
+          "wins": 15
+        },
+        "score": 0.10815224122764563
+      },
+      "val_s": 2.3786889938637614,
+      "val_cpu_s": 85.2946248841472,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 8,
+      "episodes": 8000,
+      "model": "models/rl2_ppo_s1_it8.pt",
+      "val": {
+        "real": {
+          "delta": 0.01904334610961962,
+          "ci": 0.017035533588387344,
+          "n": 50,
+          "wins": 17
+        },
+        "heavy": {
+          "delta": 0.28112512088690844,
+          "ci": 0.02673690000036351,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.09357809601567434,
+          "ci": 0.03005374947334693,
+          "n": 100,
+          "wins": 5
+        },
+        "real_burst": {
+          "delta": 0.053506877644391666,
+          "ci": 0.020702718923692798,
+          "n": 50,
+          "wins": 10
+        },
+        "score": 0.11181336016414851
+      },
+      "val_s": 2.118859260343015,
+      "val_cpu_s": 75.48049851320684,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 12,
+      "episodes": 12000,
+      "model": "models/rl2_ppo_s1_it12.pt",
+      "val": {
+        "real": {
+          "delta": 0.047033189747859375,
+          "ci": 0.023207615870280637,
+          "n": 50,
+          "wins": 11
+        },
+        "heavy": {
+          "delta": 0.28145177174876335,
+          "ci": 0.026664557163859584,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.09148721296254841,
+          "ci": 0.02837487749009506,
+          "n": 100,
+          "wins": 7
+        },
+        "real_burst": {
+          "delta": 0.061066263648830735,
+          "ci": 0.019957222615665987,
+          "n": 50,
+          "wins": 6
+        },
+        "score": 0.12025960952700046
+      },
+      "val_s": 2.3414669819176197,
+      "val_cpu_s": 83.37118710950017,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 16,
+      "episodes": 16000,
+      "model": "models/rl2_ppo_s1_it16.pt",
+      "val": {
+        "real": {
+          "delta": 0.01323719864058932,
+          "ci": 0.019897715247136502,
+          "n": 50,
+          "wins": 21
+        },
+        "heavy": {
+          "delta": 0.19586071059432508,
+          "ci": 0.02699405150489655,
+          "n": 50,
+          "wins": 1
+        },
+        "general": {
+          "delta": 0.07188598695853843,
+          "ci": 0.023151363770950322,
+          "n": 100,
+          "wins": 11
+        },
+        "real_burst": {
+          "delta": 0.03436802148236192,
+          "ci": 0.013853414229176594,
+          "n": 50,
+          "wins": 12
+        },
+        "score": 0.07883797941895368
+      },
+      "val_s": 2.2123183459043503,
+      "val_cpu_s": 78.04707729490474,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 20,
+      "episodes": 20000,
+      "model": "models/rl2_ppo_s1_it20.pt",
+      "val": {
+        "real": {
+          "delta": 0.02487638636090931,
+          "ci": 0.019776297489442735,
+          "n": 50,
+          "wins": 15
+        },
+        "heavy": {
+          "delta": 0.2234315816955788,
+          "ci": 0.029348054829742124,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.07427248699889268,
+          "ci": 0.02660871617429521,
+          "n": 100,
+          "wins": 14
+        },
+        "real_burst": {
+          "delta": 0.04668376997565429,
+          "ci": 0.01738088001451368,
+          "n": 50,
+          "wins": 8
+        },
+        "score": 0.09231605625775877
+      },
+      "val_s": 2.2396847819909453,
+      "val_cpu_s": 80.43147646542639,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 24,
+      "episodes": 24000,
+      "model": "models/rl2_ppo_s1_it24.pt",
+      "val": {
+        "real": {
+          "delta": 0.0327782580171318,
+          "ci": 0.02331325551773964,
+          "n": 50,
+          "wins": 17
+        },
+        "heavy": {
+          "delta": 0.21759087605985195,
+          "ci": 0.032111026470552806,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.07097914487158925,
+          "ci": 0.025737490842177753,
+          "n": 100,
+          "wins": 16
+        },
+        "real_burst": {
+          "delta": 0.04476340192537242,
+          "ci": 0.016814175633032252,
+          "n": 50,
+          "wins": 9
+        },
+        "score": 0.09152792021848635
+      },
+      "val_s": 2.2319457847625017,
+      "val_cpu_s": 79.090235627722,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 28,
+      "episodes": 28000,
+      "model": "models/rl2_ppo_s1_it28.pt",
+      "val": {
+        "real": {
+          "delta": 0.03321357643709397,
+          "ci": 0.021463201668262485,
+          "n": 50,
+          "wins": 13
+        },
+        "heavy": {
+          "delta": 0.21372697136515878,
+          "ci": 0.02565042078880594,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.07773743682993554,
+          "ci": 0.03345439177049097,
+          "n": 100,
+          "wins": 15
+        },
+        "real_burst": {
+          "delta": 0.046195551474384644,
+          "ci": 0.01662191275591386,
+          "n": 50,
+          "wins": 11
+        },
+        "score": 0.09271838402664323
+      },
+      "val_s": 2.1484640007838607,
+      "val_cpu_s": 76.07378935953602,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 32,
+      "episodes": 32000,
+      "model": "models/rl2_ppo_s1_it32.pt",
+      "val": {
+        "real": {
+          "delta": 0.0681128830034671,
+          "ci": 0.02558994681638274,
+          "n": 50,
+          "wins": 11
+        },
+        "heavy": {
+          "delta": 0.23853761378272662,
+          "ci": 0.02863629363091141,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.07931907341912021,
+          "ci": 0.033615727046327,
+          "n": 100,
+          "wins": 12
+        },
+        "real_burst": {
+          "delta": 0.08982473543994814,
+          "ci": 0.021817946070163,
+          "n": 50,
+          "wins": 4
+        },
+        "score": 0.11894857641131551
+      },
+      "val_s": 2.2401659288443625,
+      "val_cpu_s": 79.80175378127024,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 36,
+      "episodes": 36000,
+      "model": "models/rl2_ppo_s1_it36.pt",
+      "val": {
+        "real": {
+          "delta": 0.05955172968888684,
+          "ci": 0.024146204970279025,
+          "n": 50,
+          "wins": 11
+        },
+        "heavy": {
+          "delta": 0.22375012772736189,
+          "ci": 0.02443799705879734,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.08291151461992209,
+          "ci": 0.03542043330844242,
+          "n": 100,
+          "wins": 15
+        },
+        "real_burst": {
+          "delta": 0.07748298322393053,
+          "ci": 0.018669971453724336,
+          "n": 50,
+          "wins": 4
+        },
+        "score": 0.11092408881502534
+      },
+      "val_s": 2.240888775791973,
+      "val_cpu_s": 79.33417050773278,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 40,
+      "episodes": 40000,
+      "model": "models/rl2_ppo_s1_it40.pt",
+      "val": {
+        "real": {
+          "delta": 0.08947153325214545,
+          "ci": 0.028059966250006993,
+          "n": 50,
+          "wins": 9
+        },
+        "heavy": {
+          "delta": 0.2007914510644531,
+          "ci": 0.02118932557469686,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.06560516481046039,
+          "ci": 0.03206114388649605,
+          "n": 100,
+          "wins": 14
+        },
+        "real_burst": {
+          "delta": 0.10924836747375266,
+          "ci": 0.020622406665185507,
+          "n": 50,
+          "wins": 1
+        },
+        "score": 0.11627912915020289
+      },
+      "val_s": 2.0945664779283106,
+      "val_cpu_s": 74.89173523755744,
+      "candidate": true,
+      "accepted": false
+    }
+  ],
+  "reference": {
+    "who": "nearest_job",
+    "cpu_s": 2.131489498075098,
+    "wall_s": 0.7507824990898371
+  },
+  "best": {
+    "model": "models/rl2_ppo_s1.pt",
+    "score": 0.07883797941895368,
+    "update": 16,
+    "checkpoint": "models/rl2_ppo_s1_it16.pt"
+  },
+  "finished": "2026-11-23 21:01:27",
+  "wall_s": 1321.2450349349529
+}

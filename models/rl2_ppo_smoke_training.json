@@ -1,0 +1,635 @@
+{
+  "tag": "rl2_ppo_smoke",
+  "args": {
+    "tag": "rl2_ppo_smoke",
+    "seed": 9,
+    "size": "S",
+    "episodes": 4000,
+    "batch_episodes": 1000,
+    "val_every": 1000,
+    "val": 50,
+    "val_mode": "design",
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "init": null,
+    "workers": 40,
+    "threads": 8,
+    "device": "auto",
+    "horizon": null
+  },
+  "ppo": {
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "gamma": 1.0
+  },
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "started": "2026-11-23 20:11:51",
+  "machine": {
+    "host": "isecapstone",
+    "cpus": 48,
+    "workers": 40,
+    "device": "cuda",
+    "cuda": "NVIDIA GeForce RTX 3080"
+  },
+  "seed_base": 1100000,
+  "updates": [
+    {
+      "update": 1,
+      "episodes": 1000,
+      "episodes_total": 1000,
+      "decisions": 54914,
+      "seeds": [
+        1100000,
+        1100999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 86,
+        "general/none/belts/burst+slow": 21,
+        "general/none/belts/regular": 96,
+        "general/none/belts/slow": 39,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 9,
+        "general/none/full/regular": 12,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 18,
+        "general/none/zone/regular": 36,
+        "general/none/zone/slow": 10,
+        "general/when_idle/belts/burst": 70,
+        "general/when_idle/belts/burst+slow": 32,
+        "general/when_idle/belts/regular": 69,
+        "general/when_idle/belts/slow": 26,
+        "general/when_idle/full/burst": 21,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 18,
+        "general/when_idle/full/slow": 12,
+        "heavy/none/belts/burst": 27,
+        "heavy/none/belts/regular": 19,
+        "heavy/none/full/burst": 10,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 3,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 10,
+        "heavy/when_idle/belts/regular": 15,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 1,
+        "real/none/belts/burst": 49,
+        "real/none/belts/regular": 44,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 10,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 24,
+        "real/when_idle/belts/burst": 31,
+        "real/when_idle/belts/regular": 52,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 86.03911914346274,
+      "mc_cost_to_go_mean": 6104.998924005179,
+      "all_decisions": 77265,
+      "gen_s": 8.742918338160962,
+      "gen_cpu_s": 307.2778343548998,
+      "train_s": 24.245434693060815,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.000508370183411788,
+            "value": 0.03766577559415998,
+            "entropy": 1.7882758404815493,
+            "kl": 0.0021693615762008213,
+            "clipfrac": 0.010580179917689479
+          },
+          {
+            "policy": -0.0011063525140813004,
+            "value": 0.016960851578433002,
+            "entropy": 1.7876785985326873,
+            "kl": 0.0029757748854598223,
+            "clipfrac": 0.01706304403250412
+          },
+          {
+            "policy": -0.001727292275571613,
+            "value": 0.01465956268041564,
+            "entropy": 1.7871630785743715,
+            "kl": 0.0031992964797677376,
+            "clipfrac": 0.01997669082567162
+          },
+          {
+            "policy": -0.002060844605312972,
+            "value": 0.012241875677302273,
+            "entropy": 1.7868450200014565,
+            "kl": 0.0034846603879312623,
+            "clipfrac": 0.026514185818977493
+          }
+        ],
+        "device": "cuda",
+        "samples": 54914
+      },
+      "scale": [
+        54914,
+        6104.9989240051445,
+        9075.019552694906
+      ]
+    },
+    {
+      "update": 2,
+      "episodes": 1000,
+      "episodes_total": 2000,
+      "decisions": 56112,
+      "seeds": [
+        1101000,
+        1101999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 78,
+        "general/none/belts/burst+slow": 36,
+        "general/none/belts/regular": 95,
+        "general/none/belts/slow": 36,
+        "general/none/full/burst": 9,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 31,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 14,
+        "general/none/zone/regular": 36,
+        "general/none/zone/slow": 14,
+        "general/when_idle/belts/burst": 97,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 72,
+        "general/when_idle/belts/slow": 31,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 9,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 10,
+        "heavy/none/belts/regular": 15,
+        "heavy/none/full/burst": 6,
+        "heavy/none/full/regular": 7,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 11,
+        "heavy/when_idle/belts/regular": 22,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 37,
+        "real/none/belts/regular": 36,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 4,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 15,
+        "real/when_idle/belts/burst": 37,
+        "real/when_idle/belts/regular": 53,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": Infinity,
+      "mc_cost_to_go_mean": 6510.766164695952,
+      "all_decisions": 78817,
+      "gen_s": 9.175443587359041,
+      "gen_cpu_s": 324.216502814088,
+      "train_s": 21.78392258286476,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.0006324147010481796,
+            "value": 0.03290110295051552,
+            "entropy": 1.7638159202040518,
+            "kl": 0.0018946579495191986,
+            "clipfrac": 0.011209723410322213
+          },
+          {
+            "policy": -0.0010420625191792689,
+            "value": 0.023553198273021474,
+            "entropy": 1.7626997906494792,
+            "kl": 0.002592915478676328,
+            "clipfrac": 0.01678785286675942
+          },
+          {
+            "policy": -0.001400314587998805,
+            "value": 0.018342424833115125,
+            "entropy": 1.7623121134059396,
+            "kl": 0.0028526993910031827,
+            "clipfrac": 0.019799686343727
+          },
+          {
+            "policy": -0.0016549867095857528,
+            "value": 0.018684377890087648,
+            "entropy": 1.7627332131679765,
+            "kl": 0.002734695085610356,
+            "clipfrac": 0.01892643284965078
+          }
+        ],
+        "device": "cuda",
+        "samples": 56112
+      },
+      "scale": [
+        111026,
+        6310.07171244784,
+        10131.40114063742
+      ]
+    },
+    {
+      "update": 3,
+      "episodes": 1000,
+      "episodes_total": 3000,
+      "decisions": 55276,
+      "seeds": [
+        1102000,
+        1102999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 88,
+        "general/none/belts/burst+slow": 28,
+        "general/none/belts/regular": 66,
+        "general/none/belts/slow": 23,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 18,
+        "general/none/full/slow": 5,
+        "general/none/zone/burst": 28,
+        "general/none/zone/burst+slow": 12,
+        "general/none/zone/regular": 37,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 79,
+        "general/when_idle/belts/burst+slow": 28,
+        "general/when_idle/belts/regular": 91,
+        "general/when_idle/belts/slow": 40,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 9,
+        "general/when_idle/full/regular": 14,
+        "general/when_idle/full/slow": 6,
+        "heavy/none/belts/burst": 20,
+        "heavy/none/belts/regular": 16,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 21,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 46,
+        "real/none/belts/regular": 47,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 27,
+        "real/none/zone/regular": 22,
+        "real/when_idle/belts/burst": 33,
+        "real/when_idle/belts/regular": 49,
+        "real/when_idle/full/burst": 5,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 79.52733000702652,
+      "mc_cost_to_go_mean": 6010.856641395156,
+      "all_decisions": 77678,
+      "gen_s": 9.1102025504224,
+      "gen_cpu_s": 321.8666852884926,
+      "train_s": 23.140140656847507,
+      "train": {
+        "epochs": [
+          {
+            "policy": -0.0010020135908540384,
+            "value": 0.03628546972472305,
+            "entropy": 1.7107144914666137,
+            "kl": 0.0030012233148501524,
+            "clipfrac": 0.025146537376211205
+          },
+          {
+            "policy": -0.002173341124359179,
+            "value": 0.025246991638108476,
+            "entropy": 1.7091306383543003,
+            "kl": 0.003530192504955988,
+            "clipfrac": 0.02708227802307919
+          },
+          {
+            "policy": -0.0030231449185046423,
+            "value": 0.021976905780758057,
+            "entropy": 1.7092993828863696,
+            "kl": 0.003767586419334183,
+            "clipfrac": 0.03051957451181807
+          },
+          {
+            "policy": -0.004051001073256253,
+            "value": 0.02093536162450915,
+            "entropy": 1.7078472407183865,
+            "kl": 0.004236320733357652,
+            "clipfrac": 0.036580070903913894
+          }
+        ],
+        "device": "cuda",
+        "samples": 55276
+      },
+      "scale": [
+        166302,
+        6210.617633317596,
+        10013.802730613252
+      ]
+    },
+    {
+      "update": 4,
+      "episodes": 1000,
+      "episodes_total": 4000,
+      "decisions": 53684,
+      "seeds": [
+        1103000,
+        1103999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 86,
+        "general/none/belts/burst+slow": 34,
+        "general/none/belts/regular": 77,
+        "general/none/belts/slow": 21,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 23,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 42,
+        "general/none/zone/burst+slow": 23,
+        "general/none/zone/regular": 44,
+        "general/none/zone/slow": 18,
+        "general/when_idle/belts/burst": 76,
+        "general/when_idle/belts/burst+slow": 37,
+        "general/when_idle/belts/regular": 84,
+        "general/when_idle/belts/slow": 27,
+        "general/when_idle/full/burst": 11,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 16,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 19,
+        "heavy/none/belts/regular": 12,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 7,
+        "heavy/when_idle/belts/burst": 12,
+        "heavy/when_idle/belts/regular": 17,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 41,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 10,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 16,
+        "real/none/zone/regular": 21,
+        "real/when_idle/belts/burst": 37,
+        "real/when_idle/belts/regular": 53,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 72.96864124088171,
+      "mc_cost_to_go_mean": 5624.456125137476,
+      "all_decisions": 76667,
+      "gen_s": 9.164236030075699,
+      "gen_cpu_s": 320.80395154841244,
+      "train_s": 22.711361773777753,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.0009481252826376667,
+            "value": 0.032102879678204445,
+            "entropy": 1.6495631369719446,
+            "kl": 0.004222596697628712,
+            "clipfrac": 0.043402130989026545
+          },
+          {
+            "policy": -0.001524447834878498,
+            "value": 0.02135720130709269,
+            "entropy": 1.6452653400855877,
+            "kl": 0.004640732148242938,
+            "clipfrac": 0.046494299981255406
+          },
+          {
+            "policy": -0.0032302265680499783,
+            "value": 0.018577061446280754,
+            "entropy": 1.6434514925186952,
+            "kl": 0.004765905793202491,
+            "clipfrac": 0.04975411668371263
+          },
+          {
+            "policy": -0.0042151740278414986,
+            "value": 0.01768425455389486,
+            "entropy": 1.644645680410213,
+            "kl": 0.005306366116212909,
+            "clipfrac": 0.059384546614392276
+          }
+        ],
+        "device": "cuda",
+        "samples": 53684
+      },
+      "scale": [
+        219986,
+        6067.574465092668,
+        9826.111758630002
+      ]
+    }
+  ],
+  "validations": [
+    {
+      "update": 0,
+      "episodes": 0,
+      "model": "results/experiments/rl2_ppo_smoke/act_u0.pt",
+      "val": {
+        "real": {
+          "delta": 0.5754445197286339,
+          "ci": 0.09639785216996298,
+          "n": 50,
+          "wins": 0
+        },
+        "heavy": {
+          "delta": 1.6126585482806697,
+          "ci": 0.07829498549581576,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.5275595230126092,
+          "ci": 0.1631058137680179,
+          "n": 100,
+          "wins": 8
+        },
+        "real_burst": {
+          "delta": 0.5945917292688423,
+          "ci": 0.12669280943967723,
+          "n": 50,
+          "wins": 1
+        },
+        "score": 0.8275635800726888
+      },
+      "val_s": 2.2630132692866027,
+      "val_cpu_s": 80.63259673956782,
+      "candidate": false,
+      "accepted": false
+    },
+    {
+      "update": 1,
+      "episodes": 1000,
+      "model": "models/rl2_ppo_smoke_it1.pt",
+      "val": {
+        "real": {
+          "delta": 0.23501951936161342,
+          "ci": 0.051607453198846326,
+          "n": 50,
+          "wins": 3
+        },
+        "heavy": {
+          "delta": 0.4358525672860489,
+          "ci": 0.04333697911174253,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.22375903222993665,
+          "ci": 0.06044497400274055,
+          "n": 100,
+          "wins": 3
+        },
+        "real_burst": {
+          "delta": 0.16886551898723476,
+          "ci": 0.031124763213631793,
+          "n": 50,
+          "wins": 0
+        },
+        "score": 0.2658741594662084
+      },
+      "val_s": 2.2910401532426476,
+      "val_cpu_s": 81.10974689479917,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 2,
+      "episodes": 2000,
+      "model": "models/rl2_ppo_smoke_it2.pt",
+      "val": {
+        "real": {
+          "delta": 0.05578782095787565,
+          "ci": 0.02438502826228273,
+          "n": 50,
+          "wins": 12
+        },
+        "heavy": {
+          "delta": 0.2352455554916205,
+          "ci": 0.030942699341527824,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.13683791475797752,
+          "ci": 0.0415760516354984,
+          "n": 100,
+          "wins": 6
+        },
+        "real_burst": {
+          "delta": 0.058702864810851026,
+          "ci": 0.02170782185546954,
+          "n": 50,
+          "wins": 11
+        },
+        "score": 0.12164353900458116
+      },
+      "val_s": 2.184185658581555,
+      "val_cpu_s": 77.41672907955945,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 3,
+      "episodes": 3000,
+      "model": "models/rl2_ppo_smoke_it3.pt",
+      "val": {
+        "real": {
+          "delta": 0.06630274951306946,
+          "ci": 0.027314669477167267,
+          "n": 50,
+          "wins": 11
+        },
+        "heavy": {
+          "delta": 0.2805280469386598,
+          "ci": 0.03063710429686335,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.12842022593941776,
+          "ci": 0.037491450556677686,
+          "n": 100,
+          "wins": 4
+        },
+        "real_burst": {
+          "delta": 0.06944005408653929,
+          "ci": 0.02480807959833462,
+          "n": 50,
+          "wins": 9
+        },
+        "score": 0.13617276911942158
+      },
+      "val_s": 2.320898215752095,
+      "val_cpu_s": 82.25105185015127,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 4,
+      "episodes": 4000,
+      "model": "models/rl2_ppo_smoke_it4.pt",
+      "val": {
+        "real": {
+          "delta": 0.07789549391170036,
+          "ci": 0.029369470112091726,
+          "n": 50,
+          "wins": 11
+        },
+        "heavy": {
+          "delta": 0.281543856255971,
+          "ci": 0.02760893318254344,
+          "n": 50,
+          "wins": 0
+        },
+        "general": {
+          "delta": 0.1347245401316093,
+          "ci": 0.046475636842541204,
+          "n": 100,
+          "wins": 12
+        },
+        "real_burst": {
+          "delta": 0.06918601800612652,
+          "ci": 0.02159316712774781,
+          "n": 50,
+          "wins": 7
+        },
+        "score": 0.1408374770763518
+      },
+      "val_s": 2.637134165968746,
+      "val_cpu_s": 92.67029782710597,
+      "candidate": true,
+      "accepted": false
+    }
+  ],
+  "reference": {
+    "who": "nearest_job",
+    "cpu_s": 2.6184480166994035,
+    "wall_s": 0.7829090640880167
+  },
+  "best": {
+    "model": "models/rl2_ppo_smoke.pt",
+    "score": 0.12164353900458116,
+    "update": 2,
+    "checkpoint": "models/rl2_ppo_smoke_it2.pt"
+  },
+  "finished": "2026-11-23 20:14:13",
+  "wall_s": 141.43486056895927
+}

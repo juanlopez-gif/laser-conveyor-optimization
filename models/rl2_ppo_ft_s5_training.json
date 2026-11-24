@@ -1,0 +1,1385 @@
+{
+  "tag": "rl2_ppo_ft_s5",
+  "args": {
+    "tag": "rl2_ppo_ft_s5",
+    "seed": 5,
+    "size": "S",
+    "episodes": 12000,
+    "batch_episodes": 1000,
+    "val_every": 4000,
+    "val": 50,
+    "val_mode": "design",
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "init": "models/rl2_gen_s_b.pt",
+    "workers": 40,
+    "threads": 8,
+    "device": "auto",
+    "horizon": null
+  },
+  "ppo": {
+    "clip": 0.2,
+    "epochs": 4,
+    "minibatch": 256,
+    "ent_coef": 0.01,
+    "vf_coef": 0.5,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "gae_lambda": 0.95,
+    "gamma": 1.0
+  },
+  "python": "3.12.3",
+  "torch": "2.11.0+cu128",
+  "started": "2026-11-23 23:05:07",
+  "machine": {
+    "host": "isecapstone",
+    "cpus": 48,
+    "workers": 40,
+    "device": "cuda",
+    "cuda": "NVIDIA GeForce RTX 3080"
+  },
+  "seed_base": 700000,
+  "updates": [
+    {
+      "update": 1,
+      "episodes": 1000,
+      "episodes_total": 1000,
+      "decisions": 51289,
+      "seeds": [
+        700000,
+        700999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 75,
+        "general/none/belts/burst+slow": 39,
+        "general/none/belts/regular": 80,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 23,
+        "general/none/full/burst+slow": 2,
+        "general/none/full/regular": 31,
+        "general/none/full/slow": 2,
+        "general/none/zone/burst": 33,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 30,
+        "general/none/zone/slow": 19,
+        "general/when_idle/belts/burst": 71,
+        "general/when_idle/belts/burst+slow": 31,
+        "general/when_idle/belts/regular": 75,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 7,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 17,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 7,
+        "heavy/none/zone/regular": 16,
+        "heavy/when_idle/belts/burst": 17,
+        "heavy/when_idle/belts/regular": 18,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 1,
+        "real/none/belts/burst": 49,
+        "real/none/belts/regular": 38,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 12,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 13,
+        "real/when_idle/belts/burst": 51,
+        "real/when_idle/belts/regular": 50,
+        "real/when_idle/full/burst": 9,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 40.02741529196884,
+      "empty_episodes": 103,
+      "mc_cost_to_go_mean": 2879.1774705985326,
+      "all_decisions": 77707,
+      "gen_s": 8.01733624888584,
+      "gen_cpu_s": 285.18018092634156,
+      "train_s": 17.43450298300013,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.02616596548599444,
+            "value": 0.03915503662807431,
+            "entropy": 0.35519731162435264,
+            "kl": 0.07653775354368307,
+            "clipfrac": 0.19704030104037132
+          },
+          {
+            "policy": 0.010657997650495757,
+            "value": 0.026790925959651136,
+            "entropy": 0.3767131226833362,
+            "kl": 0.07105718761233346,
+            "clipfrac": 0.2031624715002215
+          },
+          {
+            "policy": 4.297916670897044e-05,
+            "value": 0.021844058202406712,
+            "entropy": 0.4028872697258393,
+            "kl": 0.07020462353381204,
+            "clipfrac": 0.21355456334853024
+          },
+          {
+            "policy": -0.007497376892144431,
+            "value": 0.02040476018909047,
+            "entropy": 0.4267865139284686,
+            "kl": 0.06821486088551955,
+            "clipfrac": 0.2221918930089579
+          }
+        ],
+        "device": "cuda",
+        "samples": 51289
+      },
+      "scale": [
+        155774,
+        2803.1041572931776,
+        3890.325729111006
+      ]
+    },
+    {
+      "update": 2,
+      "episodes": 1000,
+      "episodes_total": 2000,
+      "decisions": 53200,
+      "seeds": [
+        701000,
+        701999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 32,
+        "general/none/belts/regular": 81,
+        "general/none/belts/slow": 27,
+        "general/none/full/burst": 16,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 18,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 42,
+        "general/none/zone/burst+slow": 10,
+        "general/none/zone/regular": 37,
+        "general/none/zone/slow": 17,
+        "general/when_idle/belts/burst": 81,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 86,
+        "general/when_idle/belts/slow": 29,
+        "general/when_idle/full/burst": 15,
+        "general/when_idle/full/burst+slow": 4,
+        "general/when_idle/full/regular": 21,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 24,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 3,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 6,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 20,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 8,
+        "real/none/belts/burst": 31,
+        "real/none/belts/regular": 41,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 22,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 59,
+        "real/when_idle/belts/regular": 50,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 7
+      },
+      "cost_mean": 39.24922631078407,
+      "empty_episodes": 77,
+      "mc_cost_to_go_mean": 2789.682940470944,
+      "all_decisions": 78038,
+      "gen_s": 8.233664099127054,
+      "gen_cpu_s": 287.709183301311,
+      "train_s": 17.13692007260397,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.025843129611287013,
+            "value": 0.030425720140337943,
+            "entropy": 0.4192517500443566,
+            "kl": 0.07891885589164176,
+            "clipfrac": 0.21090225571080257
+          },
+          {
+            "policy": 0.017950160171752584,
+            "value": 0.02135972361367448,
+            "entropy": 0.44729859653272125,
+            "kl": 0.0793353917612169,
+            "clipfrac": 0.2175751879699248
+          },
+          {
+            "policy": 0.005679902915555732,
+            "value": 0.019379519234250363,
+            "entropy": 0.4744601921479505,
+            "kl": 0.07379702512258873,
+            "clipfrac": 0.22330827070358103
+          },
+          {
+            "policy": 0.0026218989034904575,
+            "value": 0.018162771115513673,
+            "entropy": 0.4730498519158901,
+            "kl": 0.07745066934062125,
+            "clipfrac": 0.2230451127998811
+          }
+        ],
+        "device": "cuda",
+        "samples": 53200
+      },
+      "scale": [
+        208974,
+        2799.6874225082483,
+        3869.676136275752
+      ]
+    },
+    {
+      "update": 3,
+      "episodes": 1000,
+      "episodes_total": 3000,
+      "decisions": 52269,
+      "seeds": [
+        702000,
+        702999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 81,
+        "general/none/belts/burst+slow": 45,
+        "general/none/belts/regular": 71,
+        "general/none/belts/slow": 24,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 11,
+        "general/none/full/slow": 9,
+        "general/none/zone/burst": 32,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 22,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 86,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 103,
+        "general/when_idle/belts/slow": 28,
+        "general/when_idle/full/burst": 16,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 16,
+        "general/when_idle/full/slow": 10,
+        "heavy/none/belts/burst": 14,
+        "heavy/none/belts/regular": 20,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 6,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 14,
+        "heavy/when_idle/belts/regular": 24,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 36,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 6,
+        "real/none/zone/burst": 17,
+        "real/none/zone/regular": 24,
+        "real/when_idle/belts/burst": 44,
+        "real/when_idle/belts/regular": 46,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 18
+      },
+      "cost_mean": 40.72841757945363,
+      "empty_episodes": 87,
+      "mc_cost_to_go_mean": 2858.9736211264644,
+      "all_decisions": 78128,
+      "gen_s": 8.186056150123477,
+      "gen_cpu_s": 291.5922076385468,
+      "train_s": 19.56303917709738,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.01366748454186748,
+            "value": 0.029667879682450552,
+            "entropy": 0.39264045986512697,
+            "kl": 0.03569857559392847,
+            "clipfrac": 0.14237884788449187
+          },
+          {
+            "policy": 0.011805628460387331,
+            "value": 0.021601270178544994,
+            "entropy": 0.44345295035639976,
+            "kl": 0.04440917409706292,
+            "clipfrac": 0.1625628957939375
+          },
+          {
+            "policy": -0.0041739770315816875,
+            "value": 0.01906412130830704,
+            "entropy": 0.4561522745520966,
+            "kl": 0.07040300898032406,
+            "clipfrac": 0.17916929729501088
+          },
+          {
+            "policy": -0.0017898088012947393,
+            "value": 0.01815925724900618,
+            "entropy": 0.4649219979340182,
+            "kl": 0.06190121633574105,
+            "clipfrac": 0.19124146244069953
+          }
+        ],
+        "device": "cuda",
+        "samples": 52269
+      },
+      "scale": [
+        261243,
+        2811.549291785336,
+        3893.4768169038734
+      ]
+    },
+    {
+      "update": 4,
+      "episodes": 1000,
+      "episodes_total": 4000,
+      "decisions": 53974,
+      "seeds": [
+        703000,
+        703999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 71,
+        "general/none/belts/burst+slow": 42,
+        "general/none/belts/regular": 83,
+        "general/none/belts/slow": 37,
+        "general/none/full/burst": 19,
+        "general/none/full/burst+slow": 5,
+        "general/none/full/regular": 15,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 37,
+        "general/none/zone/burst+slow": 13,
+        "general/none/zone/regular": 37,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 85,
+        "general/when_idle/belts/burst+slow": 35,
+        "general/when_idle/belts/regular": 78,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 12,
+        "general/when_idle/full/slow": 8,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 22,
+        "heavy/none/full/burst": 1,
+        "heavy/none/zone/burst": 11,
+        "heavy/none/zone/regular": 11,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 14,
+        "heavy/when_idle/full/burst": 3,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 42,
+        "real/none/belts/regular": 57,
+        "real/none/full/burst": 6,
+        "real/none/full/regular": 11,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 20,
+        "real/when_idle/belts/burst": 43,
+        "real/when_idle/belts/regular": 27,
+        "real/when_idle/full/burst": 11,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 42.26989371157401,
+      "empty_episodes": 71,
+      "mc_cost_to_go_mean": 3043.827599956067,
+      "all_decisions": 79240,
+      "gen_s": 8.700132463127375,
+      "gen_cpu_s": 295.88244592025876,
+      "train_s": 17.72730201901868,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.01897152818058324,
+            "value": 0.034945612367668154,
+            "entropy": 0.4636291540176583,
+            "kl": 0.04292178529681986,
+            "clipfrac": 0.15865046131446106
+          },
+          {
+            "policy": 0.009488580959433248,
+            "value": 0.026391482385070122,
+            "entropy": 0.4825330044732299,
+            "kl": 0.04640578899900986,
+            "clipfrac": 0.17378737910790748
+          },
+          {
+            "policy": -0.0032618905089051003,
+            "value": 0.02306153561192318,
+            "entropy": 0.5021292241522465,
+            "kl": 0.05271892661378757,
+            "clipfrac": 0.18492236998363296
+          },
+          {
+            "policy": -0.01023057058735714,
+            "value": 0.020408753428046218,
+            "entropy": 0.49619921246229415,
+            "kl": 0.058480676734839955,
+            "clipfrac": 0.19022121761225688
+          }
+        ],
+        "device": "cuda",
+        "samples": 53974
+      },
+      "scale": [
+        315217,
+        2851.321859271241,
+        3961.862475870926
+      ]
+    },
+    {
+      "update": 5,
+      "episodes": 1000,
+      "episodes_total": 5000,
+      "decisions": 51765,
+      "seeds": [
+        704000,
+        704999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 92,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 79,
+        "general/none/belts/slow": 31,
+        "general/none/full/burst": 18,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 12,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 17,
+        "general/none/zone/regular": 38,
+        "general/none/zone/slow": 12,
+        "general/when_idle/belts/burst": 67,
+        "general/when_idle/belts/burst+slow": 28,
+        "general/when_idle/belts/regular": 73,
+        "general/when_idle/belts/slow": 36,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 11,
+        "general/when_idle/full/regular": 19,
+        "general/when_idle/full/slow": 6,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 12,
+        "heavy/none/full/burst": 1,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 8,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 23,
+        "heavy/when_idle/full/burst": 6,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 43,
+        "real/none/belts/regular": 54,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 25,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 38,
+        "real/when_idle/belts/regular": 36,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 12
+      },
+      "cost_mean": 43.151628858410945,
+      "empty_episodes": 100,
+      "mc_cost_to_go_mean": 3294.921817924923,
+      "all_decisions": 77850,
+      "gen_s": 8.287060096859932,
+      "gen_cpu_s": 286.1248258110136,
+      "train_s": 22.263243636116385,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.020656333545072292,
+            "value": 0.043131880242243306,
+            "entropy": 0.5799864739055831,
+            "kl": 0.040161279181686604,
+            "clipfrac": 0.17569786535534065
+          },
+          {
+            "policy": 0.00860526767622949,
+            "value": 0.033665870556565204,
+            "entropy": 0.5811662115699989,
+            "kl": 0.03967596936298432,
+            "clipfrac": 0.18301941466558316
+          },
+          {
+            "policy": -0.0015878801974860595,
+            "value": 0.028068049048443042,
+            "entropy": 0.5839953300930574,
+            "kl": 0.03716199466864907,
+            "clipfrac": 0.1793489809748655
+          },
+          {
+            "policy": -0.010261611175916511,
+            "value": 0.02481266466254277,
+            "entropy": 0.5929271365506262,
+            "kl": 0.03611049481235696,
+            "clipfrac": 0.18182169419779795
+          }
+        ],
+        "device": "cuda",
+        "samples": 51765
+      },
+      "scale": [
+        366982,
+        2913.8942793346523,
+        4219.05872859419
+      ]
+    },
+    {
+      "update": 6,
+      "episodes": 1000,
+      "episodes_total": 6000,
+      "decisions": 54703,
+      "seeds": [
+        705000,
+        705999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 81,
+        "general/none/belts/burst+slow": 42,
+        "general/none/belts/regular": 71,
+        "general/none/belts/slow": 36,
+        "general/none/full/burst": 22,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 22,
+        "general/none/full/slow": 4,
+        "general/none/zone/burst": 24,
+        "general/none/zone/burst+slow": 20,
+        "general/none/zone/regular": 32,
+        "general/none/zone/slow": 16,
+        "general/when_idle/belts/burst": 86,
+        "general/when_idle/belts/burst+slow": 37,
+        "general/when_idle/belts/regular": 72,
+        "general/when_idle/belts/slow": 43,
+        "general/when_idle/full/burst": 12,
+        "general/when_idle/full/burst+slow": 6,
+        "general/when_idle/full/regular": 17,
+        "general/when_idle/full/slow": 9,
+        "heavy/none/belts/burst": 21,
+        "heavy/none/belts/regular": 15,
+        "heavy/none/full/burst": 6,
+        "heavy/none/full/regular": 7,
+        "heavy/none/zone/burst": 3,
+        "heavy/none/zone/regular": 6,
+        "heavy/when_idle/belts/burst": 24,
+        "heavy/when_idle/belts/regular": 16,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 46,
+        "real/none/belts/regular": 36,
+        "real/none/full/burst": 11,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 13,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 45,
+        "real/when_idle/belts/regular": 44,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 8
+      },
+      "cost_mean": 45.60348226406887,
+      "empty_episodes": 81,
+      "mc_cost_to_go_mean": 3585.1882887641136,
+      "all_decisions": 79793,
+      "gen_s": 8.623381414916366,
+      "gen_cpu_s": 294.35181131633,
+      "train_s": 20.462589372880757,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.020535435481254895,
+            "value": 0.049987254984611595,
+            "entropy": 0.6097325905126455,
+            "kl": 0.03276255674220501,
+            "clipfrac": 0.17134343636289143
+          },
+          {
+            "policy": 0.007770281348959656,
+            "value": 0.03589683224499185,
+            "entropy": 0.6222658972460101,
+            "kl": 0.03363923760507222,
+            "clipfrac": 0.17467049337987406
+          },
+          {
+            "policy": -0.0024243644384374,
+            "value": 0.02986030229102831,
+            "entropy": 0.6329372866261413,
+            "kl": 0.03237426510922789,
+            "clipfrac": 0.18006325063267553
+          },
+          {
+            "policy": -0.008150619504480212,
+            "value": 0.026368997658789674,
+            "entropy": 0.6299398027527557,
+            "kl": 0.037518065237063865,
+            "clipfrac": 0.18752170813709518
+          }
+        ],
+        "device": "cuda",
+        "samples": 54703
+      },
+      "scale": [
+        421685,
+        3000.9777568067525,
+        4611.294819531352
+      ]
+    },
+    {
+      "update": 7,
+      "episodes": 1000,
+      "episodes_total": 7000,
+      "decisions": 53911,
+      "seeds": [
+        706000,
+        706999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 74,
+        "general/none/belts/burst+slow": 37,
+        "general/none/belts/regular": 81,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 13,
+        "general/none/full/burst+slow": 7,
+        "general/none/full/regular": 9,
+        "general/none/full/slow": 6,
+        "general/none/zone/burst": 43,
+        "general/none/zone/burst+slow": 23,
+        "general/none/zone/regular": 41,
+        "general/none/zone/slow": 15,
+        "general/when_idle/belts/burst": 72,
+        "general/when_idle/belts/burst+slow": 30,
+        "general/when_idle/belts/regular": 79,
+        "general/when_idle/belts/slow": 34,
+        "general/when_idle/full/burst": 13,
+        "general/when_idle/full/burst+slow": 5,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 15,
+        "heavy/none/belts/regular": 21,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 5,
+        "heavy/none/zone/burst": 10,
+        "heavy/none/zone/regular": 5,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 5,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 52,
+        "real/none/belts/regular": 43,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 9,
+        "real/none/zone/burst": 19,
+        "real/none/zone/regular": 18,
+        "real/when_idle/belts/burst": 44,
+        "real/when_idle/belts/regular": 37,
+        "real/when_idle/full/burst": 15,
+        "real/when_idle/full/regular": 11
+      },
+      "cost_mean": 43.67907660034117,
+      "empty_episodes": 103,
+      "mc_cost_to_go_mean": 3178.0071269625664,
+      "all_decisions": 78388,
+      "gen_s": 8.517450777348131,
+      "gen_cpu_s": 291.84739910578355,
+      "train_s": 16.209713838994503,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.024297097835122673,
+            "value": 0.048709269136992535,
+            "entropy": 0.5184164116098722,
+            "kl": 0.026473165735508265,
+            "clipfrac": 0.1332010165028557
+          },
+          {
+            "policy": 0.009454190038175407,
+            "value": 0.03352866936007572,
+            "entropy": 0.5293592076089872,
+            "kl": 0.02688145044109554,
+            "clipfrac": 0.14868950680014628
+          },
+          {
+            "policy": 0.0007282105033837841,
+            "value": 0.027447068597076255,
+            "entropy": 0.5468351573691216,
+            "kl": 0.02366329309908209,
+            "clipfrac": 0.14533212145391436
+          },
+          {
+            "policy": -0.008816541494936284,
+            "value": 0.024850746070358833,
+            "entropy": 0.5492261978988247,
+            "kl": 0.026468892146788964,
+            "clipfrac": 0.15251061936158355
+          }
+        ],
+        "device": "cuda",
+        "samples": 53911
+      },
+      "scale": [
+        475596,
+        3021.0448523552236,
+        4765.479693781807
+      ]
+    },
+    {
+      "update": 8,
+      "episodes": 1000,
+      "episodes_total": 8000,
+      "decisions": 51511,
+      "seeds": [
+        707000,
+        707999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 93,
+        "general/none/belts/burst+slow": 48,
+        "general/none/belts/regular": 83,
+        "general/none/belts/slow": 34,
+        "general/none/full/burst": 15,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 19,
+        "general/none/full/slow": 8,
+        "general/none/zone/burst": 39,
+        "general/none/zone/burst+slow": 16,
+        "general/none/zone/regular": 35,
+        "general/none/zone/slow": 11,
+        "general/when_idle/belts/burst": 74,
+        "general/when_idle/belts/burst+slow": 27,
+        "general/when_idle/belts/regular": 75,
+        "general/when_idle/belts/slow": 26,
+        "general/when_idle/full/burst": 14,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 10,
+        "heavy/none/belts/burst": 21,
+        "heavy/none/belts/regular": 11,
+        "heavy/none/full/burst": 4,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 12,
+        "heavy/none/zone/regular": 6,
+        "heavy/when_idle/belts/burst": 18,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 4,
+        "real/none/belts/burst": 54,
+        "real/none/belts/regular": 31,
+        "real/none/full/burst": 20,
+        "real/none/full/regular": 8,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 38,
+        "real/when_idle/full/burst": 12,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 43.190489969084695,
+      "empty_episodes": 102,
+      "mc_cost_to_go_mean": 3169.6087862396603,
+      "all_decisions": 77401,
+      "gen_s": 8.716110086999834,
+      "gen_cpu_s": 289.4689895333722,
+      "train_s": 28.042531615123153,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.017315722408352024,
+            "value": 0.04144575325194146,
+            "entropy": 0.5094704283711443,
+            "kl": 0.019026920755429524,
+            "clipfrac": 0.1287297858715576
+          },
+          {
+            "policy": 0.00143054278115757,
+            "value": 0.028255201057244713,
+            "entropy": 0.5190419098190023,
+            "kl": 0.021920891257032202,
+            "clipfrac": 0.14272679621076217
+          },
+          {
+            "policy": -0.003618397141330968,
+            "value": 0.0247493155433108,
+            "entropy": 0.5342038768065538,
+            "kl": 0.023278151555691778,
+            "clipfrac": 0.14620178214130555
+          },
+          {
+            "policy": -0.005948408321941932,
+            "value": 0.022219536841075218,
+            "entropy": 0.5308963871274585,
+            "kl": 0.02275462506930498,
+            "clipfrac": 0.14462930247937142
+          }
+        ],
+        "device": "cuda",
+        "samples": 51511
+      },
+      "scale": [
+        527107,
+        3035.5631129708495,
+        4859.794915981415
+      ]
+    },
+    {
+      "update": 9,
+      "episodes": 1000,
+      "episodes_total": 9000,
+      "decisions": 53693,
+      "seeds": [
+        708000,
+        708999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 82,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 68,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 7,
+        "general/none/full/burst+slow": 8,
+        "general/none/full/regular": 21,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 44,
+        "general/none/zone/burst+slow": 18,
+        "general/none/zone/regular": 29,
+        "general/none/zone/slow": 7,
+        "general/when_idle/belts/burst": 80,
+        "general/when_idle/belts/burst+slow": 28,
+        "general/when_idle/belts/regular": 85,
+        "general/when_idle/belts/slow": 33,
+        "general/when_idle/full/burst": 16,
+        "general/when_idle/full/burst+slow": 11,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 25,
+        "heavy/none/belts/regular": 16,
+        "heavy/none/full/burst": 5,
+        "heavy/none/full/regular": 4,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 19,
+        "heavy/when_idle/belts/regular": 18,
+        "heavy/when_idle/full/burst": 2,
+        "heavy/when_idle/full/regular": 4,
+        "real/none/belts/burst": 45,
+        "real/none/belts/regular": 37,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 7,
+        "real/none/zone/burst": 20,
+        "real/none/zone/regular": 19,
+        "real/when_idle/belts/burst": 53,
+        "real/when_idle/belts/regular": 48,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 11
+      },
+      "cost_mean": 41.11275480724023,
+      "empty_episodes": 72,
+      "mc_cost_to_go_mean": 2885.98169761023,
+      "all_decisions": 76874,
+      "gen_s": 8.770584690850228,
+      "gen_cpu_s": 303.62905353680253,
+      "train_s": 20.070670838933438,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.01667277290111366,
+            "value": 0.03324962425722709,
+            "entropy": 0.4923251540425117,
+            "kl": 0.02013577616721968,
+            "clipfrac": 0.12668318028479364
+          },
+          {
+            "policy": 0.007465306101657065,
+            "value": 0.021982129941586777,
+            "entropy": 0.49781153808582684,
+            "kl": 0.020497786159901075,
+            "clipfrac": 0.1342260629610841
+          },
+          {
+            "policy": -0.0014251156865866623,
+            "value": 0.020598292604687266,
+            "entropy": 0.5038192185087766,
+            "kl": 0.019977022275556762,
+            "clipfrac": 0.13474754623563226
+          },
+          {
+            "policy": -0.006511460803771777,
+            "value": 0.019473986339082202,
+            "entropy": 0.5072907346499368,
+            "kl": 0.02007198594208053,
+            "clipfrac": 0.13402119454914266
+          }
+        ],
+        "device": "cuda",
+        "samples": 53693
+      },
+      "scale": [
+        580800,
+        3021.734815906492,
+        4915.9192929423625
+      ]
+    },
+    {
+      "update": 10,
+      "episodes": 1000,
+      "episodes_total": 10000,
+      "decisions": 53101,
+      "seeds": [
+        709000,
+        709999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 77,
+        "general/none/belts/burst+slow": 30,
+        "general/none/belts/regular": 72,
+        "general/none/belts/slow": 49,
+        "general/none/full/burst": 20,
+        "general/none/full/burst+slow": 4,
+        "general/none/full/regular": 20,
+        "general/none/full/slow": 7,
+        "general/none/zone/burst": 44,
+        "general/none/zone/burst+slow": 5,
+        "general/none/zone/regular": 34,
+        "general/none/zone/slow": 13,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 44,
+        "general/when_idle/belts/regular": 90,
+        "general/when_idle/belts/slow": 37,
+        "general/when_idle/full/burst": 19,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 25,
+        "general/when_idle/full/slow": 7,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 18,
+        "heavy/none/full/burst": 1,
+        "heavy/none/full/regular": 6,
+        "heavy/none/zone/burst": 4,
+        "heavy/none/zone/regular": 12,
+        "heavy/when_idle/belts/burst": 16,
+        "heavy/when_idle/belts/regular": 19,
+        "heavy/when_idle/full/burst": 7,
+        "heavy/when_idle/full/regular": 8,
+        "real/none/belts/burst": 34,
+        "real/none/belts/regular": 36,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 2,
+        "real/none/zone/burst": 15,
+        "real/none/zone/regular": 21,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 37,
+        "real/when_idle/full/burst": 7,
+        "real/when_idle/full/regular": 6
+      },
+      "cost_mean": 43.03055171611814,
+      "empty_episodes": 70,
+      "mc_cost_to_go_mean": 3106.148646638085,
+      "all_decisions": 77893,
+      "gen_s": 9.187712009996176,
+      "gen_cpu_s": 320.6670334925875,
+      "train_s": 25.3261250811629,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.00807254331745232,
+            "value": 0.031987906764439356,
+            "entropy": 0.4953245552969581,
+            "kl": 0.015199145360440655,
+            "clipfrac": 0.10468729401491328
+          },
+          {
+            "policy": -0.0013489596744076509,
+            "value": 0.021890102016164856,
+            "entropy": 0.49825859894171237,
+            "kl": 0.017097192607602976,
+            "clipfrac": 0.11709760644584453
+          },
+          {
+            "policy": -0.006695229345673556,
+            "value": 0.02266795311275158,
+            "entropy": 0.5033520149208301,
+            "kl": 0.018442667887676664,
+            "clipfrac": 0.11862300144641881
+          },
+          {
+            "policy": -0.009976101554343014,
+            "value": 0.019422940685577608,
+            "entropy": 0.5064313007138305,
+            "kl": 0.02169059825106077,
+            "clipfrac": 0.13395227958665692
+          }
+        ],
+        "device": "cuda",
+        "samples": 53101
+      },
+      "scale": [
+        633901,
+        3028.806044419593,
+        4998.522324776292
+      ]
+    },
+    {
+      "update": 11,
+      "episodes": 1000,
+      "episodes_total": 11000,
+      "decisions": 53415,
+      "seeds": [
+        710000,
+        710999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 95,
+        "general/none/belts/burst+slow": 31,
+        "general/none/belts/regular": 70,
+        "general/none/belts/slow": 28,
+        "general/none/full/burst": 12,
+        "general/none/full/burst+slow": 6,
+        "general/none/full/regular": 12,
+        "general/none/full/slow": 10,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 18,
+        "general/none/zone/regular": 48,
+        "general/none/zone/slow": 8,
+        "general/when_idle/belts/burst": 82,
+        "general/when_idle/belts/burst+slow": 36,
+        "general/when_idle/belts/regular": 88,
+        "general/when_idle/belts/slow": 27,
+        "general/when_idle/full/burst": 17,
+        "general/when_idle/full/burst+slow": 10,
+        "general/when_idle/full/regular": 11,
+        "general/when_idle/full/slow": 5,
+        "heavy/none/belts/burst": 16,
+        "heavy/none/belts/regular": 20,
+        "heavy/none/full/burst": 2,
+        "heavy/none/full/regular": 2,
+        "heavy/none/zone/burst": 9,
+        "heavy/none/zone/regular": 10,
+        "heavy/when_idle/belts/burst": 26,
+        "heavy/when_idle/belts/regular": 8,
+        "heavy/when_idle/full/burst": 1,
+        "heavy/when_idle/full/regular": 3,
+        "real/none/belts/burst": 53,
+        "real/none/belts/regular": 38,
+        "real/none/full/burst": 7,
+        "real/none/full/regular": 18,
+        "real/none/zone/burst": 21,
+        "real/none/zone/regular": 16,
+        "real/when_idle/belts/burst": 41,
+        "real/when_idle/belts/regular": 37,
+        "real/when_idle/full/burst": 10,
+        "real/when_idle/full/regular": 10
+      },
+      "cost_mean": 42.81560300620899,
+      "empty_episodes": 87,
+      "mc_cost_to_go_mean": 3128.8279106012524,
+      "all_decisions": 79089,
+      "gen_s": 9.174744823016226,
+      "gen_cpu_s": 314.67554419720545,
+      "train_s": 23.73127695126459,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.011748177930538345,
+            "value": 0.030199551702153868,
+            "entropy": 0.5099087772873315,
+            "kl": 0.019917153901456555,
+            "clipfrac": 0.12681830947479258
+          },
+          {
+            "policy": 0.0010678099815841918,
+            "value": 0.02281841057333804,
+            "entropy": 0.5265781626617217,
+            "kl": 0.022839306460486517,
+            "clipfrac": 0.14671908643968118
+          },
+          {
+            "policy": -0.005558325413261964,
+            "value": 0.019003128615258272,
+            "entropy": 0.5344512495210775,
+            "kl": 0.023008656484822615,
+            "clipfrac": 0.14720584110219212
+          },
+          {
+            "policy": -0.011619060429087362,
+            "value": 0.017350927998103376,
+            "entropy": 0.5385880616411314,
+            "kl": 0.024564109232127082,
+            "clipfrac": 0.14973322102486344
+          }
+        ],
+        "device": "cuda",
+        "samples": 53415
+      },
+      "scale": [
+        687316,
+        3036.5792782481158,
+        4973.352326449153
+      ]
+    },
+    {
+      "update": 12,
+      "episodes": 1000,
+      "episodes_total": 12000,
+      "decisions": 51888,
+      "seeds": [
+        711000,
+        711999
+      ],
+      "kinds": {
+        "general/none/belts/burst": 72,
+        "general/none/belts/burst+slow": 27,
+        "general/none/belts/regular": 72,
+        "general/none/belts/slow": 35,
+        "general/none/full/burst": 12,
+        "general/none/full/burst+slow": 10,
+        "general/none/full/regular": 22,
+        "general/none/full/slow": 12,
+        "general/none/zone/burst": 38,
+        "general/none/zone/burst+slow": 11,
+        "general/none/zone/regular": 33,
+        "general/none/zone/slow": 8,
+        "general/when_idle/belts/burst": 75,
+        "general/when_idle/belts/burst+slow": 23,
+        "general/when_idle/belts/regular": 76,
+        "general/when_idle/belts/slow": 38,
+        "general/when_idle/full/burst": 20,
+        "general/when_idle/full/burst+slow": 8,
+        "general/when_idle/full/regular": 13,
+        "general/when_idle/full/slow": 3,
+        "heavy/none/belts/burst": 17,
+        "heavy/none/belts/regular": 28,
+        "heavy/none/full/burst": 7,
+        "heavy/none/full/regular": 3,
+        "heavy/none/zone/burst": 8,
+        "heavy/none/zone/regular": 14,
+        "heavy/when_idle/belts/burst": 15,
+        "heavy/when_idle/belts/regular": 11,
+        "heavy/when_idle/full/burst": 4,
+        "heavy/when_idle/full/regular": 2,
+        "real/none/belts/burst": 47,
+        "real/none/belts/regular": 47,
+        "real/none/full/burst": 13,
+        "real/none/full/regular": 13,
+        "real/none/zone/burst": 18,
+        "real/none/zone/regular": 25,
+        "real/when_idle/belts/burst": 49,
+        "real/when_idle/belts/regular": 47,
+        "real/when_idle/full/burst": 8,
+        "real/when_idle/full/regular": 16
+      },
+      "cost_mean": 40.79887334828858,
+      "empty_episodes": 90,
+      "mc_cost_to_go_mean": 2969.9437711106207,
+      "all_decisions": 77739,
+      "gen_s": 8.431894353125244,
+      "gen_cpu_s": 296.85583919938654,
+      "train_s": 15.451415167655796,
+      "train": {
+        "epochs": [
+          {
+            "policy": 0.013688580338928459,
+            "value": 0.030804239867661162,
+            "entropy": 0.48382401165865174,
+            "kl": 0.022949658766748423,
+            "clipfrac": 0.13109004008633982
+          },
+          {
+            "policy": 0.0029444983191707786,
+            "value": 0.02307206677916772,
+            "entropy": 0.5022530354469822,
+            "kl": 0.02752855555546383,
+            "clipfrac": 0.14174761026040883
+          },
+          {
+            "policy": -0.0032191094478596295,
+            "value": 0.0211392750517292,
+            "entropy": 0.5116826427082128,
+            "kl": 0.030890228343950058,
+            "clipfrac": 0.15627890845029543
+          },
+          {
+            "policy": -0.008562314984880588,
+            "value": 0.018880658772967313,
+            "entropy": 0.525540700122011,
+            "kl": 0.02975732094119755,
+            "clipfrac": 0.1601719087724365
+          }
+        ],
+        "device": "cuda",
+        "samples": 51888
+      },
+      "scale": [
+        739204,
+        3031.9018371163625,
+        4960.871696164564
+      ]
+    }
+  ],
+  "validations": [
+    {
+      "update": 0,
+      "episodes": 0,
+      "model": "results/experiments/rl2_ppo_ft_s5/act_u0.pt",
+      "val": {
+        "real": {
+          "delta": -0.061855568814955235,
+          "ci": 0.01483705886415248,
+          "n": 50,
+          "wins": 46
+        },
+        "heavy": {
+          "delta": -0.0285574828832187,
+          "ci": 0.010942723038886552,
+          "n": 50,
+          "wins": 38
+        },
+        "general": {
+          "delta": -0.027283834978074305,
+          "ci": 0.010549768156179097,
+          "n": 100,
+          "wins": 49
+        },
+        "real_burst": {
+          "delta": -0.035053904529606994,
+          "ci": 0.009985000045319568,
+          "n": 50,
+          "wins": 42
+        },
+        "score": -0.038187697801463805
+      },
+      "val_s": 2.087946753948927,
+      "val_cpu_s": 73.4013674641028,
+      "candidate": false,
+      "accepted": false
+    },
+    {
+      "update": 4,
+      "episodes": 4000,
+      "model": "models/rl2_ppo_ft_s5_it4.pt",
+      "val": {
+        "real": {
+          "delta": -0.046653797711498995,
+          "ci": 0.01564845890005384,
+          "n": 50,
+          "wins": 40
+        },
+        "heavy": {
+          "delta": -0.022173119955876997,
+          "ci": 0.012316214175698652,
+          "n": 50,
+          "wins": 36
+        },
+        "general": {
+          "delta": -0.014466888497752446,
+          "ci": 0.009027598194971804,
+          "n": 100,
+          "wins": 40
+        },
+        "real_burst": {
+          "delta": -0.02588176467452918,
+          "ci": 0.009036690276799788,
+          "n": 50,
+          "wins": 39
+        },
+        "score": -0.027293892709914405
+      },
+      "val_s": 2.109398304950446,
+      "val_cpu_s": 73.9011362735182,
+      "candidate": true,
+      "accepted": true
+    },
+    {
+      "update": 8,
+      "episodes": 8000,
+      "model": "models/rl2_ppo_ft_s5_it8.pt",
+      "val": {
+        "real": {
+          "delta": -0.03771392383819157,
+          "ci": 0.013535365475771088,
+          "n": 50,
+          "wins": 40
+        },
+        "heavy": {
+          "delta": -0.018380064529095397,
+          "ci": 0.012473787256166824,
+          "n": 50,
+          "wins": 35
+        },
+        "general": {
+          "delta": -0.0156706864693683,
+          "ci": 0.008845419754565601,
+          "n": 100,
+          "wins": 42
+        },
+        "real_burst": {
+          "delta": -0.01565485779530465,
+          "ci": 0.008050359273950492,
+          "n": 50,
+          "wins": 35
+        },
+        "score": -0.021854883157989977
+      },
+      "val_s": 2.211950794328004,
+      "val_cpu_s": 78.32505509536713,
+      "candidate": true,
+      "accepted": false
+    },
+    {
+      "update": 12,
+      "episodes": 12000,
+      "model": "models/rl2_ppo_ft_s5_it12.pt",
+      "val": {
+        "real": {
+          "delta": -0.041249013915338806,
+          "ci": 0.01303512621164568,
+          "n": 50,
+          "wins": 40
+        },
+        "heavy": {
+          "delta": -0.027890809634976588,
+          "ci": 0.012640548721565911,
+          "n": 50,
+          "wins": 36
+        },
+        "general": {
+          "delta": -0.015006810194828602,
+          "ci": 0.009618401456250387,
+          "n": 100,
+          "wins": 44
+        },
+        "real_burst": {
+          "delta": -0.014492303045424529,
+          "ci": 0.009739902238934197,
+          "n": 50,
+          "wins": 34
+        },
+        "score": -0.02465973419764213
+      },
+      "val_s": 2.3288421612232924,
+      "val_cpu_s": 83.30268403282389,
+      "candidate": true,
+      "accepted": false
+    }
+  ],
+  "reference": {
+    "who": "nearest_job",
+    "cpu_s": 2.1885549784637988,
+    "wall_s": 0.708975575864315
+  },
+  "best": {
+    "model": "models/rl2_ppo_ft_s5.pt",
+    "score": -0.027293892709914405,
+    "update": 4,
+    "checkpoint": "models/rl2_ppo_ft_s5_it4.pt"
+  },
+  "finished": "2026-11-23 23:11:06",
+  "wall_s": 358.10992151591927
+}
