@@ -539,11 +539,20 @@ decision versions of $\Pb$ for $L_{\max}$ and for $\sum_jC_j$ (equivalently $\su
 are NP-hard in the strong sense.
 \end{proposition}
 The reduction (Appendix~\ref{app:complexity}) is from $1\,|\,r_j\,|\,L_{\max}$ and
-$1\,|\,r_j\,|\,\sum C_j$, both strongly NP-hard \cite{Lenstra1977}%
-\footnote{The theorem numbers or pages of \cite{Lenstra1977} that establish each of the
-two source problems are to be added from the publisher's record before submission.},
-with one part per conveyor, where the head is
-the only coupling. Not covered: a \emph{fixed} number of conveyors, where parts share belts
+$1\,|\,r_j\,|\,\sum C_j$ \cite{Lenstra1977}, with one part per conveyor, where the head
+is the only coupling; it preserves the encoding of the numbers up to a polynomial
+factor, so the problem inherits the hardness of its source: strong NP-hardness if the
+source is strongly NP-hard, ordinary NP-hardness otherwise.%
+\footnote{The 1975 preprint of \cite{Lenstra1977} (Mathematisch Centrum report
+BW~43/75, P.~Brucker, J.K.~Lenstra, A.H.G.~Rinnooy Kan) proves the NP-completeness of
+$n\,|\,1\,|\,r_j\ge0,w_j=1\,|\,\sum w_jC_j$ and of $n\,|\,1\,|\,r_j\ge0\,|\,L_{\max}$ by
+reductions from KNAPSACK (its Theorem~4(a) and~4(c)), which gives ordinary NP-hardness
+only. The strong NP-hardness of both problems is attributed in the scheduling
+literature to the published 1977 version; its theorem numbers could not be checked
+against that version for this draft and must be before submission. Until then the
+claim of Proposition~\ref{prop:complexity} that is verified from a source is ordinary
+NP-hardness.}
+Not covered: a \emph{fixed} number of conveyors, where parts share belts
 and their availability depends on earlier stops, and the all-conveyors stop rule; the
 makespan version is not claimed. In Graham-style notation the problem is
 \[
@@ -689,7 +698,7 @@ S network on the same development realizations (30 per group).
 Section~\ref{sec:ladder}, on the development realizations (reference cell and heavy
 variant, 30 each; 60 general cells), score = mean of the three; and seconds per episode.
 ``Penalty in the cost'' scores the look-ahead on the penalized objective. Bold: the chosen
-expert.}
+expert. Legacy arrival-time tie-break (Section~\ref{sec:dev}).}
 \label{tab:variants}
 \resizebox{\linewidth}{!}{\input{tables/variants}}
 \end{table}
@@ -803,7 +812,14 @@ from the reserved seeds of Section~\ref{sec:confirm}.
 \section{Development results}\label{sec:dev}
 %====================================================================
 Everything in this section was measured on development realizations and used to make
-design decisions; nothing here is confirmatory.
+design decisions; nothing here is confirmatory. \textbf{Tie-break convention.} Every
+result of this section and of Section~\ref{sec:confirm} predates the observable
+tie-break of Section~\ref{sec:online}: the rules (\nj, \nh) and the candidate ranking of
+the known-parts search ran with the legacy arrival-time key, and so did the known-parts
+expert of iteration 0 and the base policy inside every look-ahead; the network's own
+decisions never used the arrival time. The only results obtained with the observable
+key are those of the audit quoted in Section~\ref{sec:online} (development
+realizations), which bounds the effect of the change on each comparator.
 
 \subsection{Three sizes, one expert: the ladder stops at S}\label{sec:ladder}
 With the known-parts expert, the three sizes were trained on a 48-thread workstation
@@ -825,7 +841,7 @@ slowly. The ladder stops at S, and the lever is the expert.
 \caption{Scaling ladder with the known-parts expert: best accepted iteration of each
 run on the validation groups (paired $\Delta$ vs \nj\ [\%, 95\,\% CI]; 50 realizations
 for the reference cell and the heavy variant, 100 general cells) and the score of the
-search over that network.}
+search over that network. Legacy tie-break.}
 \label{tab:ladder}
 \resizebox{\linewidth}{!}{\input{tables/ladder}}
 \end{table}
@@ -863,7 +879,7 @@ and the owner froze that network (iteration~1) for the confirmatory run.
 alone on the validation groups (paired $\Delta$ vs \nj\ [\%, 95\,\% CI]), its score and
 its expert's score. Bold iterations were accepted. The first run validates in the basic
 mode; the two continuations in the design mode (where \nj\ also pre-positions), with the
-fourth group added in the last.}
+fourth group added in the last. Legacy tie-break.}
 \label{tab:sfruns}
 \resizebox{\linewidth}{!}{\input{tables/sf_runs}}
 \end{table}
@@ -888,7 +904,7 @@ seeing the hidden queue. The Poisson expert stays the expert of record.
 \caption{Expert futures: the frozen network alone, and the scenario search over it with
 Poisson futures and with the cell's on/off arrival model, on the validation groups
 (design mode, 50 realizations per group, 100 general) and on two cells with strong
-bursts (on 20\,\% of the time in 40~s periods). Paired $\Delta$ vs \nj\ [\%, 95\,\% CI].}
+bursts (on 20\,\% of the time in 40~s periods). Paired $\Delta$ vs \nj\ [\%, 95\,\% CI]. Legacy tie-break.}
 \label{tab:futures}
 \resizebox{\linewidth}{!}{\input{tables/futures}}
 \end{table}
@@ -948,6 +964,9 @@ decision with at least two candidates, every policy is timed on the same state (
 thread, the machine fully loaded by the other workers), 16\,215 decisions in B and
 17\,147 in C. The protocol, the regimes and the contrasts were fixed before the run; the
 per-episode results and the per-decision latencies are distributed with the source.
+The run used the legacy arrival-time tie-break for \nj, \nh\ and the known-parts search
+(Section~\ref{sec:online}): their numbers below are those of the slightly favoured
+comparators, and the reserved realizations were not rerun with the observable key.
 
 \begin{table}[t]
 \centering\small
@@ -969,7 +988,7 @@ Table~\ref{tab:confirmC} the design mode; Table~\ref{tab:latency} the latencies.
 time of each policy against \nj; contrasts of the two searches against the network
 (positive = the network is better; in parentheses the realizations in which the search
 is cheaper); and per-decision latency (median / 95th percentile). Bold: the interval
-excludes zero.}
+excludes zero. Rules and known-parts search with the legacy arrival-time tie-break (Section~\ref{sec:online}).}
 \label{tab:confirmB}
 \resizebox{\linewidth}{!}{\input{tables/confirm_B}}
 \end{table}
@@ -977,7 +996,7 @@ excludes zero.}
 \begin{table}[t]
 \centering\small
 \caption{As Table~\ref{tab:confirmB}, design mode (C): every policy, including \nj, may
-pre-position the idle head.}
+pre-position the idle head. Legacy tie-break.}
 \label{tab:confirmC}
 \resizebox{\linewidth}{!}{\input{tables/confirm_C}}
 \end{table}
@@ -1203,8 +1222,10 @@ a MILP solver on small instances and inside a rolling horizon.
 %====================================================================
 \section{Proof of Proposition~\ref{prop:complexity}}\label{app:complexity}
 %====================================================================
-Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$, strongly NP-hard with
-integer data \cite{Lenstra1977}. Given $n$ jobs $(r_j,p_j,d_j)$, build $N=n$ conveyors of
+Reduce from $1\,|\,r_j\,|\,L_{\max}$ and $1\,|\,r_j\,|\,\sum C_j$ with integer data
+\cite{Lenstra1977} (NP-complete by the KNAPSACK reductions of the 1975 preprint;
+strongly NP-hard according to the published version, see the footnote in
+Section~\ref{sec:properties}). Given $n$ jobs $(r_j,p_j,d_j)$, build $N=n$ conveyors of
 equal speed $v$, one part per conveyor, and scale by an integer $M$: $r'_j=Mr_j$,
 $p'_j=Mp_j$, $d'_j=Md_j+c$ with $c=a/v$. Part $j$ reaches $x=a$ at $Mr_j+c$. With one part
 per conveyor and $\sigma=I$ no belt stop delays another part, and blocking only makes an

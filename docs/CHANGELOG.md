@@ -94,6 +94,19 @@ summarized from the git history.
   taller figures (`experiments/paper1_figures.py`); and the PPO baseline in progress
   is stated explicitly on the title page, in the abstract, in a framed paragraph of
   §8.4 with the frozen protocol, and in the conclusions. 28 pages.
+* **Owner's three-task list (same day):** (1) in Paper 1, every result now says which
+  tie-break it was obtained with (a "tie-break convention" paragraph opening §8, a
+  sentence in the protocol of §9.1, and a note in the captions of Tables 3–6, 8 and 9:
+  everything except the audit used the legacy arrival-time key); (2) the Lenstra et
+  al. citation was checked against the CWI copy of the 1975 preprint (Mathematisch
+  Centrum BW 43/75, OCR text): it proves the NP-completeness of
+  n|1|r_j≥0,w_j=1|Σw_jC_j and n|1|r_j≥0|L_max by reductions from KNAPSACK (Theorem 4(a)
+  and 4(c)), i.e. ordinary NP-hardness, with no 3-PARTITION and no "strong"; the strong
+  NP-hardness our Proposition 4 relies on is attributed to the published 1977 version,
+  which could not be read. Paper 1 §5.2 and Appendix B, and the formulation document's
+  complexity proof, now say exactly that and state that the reduction inherits the
+  hardness of its source (strong if the source is strongly NP-hard); the owner must
+  check the 1977 version before submission.
 
 ## 0.7.25 — 2026-11-23 — Paper 1 draft 0.2: the formulation in the body, proofs and MILP in appendices
 
