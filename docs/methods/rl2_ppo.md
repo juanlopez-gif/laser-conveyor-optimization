@@ -1,4 +1,4 @@
-# PPO baseline on the token policy (0.7.25)
+# PPO baseline on the token policy (0.7.29)
 
 Code: `src/rl2/ppo.py` (trainer), `experiments/rl2_ppo.py` (CLI),
 `experiments/rl2_ppo_eval.py` (paired evaluation), `experiments/rl2_ppo_cost.py`,
@@ -488,9 +488,9 @@ Within the frozen protocol (lr 3 × 10⁻⁴, no KL penalty towards the frozen n
 teacher; the answer to §1.4's V2 question is no, at this step size. Cost: 6 min of
 wall-clock per run.
 
-## 4. CHANGELOG entry (for `docs/CHANGELOG.md`, to be integrated by the main session)
+## 4. CHANGELOG entry (integrated in `docs/CHANGELOG.md` as 0.7.29)
 
-## 0.7.25 — 2026-11-23 — PPO baseline on the token policy (`docs/methods/rl2_ppo.md`)
+## 0.7.29 — 2026-11-23 — PPO baseline on the token policy (`docs/methods/rl2_ppo.md`)
 
 * **Why.** Paper 1 claims that the search teacher is what makes the amortized
   policy good; the only reinforcement-learning comparison so far was the old PPO of

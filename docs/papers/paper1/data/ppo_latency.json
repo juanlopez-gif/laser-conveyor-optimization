@@ -1,0 +1,11 @@
+{
+  "model": "models/rl2_ppo_s2.pt",
+  "params": 884994,
+  "default_single_ms_median": 1.0589780285954475,
+  "default_single_ms_p95": 1.1754403822124004,
+  "default_encode_ms_median": 0.053451862186193466,
+  "heavy_single_ms_median": 1.1140520218759775,
+  "heavy_single_ms_p95": 1.2797489762306213,
+  "heavy_encode_ms_median": 0.060324324294924736,
+  "episode_decisions_per_s_1thread": 1419.5227175240955
+}

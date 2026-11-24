@@ -6,6 +6,91 @@ summarized from the git history.
 
 ---
 
+## 0.7.30 — 2026-11-23 — Paper 1 draft 0.4: the PPO baseline integrated (V1 from scratch, V2 fine-tuning)
+
+* **Why.** The owner asked to wait for the PPO session's final report before draft 0.4 and
+  to present V1 as PPO from scratch and V2 as a fine-tuning of the learned policy, the
+  improvement judged by the evaluation performance and the training cost, a larger KL
+  read only as "the policy changed more during training".
+* **What.** `docs/papers/paper1/paper1.tex` (draft 0.4): the "work in progress" line of
+  the title page removed; abstract, introduction, §8.4 (now "the earlier agents and the
+  PPO baseline" plus a new §8.5 `sec:ppo` with the protocol, V1, V2, cost and latency,
+  and a reading), Limits and Conclusions rewritten with the result: from scratch PPO
+  stays +3.6 / +4.5 / +7.9 % above `nearest_job` and +7.9 to +12.3 % above the frozen
+  expert-iteration network at a comparable number of acting episodes (two runs still
+  improving at the budget, 0.5–1 point per 4 000 episodes; the greedy/sampled decoding
+  divergence of one seed reported), fine-tuning the learned policy makes it worse on all
+  three seeds (+0.67 to +1.72 % vs the frozen network, the first checkpoint the best,
+  KL 0.06–0.15 at the first updates), one PPO run costs 22 min / 14.5 CPU-h against
+  12.7 h / 596 CPU-h for the chain (≈ 39 M look-ahead clone runs), latency 1.06 ms per
+  decision as for any size-S network. `experiments/paper1_figures.py`: tables `ppo_v1`,
+  `ppo_v2`, `ppo_cost` and figure `ppo` (two panels, legends below each panel) generated
+  from the versioned `docs/papers/paper1/data/ppo_*.json` and the `models/rl2_ppo_*_training.json`
+  logs. PDF rebuilt.
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf,tables/ppo_*.tex,figures/ppo.pdf,data/ppo_*.json}`,
+  `experiments/paper1_figures.py`, `docs/plans/papers.md`.
+
+---
+
+## 0.7.29 — 2026-11-23 — PPO baseline on the token policy (`docs/methods/rl2_ppo.md`), merged from `claude/ppo-baseline-e08600`
+
+* **Why.** Paper 1 claims that the search teacher is what makes the amortized
+  policy good; the only reinforcement-learning comparison so far was the old PPO of
+  0.5–0.6 on another representation. A PPO baseline with the **same** tokens,
+  network (`DispatchNet` size S, 0.88 M parameters), action mask, simulator, cell
+  distribution and validation realizations as the expert-iteration chain answers
+  "what does the teacher add over the reward alone?" at equal inference cost. The
+  protocol (reward, advantages, hyperparameters, budget, seeds, checkpoint
+  selection, evaluation, cost accounting) was frozen and committed before the full
+  runs and not changed afterwards (rl2_ppo.md §1).
+* **What.** `src/rl2/ppo.py` (semi-MDP PPO between network decisions: reward = minus
+  the increase of the penalized objective of `cost_so_far()`, γ = 1, GAE 0.95 in cost
+  units, per-batch advantage normalization, value targets on the running scale,
+  clipped surrogate 0.2, 4 epochs, minibatch 256, entropy 0.01, AdamW 3 × 10⁻⁴;
+  workers return the sampled trajectories, the GPU updates; one update per 1 000
+  episodes, checkpoint every 4 000 scored greedy on the validation groups, best
+  kept), `experiments/rl2_ppo.py` (CLI), `experiments/rl2_ppo_eval.py` (paired
+  evaluation), `experiments/rl2_ppo_cost.py` (cost of the PPO runs and of the
+  expert-iteration chain, teacher look-aheads measured on a sample),
+  `experiments/rl2_ppo_anomaly.py` (greedy vs sampled decoding),
+  `experiments/rl2_ppo_latency.py`; `tests/test_rl2_ppo.py` (7 tests: masking,
+  GAE identities, normalization, loss at ratio 1, update direction, tiny end-to-end
+  run). Models `models/rl2_ppo_s0.pt`, `_s1`, `_s2` (from scratch, 40 000 episodes
+  each, training seeds 200 000+ / 300 000+ / 400 000+) and `models/rl2_ppo_ft_s3.pt`,
+  `_s4`, `_s5` (fine-tuning of `rl2_gen_s_b`, 12 000 episodes), with their
+  `_training.json`. Results in `results/experiments/rl2_ppo_*` (not versioned),
+  tables in rl2_ppo.md §3.
+* **Result.** From scratch, with a comparable number of acting episodes to the
+  chain (40 000 vs 36 000), PPO stays above `nearest_job` on every seed: best greedy
+  scores +4.49 / +7.88 / +3.62 % (mean over seeds +5.33 %), against −3.82 % for the
+  frozen expert-iteration network on the same realizations; vs that network PPO is
+  +8.78 / +12.31 / +7.89 % worse (mean +9.66 %), losing on every group. Two of three
+  runs were still improving at the end of the budget (≈ 0.5–1 % per 4 000
+  episodes); seed 1's greedy score worsened after 16 000 episodes while its sampled
+  policy kept improving (§3.5: the PPO policies are still stochastic, 0.8–1.0 nats,
+  and their sampled score is 15–40 points worse than greedy). Fine-tuning the frozen
+  network with PPO (V2) makes it worse on all three seeds (−2.26 / −3.22 / −2.73 %
+  at the best checkpoint, the first; +1.20 % vs the frozen network on average), the
+  first update moving the policy far (KL 0.06–0.15 per update). Cost: one PPO run
+  = 22 min wall / 14.5 CPU-h upper bound on 40 workers, the chain = 12.7 h /
+  596 CPU-h on 47 workers with ≈ 39 M look-ahead clone runs; the PPO checkpoint has
+  the network's latency (1.06 ms per decision, one thread, same machine as the
+  untrained reference).
+* **Where.** `docs/methods/rl2_ppo.md` (§1 frozen protocol, §2 smoke test, §3
+  results: learning curves, paired evaluation, cost, latency, anomaly, V2),
+  `src/rl2/ppo.py`, `experiments/rl2_ppo*.py`, `tests/test_rl2_ppo.py`,
+  `models/rl2_ppo_*`. Not done (rl2_ppo.md §1.7): hyperparameter search, reward
+  shaping, KL penalty towards the frozen network, longer budgets.
+* **Integration.** Run in its own session and worktree (branch `claude/ppo-baseline-e08600`,
+  commits 3f8eff4, 40df8a4, 8c93a60; merge commit 0fa2301 on `remote-training`, no
+  conflicts). The branch's document and §4 text carried the number 0.7.25, already used
+  by Paper 1 draft 0.2; they are renumbered 0.7.29 here. Its per-run results under
+  `results/experiments/rl2_ppo_*` are git-ignored; the paired evaluations, the cost
+  accounting, the latency and the decoding anomaly are versioned for Paper 1 as
+  `docs/papers/paper1/data/ppo_{eval,eval_ft,cost,latency,anomaly_s1}.json` (0.7.30).
+
+---
+
 ## 0.7.28 — 2026-11-23 — Belt-speed bench run on the reserved seeds 10000–10059 (`geometry.md` §8)
 
 * **Decisions (owner, `geometry.md` §7.6).** Reserved seeds **10000–10059** (checked

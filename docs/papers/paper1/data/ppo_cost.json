@@ -1,0 +1,144 @@
+{
+  "teacher_sample": {
+    "known": {
+      "episodes": 40,
+      "decisions": 1762,
+      "lookaheads": 7167,
+      "clones_per_decision": 4.067536889897843,
+      "secs_per_episode": 0.931328687898349,
+      "wall_s": 4.264452029950917
+    },
+    "sf": {
+      "episodes": 40,
+      "decisions": 1771,
+      "lookaheads": 58120,
+      "clones_per_decision": 32.81761716544325,
+      "secs_per_episode": 11.626081550936215,
+      "wall_s": 52.9447703701444
+    }
+  },
+  "ppo": [
+    {
+      "tag": "rl2_ppo_s0",
+      "workers": 40,
+      "wall_s": 1307.5401773741469,
+      "gen_s": 366.4771744119935,
+      "train_s": 906.5321339531802,
+      "val_s": 26.336687551811337,
+      "gen_cpu_s": 12758.677568844054,
+      "val_cpu_s": 906.2792254770175,
+      "episodes": 40000,
+      "val_episodes": 3000,
+      "decisions": 2164734,
+      "all_decisions": 3132795,
+      "best_update": 40,
+      "best_score": 0.04487727915147032
+    },
+    {
+      "tag": "rl2_ppo_s1",
+      "workers": 40,
+      "wall_s": 1321.2450349349529,
+      "gen_s": 353.07956684427336,
+      "train_s": 934.7302072881721,
+      "val_s": 25.219242523424327,
+      "gen_cpu_s": 12244.532506098505,
+      "val_cpu_s": 871.6646054820158,
+      "episodes": 40000,
+      "val_episodes": 3000,
+      "decisions": 2185072,
+      "all_decisions": 3124362,
+      "best_update": 16,
+      "best_score": 0.07883797941895368
+    },
+    {
+      "tag": "rl2_ppo_s2",
+      "workers": 40,
+      "wall_s": 1291.868652204983,
+      "gen_s": 349.6112620746717,
+      "train_s": 909.4186168834567,
+      "val_s": 24.40102160256356,
+      "gen_cpu_s": 12115.719062304124,
+      "val_cpu_s": 837.5715977703221,
+      "episodes": 40000,
+      "val_episodes": 3000,
+      "decisions": 2163500,
+      "all_decisions": 3114124,
+      "best_update": 40,
+      "best_score": 0.03615293058338094
+    }
+  ],
+  "chain": [
+    {
+      "tag": "rl2_gen_s_big",
+      "workers": 47,
+      "iterations": 6,
+      "teacher": "known-parts",
+      "gen_s": 909.0011604712345,
+      "train_s": 428.69019106961787,
+      "val_s": 119.46909221727401,
+      "episodes": 14000,
+      "decisions": 685606,
+      "lookahead_clones": 2788727.6969353002,
+      "val_episodes": 4400,
+      "val_lookahead_clones": 239033.80259445432,
+      "best": {
+        "model": "models/rl2_gen_s_big_it3.pt",
+        "score": -0.02789980737517954
+      }
+    },
+    {
+      "tag": "rl2_gen_s_sf",
+      "workers": 47,
+      "iterations": 4,
+      "teacher": "sampled-future",
+      "gen_s": 12506.522883272264,
+      "train_s": 193.01333032175899,
+      "val_s": 1232.6788229169324,
+      "episodes": 8000,
+      "decisions": 390183,
+      "lookahead_clones": 12804876.318464145,
+      "val_episodes": 3200,
+      "val_lookahead_clones": 1280487.6318464146,
+      "best": {
+        "model": "models/rl2_gen_s_sf_it2.pt",
+        "score": -0.04828261520159704
+      }
+    },
+    {
+      "tag": "rl2_gen_s_d",
+      "workers": 47,
+      "iterations": 4,
+      "teacher": "sampled-future",
+      "gen_s": 14190.113389133941,
+      "train_s": 216.28679111693054,
+      "val_s": 1211.5704911043867,
+      "episodes": 8000,
+      "decisions": 397521,
+      "lookahead_clones": 13045691.993224166,
+      "val_episodes": 3200,
+      "val_lookahead_clones": 1304569.1993224167,
+      "best": {
+        "model": "models/rl2_gen_s_d_it2.pt",
+        "score": -0.0398198015709695
+      }
+    },
+    {
+      "tag": "rl2_gen_s_b",
+      "workers": 47,
+      "iterations": 3,
+      "teacher": "sampled-future",
+      "gen_s": 13402.987013007049,
+      "train_s": 196.51692723296583,
+      "val_s": 1080.7932208003476,
+      "episodes": 6000,
+      "decisions": 314028,
+      "lookahead_clones": 10305650.683229813,
+      "val_episodes": 3250,
+      "val_lookahead_clones": 1288206.3354037267,
+      "best": {
+        "model": "models/rl2_gen_s_b_it1.pt",
+        "score": -0.038187697801463805
+      }
+    }
+  ]
+}

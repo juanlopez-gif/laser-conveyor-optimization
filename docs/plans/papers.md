@@ -472,7 +472,11 @@ look-aheads with the teacher design study, the token policy and expert iteration
 development results (ladder S/M/L, sampled-future continuation, burst-aware teacher) and
 the phase-4 confirmatory comparison (network vs NJ, vs known-parts search, vs teacher,
 latencies, B and C). Stated limits: no optimality gap, rollout instead of the exact
-pruned search, one 3-belt cell in the confirmatory run. Open: the owner's reading;
+pruned search, one 3-belt cell in the confirmatory run. **Draft 0.4 (0.7.30):** the PPO
+baseline of the parallel session (0.7.29, `docs/methods/rl2_ppo.md`) integrated as V1
+(from scratch: +3.6 to +7.9 % above `nearest_job`, +7.9 to +12.3 % above the learned
+policy, one fortieth of the CPU-hours) and V2 (fine-tuning of the learned policy: worse
+on all three seeds); the "work in progress" notice removed. Open: the owner's reading;
 the hindsight reference and the generalization bench on new reserved seeds.
 **Draft 0.2 (0.7.25):** the formulation is in the body (§3–§5: model, online problem,
 properties) with the MILP, the proofs, the lower bounds and the special cases in

@@ -405,6 +405,111 @@ def fig_latency(b: Bench, path: Path):
     plt.close(fig)
 
 
+
+# ------------------------------------------------------------------ PPO baseline (docs/methods/rl2_ppo.md)
+DATA = ROOT / "docs/papers/paper1/data"
+GROUPS = ("real", "heavy", "general", "real_burst")
+
+
+def load_ppo(name):
+    return json.load(open(DATA / name))
+
+
+def ppo_cell(d, g):
+    return fmt(100 * d[g]["delta"], 100 * d[g]["ci"]) + f" ({d[g]['wins']}/{d[g]['n']})"
+
+
+def t_ppo(variant: str):
+    """Paired evaluation of the selected PPO checkpoints: V1 (from scratch, ppo_eval.json) or V2
+    (fine-tuning of the frozen network, ppo_eval_ft.json), vs NJ and vs the frozen network."""
+    ev = load_ppo("ppo_eval.json" if variant == "v1" else "ppo_eval_ft.json")
+    tags = [m.split("/")[-1].replace(".pt", "") for m in ev["args"]["models"]]
+    ep = {tag: load_training(tag) for tag in tags}
+    L = [r"\begin{tabular}{@{}llccccc@{}}", r"\toprule",
+         r"policy & best checkpoint & real & heavy & general & real/bursts & score \\", r"\midrule",
+         r"\multicolumn{7}{@{}l}{\emph{vs \nj}} \\"]
+    ref = ev["vs_nearest_job"]["rl2_gen_s_b"]
+    L.append(r"\texttt{rl2\_gen\_s\_b} (expert iteration, frozen) & --- & " + " & ".join(ppo_cell(ref, g) for g in GROUPS)
+             + f" & {100 * ref['score']:+.2f} \\\\")
+    for tag in tags:
+        d = ev["vs_nearest_job"][tag]
+        b = ep[tag]["best"]
+        L.append(f"\\texttt{{{tag.replace('_', chr(92) + '_')}}} & update {b['update']} ({ep[tag]['validations'][-1]['episodes'] * b['update'] // ep[tag]['validations'][-1]['update']:,} ep.) & "
+                 + " & ".join(ppo_cell(d, g) for g in GROUPS) + f" & {100 * d['score']:+.2f} \\\\")
+    d = ev["vs_nearest_job"]["mean_over_seeds"]
+    L.append(r"mean over seeds & & " + " & ".join(ppo_cell(d, g) for g in GROUPS) + f" & {100 * d['score']:+.2f} \\\\")
+    L += [r"\midrule", r"\multicolumn{7}{@{}l}{\emph{vs \texttt{rl2\_gen\_s\_b} (negative = PPO better)}} \\"]
+    for tag in tags:
+        d = ev["vs_ref"][tag]
+        L.append(f"\\texttt{{{tag.replace('_', chr(92) + '_')}}} & & " + " & ".join(ppo_cell(d, g) for g in GROUPS) + f" & {100 * d['score']:+.2f} \\\\")
+    d = ev["vs_ref"]["mean_over_seeds"]
+    L.append(r"mean over seeds & & " + " & ".join(ppo_cell(d, g) for g in GROUPS) + f" & {100 * d['score']:+.2f} \\\\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(L)
+
+
+def t_ppo_cost():
+    c = load_ppo("ppo_cost.json")
+    L = [r"\begin{tabular}{@{}lrrrrrrr@{}}", r"\toprule",
+         r"run & wall-clock & workers & CPU-h (wall $\times$ workers) & GPU updates & acting episodes & look-ahead clone runs & best score \\",
+         r"\midrule"]
+    for r in c["ppo"]:
+        L.append(f"\\texttt{{{r['tag'].replace('_', chr(92) + '_')}}} (PPO from scratch) & {r['wall_s'] / 60:.0f} min & {r['workers']} & "
+                 f"{r['wall_s'] * r['workers'] / 3600:.1f} & {r['train_s'] / 60:.0f} min & {r['episodes']:,} & 0 & {100 * r['best_score']:+.2f} \\\\")
+    L.append(r"\midrule")
+    tot = dict(wall=0.0, cpu=0.0, train=0.0, ep=0, clones=0.0)
+    for r in c["chain"]:
+        wall = r["gen_s"] + r["train_s"] + r["val_s"]
+        tot["wall"] += wall; tot["cpu"] += wall * r["workers"] / 3600; tot["train"] += r["train_s"]
+        tot["ep"] += r["episodes"]; tot["clones"] += r["lookahead_clones"]
+        L.append(f"\\texttt{{{r['tag'].replace('_', chr(92) + '_')}}} ({r['teacher']} expert, {r['iterations']} it.) & {wall / 3600:.2f} h & {r['workers']} & "
+                 f"{wall * r['workers'] / 3600:.0f} & {r['train_s'] / 60:.0f} min & {r['episodes']:,} & {r['lookahead_clones'] / 1e6:.1f} M & {100 * r['best']['score']:+.2f} \\\\")
+    L.append(f"expert-iteration chain, total & {tot['wall'] / 3600:.1f} h & & {tot['cpu']:.0f} & {tot['train'] / 60:.0f} min & {tot['ep']:,} & {tot['clones'] / 1e6:.1f} M & \\\\")
+    L += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(L)
+
+
+def fig_ppo(path: Path):
+    plt = _rc()
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 4.0))
+    ref = 100 * load_ppo("ppo_eval.json")["vs_nearest_job"]["rl2_gen_s_b"]["score"]
+    ax = axes[0]
+    for tag, col in (("rl2_ppo_s0", "#1f77b4"), ("rl2_ppo_s1", "#ff7f0e"), ("rl2_ppo_s2", "#2ca02c")):
+        d = load_training(tag)
+        vs = [v for v in d["validations"] if v["update"] > 0]
+        x = [v["episodes"] for v in vs]
+        ax.plot(x, [100 * v["val"]["score"] for v in vs], "-o", color=col, ms=3, label=f"{tag.replace('rl2_ppo_', 'seed ')}: greedy score")
+        b = d["best"]
+        ax.plot([b["update"] * 1000], [100 * b["score"]], "s", color=col, ms=6, mfc="none", label=f"{tag.replace('rl2_ppo_', 'seed ')}: selected")
+    ax.axhline(0, color="k", lw=0.6, ls="-", label="NJ (0)")
+    ax.axhline(ref, color="k", lw=0.6, ls=":", label=f"frozen expert-iteration network ({ref:+.2f})")
+    ax.set_xlabel("training episodes (PPO from scratch, V1)")
+    ax.set_ylabel("validation score: mean paired $\\Delta$ vs NJ [%]")
+    ax.set_title("V1: PPO from scratch, size S")
+    ax.set_ylim(-6, 25)
+    h0, l0 = ax.get_legend_handles_labels()
+    ax = axes[1]
+    for tag, col in (("rl2_ppo_ft_s3", "#1f77b4"), ("rl2_ppo_ft_s4", "#ff7f0e"), ("rl2_ppo_ft_s5", "#2ca02c")):
+        d = load_training(tag)
+        vs = d["validations"]
+        x = [v["episodes"] for v in vs]
+        ax.plot(x, [100 * v["val"]["score"] for v in vs], "-o", color=col, ms=3, label=f"{tag.replace('rl2_ppo_ft_', 'seed ')}: greedy score")
+        b = d["best"]
+        ax.plot([b["update"] * 1000], [100 * b["score"]], "s", color=col, ms=6, mfc="none", label=f"{tag.replace('rl2_ppo_ft_', 'seed ')}: selected")
+    ax.axhline(0, color="k", lw=0.6, ls="-", label="NJ (0)")
+    ax.axhline(ref, color="k", lw=0.6, ls=":", label=f"frozen network, the initialization ({ref:+.2f})")
+    ax.set_xlabel("training episodes (PPO fine-tuning, V2)")
+    ax.set_ylabel("paired $\\Delta$ vs NJ [%]")
+    ax.set_title("V2: PPO fine-tuning of the learned policy")
+    ax.set_ylim(-4.5, 0.5)
+    h1, l1 = ax.get_legend_handles_labels()
+    axes[0].legend(h0, l0, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, frameon=False, fontsize=6.5)
+    axes[1].legend(h1, l1, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, frameon=False, fontsize=6.5)
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
 # ------------------------------------------------------------------ main
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -418,12 +523,13 @@ def main() -> None:
     lat_tex, nB, nC = t_latency(b)
     tables = {"regimes": t_regimes(b), "confirm_B": t_confirm(b, "B"), "confirm_C": t_confirm(b, "C"),
               "latency": lat_tex, "ladder": t_ladder(), "sf_runs": t_sf_runs(), "variants": t_variants(),
-              "futures": t_futures()}
+              "futures": t_futures(), "ppo_v1": t_ppo("v1"), "ppo_v2": t_ppo("v2"), "ppo_cost": t_ppo_cost()}
     for name, tex in tables.items():
         (OUT / "tables" / f"{name}.tex").write_text("% generated by experiments/paper1_figures.py\n" + tex + "\n")
     fig_training(OUT / "figures/training.pdf")
     fig_confirm(b, OUT / "figures/confirm.pdf")
     fig_latency(b, OUT / "figures/latency.pdf")
+    fig_ppo(OUT / "figures/ppo.pdf")
     # headline numbers
     print(f"latency decisions pooled: B {nB}, C {nC}")
     for t in ("B", "C"):
