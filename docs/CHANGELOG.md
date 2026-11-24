@@ -6,6 +6,38 @@ summarized from the git history.
 
 ---
 
+## 0.7.24 — 2026-11-23 — Paper 1 draft 0.1 in LaTeX (`docs/papers/paper1/`)
+
+* **Why.** The owner closed Paper 2 at draft 0.6 and asked for Paper 1 (2026-11-23).
+  Per the plan's review notes and the owner's decisions of 2026-11-22, the method of
+  Paper 1 is the sampled-future look-ahead plus the learned policy that amortizes it;
+  the known-parts rollout is the reference it improves on, and the exact pruned search
+  of the original plan is named as not built.
+* **What.** `docs/papers/paper1/paper1.tex` (draft 0.1, 14 pages): problem with
+  endogenous blocking and the reference information model, properties (strong
+  NP-hardness with N in the input, belt order not dominant, lower bounds, light
+  traffic; proofs cited to the formulation and theory documents), the two look-aheads
+  (known-parts rollout; sampled futures scored on every part) with the teacher design
+  study (`rl2.md` §6.4), the token/Transformer policy and expert iteration (`rl2.md`
+  §2–§3, §6.3), the training distribution (§6.1), development results (scaling ladder
+  §8.4, sampled-future continuation §8.5, design-mode and bursts continuations
+  §8.6/§8.8, burst-aware teacher §8.9), the confirmatory evaluation of phase 4
+  (`confirmatory.md` §9.3: network vs NJ, vs the known-parts search, vs its teacher, in
+  B and C, with per-decision latencies), discussion and limits (no optimality gap;
+  rollout K = 6 instead of the exact search; one 3-belt cell in the confirmatory run).
+  Generator `experiments/paper1_figures.py`: extracts
+  `data/phase4_search.csv` (1 920 episodes of the Paper-1 policies and the rules in B
+  and C) and `data/phase4_latency.csv.gz` (166 810 per-decision latencies) from the
+  phase-4 `bench.json`, copies the teacher-variant and teacher-futures result files
+  (`data/teacher_*.json`), reads the versioned training logs `models/*_training.json`;
+  tables `regimes`, `confirm_B`, `confirm_C`, `latency`, `ladder`, `sf_runs`,
+  `variants`, `futures`; figures `training`, `confirm`, `latency`. All numbers in the
+  text come from those tables or from `rl2.md`/`confirmatory.md`; PDF versioned.
+* **Not in the draft** (owner's call): the hindsight/optimality reference, the 36-cell
+  bench and the budget ablations of the original plan (second phase-4 run, new reserved
+  seeds), and an expert-iteration reference in the bibliography (none verified in
+  `references.bib`; the scheme is described without citation).
+
 ## 0.7.23 — 2026-11-23 — Paper 2 draft 0.6: three text corrections before sharing
 
 * **Why.** The owner's reading of draft 0.5 (2026-11-23): (1) "3.33 s is enough" in the

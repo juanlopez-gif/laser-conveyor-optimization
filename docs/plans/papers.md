@@ -458,6 +458,17 @@ traces "compatible with", not "confirm"); the owner considers it ready to share 
 co-authors. Decisions 4–6 are answered by the draft's structure (§6.7, §6.5, §§6.1 and
 7.4). Open: co-authors' reading; economic translation deferred.
 
+**Paper 1 draft 0.1 (0.7.24, `docs/papers/paper1/`).** Written after Paper 2 was closed
+at draft 0.6. Title kept from the plan ("Scheduling a Shared Mobile Head Across Parallel
+Conveyors with Endogenous Blocking"), subtitle "A sampled-future look-ahead and the
+learned dispatching policy that amortizes it". Contents: problem and properties, the two
+look-aheads with the teacher design study, the token policy and expert iteration, the
+development results (ladder S/M/L, sampled-future continuation, burst-aware teacher) and
+the phase-4 confirmatory comparison (network vs NJ, vs known-parts search, vs teacher,
+latencies, B and C). Stated limits: no optimality gap, rollout instead of the exact
+pruned search, one 3-belt cell in the confirmatory run. Open: the owner's reading;
+the hindsight reference and the generalization bench on new reserved seeds.
+
 **Where the plan's steps already stand.**
 
 | step | status |

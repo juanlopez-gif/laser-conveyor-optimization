@@ -1,0 +1,62 @@
+{
+"net": "models/rl2_gen_s_b.pt",
+"val": 50,
+"val_mode": "design",
+"groups": [
+"heavy",
+"real_burst"
+],
+"extra": [
+"arrivals.stochastic.distribution=burst",
+"arrivals.stochastic.burst.on_fraction=0.2",
+"arrivals.stochastic.burst.on_mean=40"
+],
+"rows": [
+{
+"variant": "net alone",
+"heavy": {
+"delta": -0.010595915719413273,
+"ci": 0.006051574445243941,
+"secs": 0.7774851492512971
+},
+"real_burst": {
+"delta": -0.01848542630614707,
+"ci": 0.007522999385494691,
+"secs": 0.5419232653360814
+},
+"score": -0.01454067101278017,
+"vs_net": 0.0
+},
+{
+"variant": "roll:m8:w30:p0",
+"heavy": {
+"delta": -0.011264347493026778,
+"ci": 0.005845623902513744,
+"secs": 183.16867590834386
+},
+"real_burst": {
+"delta": -0.016046126913004288,
+"ci": 0.007054121975756394,
+"secs": 104.59058018215
+},
+"score": -0.013655237203015532,
+"vs_net": 0.0011038432356741791
+},
+{
+"variant": "roll:m8:w30:p0:fcell",
+"heavy": {
+"delta": -0.012686263782883631,
+"ci": 0.00610718649436566,
+"secs": 206.40016223100014
+},
+"real_burst": {
+"delta": -0.015563267476483643,
+"ci": 0.006937750282408559,
+"secs": 101.32205500553363
+},
+"score": -0.014124765629683636,
+"vs_net": 0.0005512479812330639
+}
+],
+"elapsed_s": 699.807281055022
+}
