@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.1 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.38; bibliographic audit of 0.7.39)}
+\date{November 2026 --- draft 1.2 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.38; bibliographic audit of 0.7.39; scientific review of 0.7.40)}
 
 \begin{document}
 \maketitle
@@ -61,7 +61,7 @@ in the input, the structural facts that make belt order natural but
 not dominant, valid lower bounds that account for the belt kinematics, and sufficient
 conditions for a light-traffic regime in which every non-idling rule that dispatches
 among the parts already in the zone produces the same schedule, within one interception
-time of the offline optimum. We then ask how to decide well in
+time of the offline optimum in makespan and mean flow time. We then ask how to decide well in
 milliseconds. A look-ahead search scores each candidate part by simulating the known parts
 together with sampled futures of the unknown arrivals (eight Poisson futures over a 30~s
 window, common random numbers, the realized cost of every part as the objective); it is
@@ -72,7 +72,10 @@ randomized cells with one to six conveyors, amortizes it: on 30 reserved realiza
 eight operating regimes, used once, no difference between the policy alone and the
 scenario search built on it was detected in any tested regime; the look-ahead over the known parts costs
 1.5--3.9\,\% more than the policy in every regime of the basic mode (1.4--4.4\,\% in the design mode; significant in seven of eight in each), and the policy beats the nearest-part rule
-by 2--7\,\% of the penalized flow time in seven of the eight regimes, at 10.8~ms per
+by 2--7\,\% of the penalized flow time in seven of the eight regimes (individual 95\,\%
+intervals, rule with its legacy arrival-time tie-break; in all eight in both modes when
+the rule alone was rerun afterwards on the same realizations with the observable
+tie-break), at 10.8~ms per
 decision (median, one thread, machine fully loaded; 17.5~ms at the 95th percentile;
 above the design's 5~ms budget in 98\,\% of the decisions on that machine)
 against 1.2~s for the search. Three negative results shape the method:
@@ -128,7 +131,7 @@ measure on reserved realizations. Its contributions are:
   the head's travel, with their measured quality; sufficient conditions for a
   light-traffic regime where every non-idling rule that dispatches among the parts
   already in the zone produces the same schedule, within one interception time of the
-  offline optimum, and counterexamples showing that outside it neither first-in nor
+  offline optimum in makespan and mean flow time, and counterexamples showing that outside it neither first-in nor
   nearest-part is optimal, and that waiting and anticipation pay.
 \item A look-ahead search for the online problem (Section~\ref{sec:search}) that
   simulates every candidate against sampled futures of the unknown arrivals and scores it
@@ -617,9 +620,14 @@ at $x=40$ and $12$~cm, part $B$ on belt~2 at $x=30$~cm. Serving $A$ first, the h
 it at $0.6$~s and belt~1 stops; at $t=3$~s, $C$ is at $13.8$~cm. Serving $B$ first, belt~1
 keeps moving until $A$ reaches $b$ at $5/3$~s and blocks it; at $t=3$~s, $C$ is at
 $17.0$~cm. The arrivals are the same and both first services are still in progress: a
-choice between two parts changes the position of a third one by 3.2~cm, and with it its
-window. In the mixed-model lines of Section~\ref{sec:related} a different launch sequence
-shifts every product at once; here the shift is confined to the belts that stop.
+choice between two parts changes the position of a third one by 3.2~cm. The choice can
+also move the opening of a window: with $C$ at $x=6$~cm instead, upstream of $a$, serving
+$B$ first lets $C$ reach $a$ at $4/3=1.33$~s, before $A$ blocks belt~1 at $5/3$~s, while
+serving $A$ first stops belt~1 from 0.6 to 3.1~s and $C$ reaches $a$ at 3.83~s, 2.5~s
+later. In the mixed-model lines of Section~\ref{sec:related} transport timing shifts only
+through a common line stop, which shifts every product at once (a different launch
+sequence alone changes which product occupies a station, not when the line moves); here
+a service stops only its own belt.
 
 Belt order is natural, by Proposition~\ref{prop:cascade}, but \emph{not} dominant
 (Section~\ref{sec:special}): on small instances with bursts the best order sometimes
@@ -680,7 +688,8 @@ the makespan (and bounded from below for $\sum_jC_j$) by dynamic
 programming over (processed set, last part) for $n\le10$ and applied to windows beyond,
 that recomputes the availability of each part from the parts processed before it.
 Table~\ref{tab:bounds} gives their quality on random instances of the reference cell:
-against the exact optimum over $\Phi$ (all orders enumerated, $n\le8$) 2--9\,\% on the
+against the best enumerated schedule over $\Phi$ (all orders, $n\le8$, simulated at a
+0.01~s step) 2--9\,\% on the
 makespan and 7--20\,\% on the mean flow time; against the best of four online rules,
 which is only a heuristic upper bound, 1--11\,\% and 12--28\,\% at $n=10$ and
 1--15\,\% and 24--51\,\% at $n=20$--$40$. Part of every
@@ -696,13 +705,17 @@ solutions and would be the pruning of an exact search over the known parts.
 \centering\small
 \caption{Quality of the lower bounds: mean gap $100\,(\mathrm{UB}-\mathrm{LB})/\mathrm{LB}$
 over three random instances of the reference cell per size (Poisson arrivals at the
-reference rates). The upper bound is the exact optimum over $\Phi$ (all $n!$ orders
-enumerated and decoded by the fixed-sequence decoder $\Phi$ at a 0.01~s step, with
-pruning against the incumbent within a 0.1~s allowance) for $n\le8$ only; for $n\ge10$ it
-is the best of four online rules, a heuristic, so those gaps mix the bounds' looseness
-with the rules' suboptimality. Unpenalized objectives; $\Phi$ dispatches without
-deliberate idling, so its optimum bounds the restricted model, not $\Pb$; three instances
-per size. Last column: the time of one evaluation of all bounds.}
+reference rates). For $n\le8$ the upper bound is the best of two values: the
+enumeration of the $n!$ orders, each decoded by the fixed-sequence decoder $\Phi$ in the
+simulator at a 0.01~s step and simulated only if its L6 sequence bound is below the
+incumbent plus 0.1~s, and the four online rules; it is the optimum over $\Phi$ up to the
+simulator's step error and that pruning allowance, not a certified exact value. For
+$n\ge10$ it is the best of the four online rules, a heuristic, so those gaps mix the
+bounds' looseness with the rules' suboptimality. Unpenalized objectives; $\Phi$
+dispatches the next part of its order as soon as that part is eligible (waiting for it if
+another part is ready) and never moves the head in anticipation, so these gaps are
+measured against the restricted model $\Psim$, not against the optimum of $\Pb$; three
+instances per size. Last column: the time of one evaluation of all bounds.}
 \label{tab:bounds}
 \begin{tabular}{@{}cccc@{}}
 \toprule
@@ -722,7 +735,11 @@ Let $e^0_j=r_j+a/v_{k(j)}$ be the free-flow availability of part $j$, and
 \[
 I^\ast=\max\Bigl(\frac{b-a}{v_x+\min_kv_k},\ \frac{\max_ky_k-\min_ky_k}{v_y}\Bigr)
 \]
-the longest interception a ready part can need (2.69~s in the reference cell).
+an upper bound on the interception time of a part that has just entered the zone at $a$
+on a moving belt (2.69~s in the reference cell; interception lemma in the proof of
+Theorem~\ref{thm:LTPhi}). It does not bound every ready part: a part already blocked at
+$b$ with the head at $a$ on the same belt needs $(b-a)/v_x=3.5$~s; the conditions below
+ensure that every part is met on entry.
 \begin{theorem}[Light traffic]\label{thm:light}
 Assume simultaneous axes, $\sigma=I$, $a\ge\delta$, $v_k\le v_x$ and $v_kI^\ast\le b-a$ for
 all $k$. If consecutive parts $h,i$ of the same conveyor satisfy
@@ -1218,7 +1235,11 @@ per-episode results and the per-decision latencies are distributed with the sour
 The run used the legacy arrival-time tie-break for \nj, \nh\ and the known-parts search
 (Section~\ref{sec:online}): their numbers below are those of comparators run under
 that key, whose effect on development realizations was at most $\pm1.5$\,\% per
-regime and of either sign; the reserved realizations were not rerun with the observable key.
+regime and of either sign. After the run, as a retrospective sensitivity analysis and
+not as a new confirmation, \nj\ alone was rerun on the same reserved realizations with
+both keys (the legacy run reproduces the archived costs to the printed precision) and
+paired with the archived costs of the network (results below); \nh\ and the known-parts
+search were not rerun with the observable key.
 
 \begin{table}[t]
 \centering\small
@@ -1278,7 +1299,13 @@ bursts, $-2.8$ to $-4.2$ at the heavy load) and by 2.0--7.1\,\% in C; the except
 heavy load with Poisson arrivals and a slow head ($-1.3\pm2.3$ and $-1.6\pm2.7$), where
 with every belt queueing and a head at 2.5~cm/s no tested policy improved on the
 nearest-part rule by a detectable amount; how far all of them are from the optimum is
-not measured.
+not measured. The intervals are individual: Holm's adjustment over the eight regimes of
+each mode leaves six detections in B and seven in C. With \nj\ rerun under the observable
+tie-break (retrospective, same realizations, network costs unchanged), the network is
+cheaper with an individual interval excluding zero in all eight regimes in both modes
+(2.0--7.6\,\% in B and 2.1--7.6\,\% in C); in the exception above the contrasts become
+$-2.1\pm2.0$ and $-2.7\pm2.5$, so the margin there stays close to zero. The margin of the
+known-parts search was not re-estimated under the observable key.
 
 \textbf{It beats the known-parts search in every regime}: the search costs 1.5--3.9\,\% more than the policy in B and
 1.4--4.4 in C, significantly in seven of eight in both modes, at 2--3 times the search's
@@ -1405,7 +1432,8 @@ determines the availability of every part, and the problem this creates is stron
 NP-hard (offline, maximum lateness and total completion time, with the number of conveyors
 in the input), naturally but not dominantly ordered by belt, and indifferent to the ready-only
 rule under the sufficient conditions of light traffic, where every such non-idling rule
-coincides within one interception time of the offline optimum. In the contended regimes of a real cell, the decision that
+coincides within one interception time of the offline optimum in makespan and mean flow
+time. In the contended regimes of a real cell, the decision that
 serves the parts in view best is not the best decision: a look-ahead that samples the
 unknown arrivals and scores the realized cost of every part decides better than the
 nearest-part rule by 3--8\,\% of the penalized flow time in the seven significant regimes
@@ -1763,7 +1791,8 @@ two labels per state. For any $U\subset J$ the restriction of a feasible schedul
 satisfies the recursion built on $U$ alone, with $F_j$ replaced by $F_j\cap U$ and $M_h$ by
 $M_h\cap U$ (the belt indices $m_j$ and the gaps $s_{ij}$ keep their values in $J$), so
 for a partition $J=U_1\cup\dots\cup U_q$, $\sum_jC_j\ge\sum_b\mathrm{DP}_\Sigma(U_b)$; the
-implementation uses the exact DP for $n\le10$ and, beyond, windows of 8 consecutive parts
+implementation uses the DP over all parts for $n\le10$ (exact for the makespan relaxation,
+a lower bound for $\sum_jC_j$) and, beyond, windows of 8 consecutive parts
 in availability order (four shifted partitions, the best kept). The bound reported in
 Table~\ref{tab:bounds} is the maximum of all the above.
 
@@ -1845,8 +1874,9 @@ non-idling rule (one candidate at that epoch) serves it first: makespan 30.42~s,
 9.27~s. Serving the fifth part first (waiting 0.2~s for it on the head's own conveyor) and
 then the fourth gives 29.45~s and 8.88~s, feasible and verified. Hence neither first-in nor
 nearest-part is optimal, over $\Phi$ and hence over $\Pb$; the improvement needs
-deliberate idling, which no implemented rule does and which the decoder $\Phi$, which
-never idles, cannot represent: the model $\Pb$ admits it. On 30 random five-part instances of
+deliberate idling, which no implemented rule does; the decoder $\Phi$ represents it,
+since with the order (fifth, fourth) it waits for the fifth part although the fourth is
+ready. On 30 random five-part instances of
 the reference cell with all 120 orders enumerated, first-in was optimal in 22 (makespan)
 and 21 (flow) instances and nearest-part in 20 and 21.
 \end{counterexample}

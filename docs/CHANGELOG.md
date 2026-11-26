@@ -6,6 +6,79 @@ summarized from the git history.
 
 ---
 
+## 0.7.40 — 2026-11-25 — Scientific review of 0.7.39: Paper 1 draft 1.2 and Paper 2 draft 1.5
+
+* **Why.** The owner supplied an external scientific review of the published commit
+  2b895f5 with a reproduction script. Every claim was checked against the `.tex` files and
+  the code, and both numerical studies of the script were rerun here before editing.
+  Everything reproduced exactly: the legacy rule matched the archived costs (Paper 1: 240
+  per mode; Paper 2: 6 720 full-view costs, tolerance 1e-7), and the observable-key
+  figures matched the review's table cell by cell.
+* **Paper 2 (draft 1.5).**
+  * New §6.3 "Sensitivity to the tie-break" and Table 9 (`tables/bench_observable.tex`).
+    The rule was rerun with the observable tie-break on the same 60 realizations of the
+    56 distinct cells, in both modes and at all grid points, with the criteria unchanged.
+    It is labelled retrospective, not a confirmation.
+    * 19 cells pass the benefit screen; 13 pass under both keys, 5 only under the legacy
+      key and 6 only under the observable one.
+    * 3.33 s instead of 10 s costs a median of 0.037 s and at most 0.443 s per part.
+    * Only 3 of the 19 cells meet the conservative 90 % criterion before 10 s (at 2, 7.5
+      and 7.5 s); the other 16 meet it first at 10 s.
+    * Consequence: the small cost of a shorter view holds under both keys. The certified
+      2–7.5 s range belongs to the arrival-time key. This is stated in the abstract,
+      contribution 2, §7.1, the Limits and the Conclusions. The prespecified results are
+      kept, identified by their key.
+  * Predictors under the observable key (19 cells, point-estimate knees): move duration
+    1.72 s, group mean by v_x 1.74 s, crossing time 2.12 s, constant 2.27 s. They are
+    added to the abstract, contribution 3, §6.4 and the Conclusions. The advice in §7.1 to
+    use the move duration for cells unlike those tested is withdrawn.
+  * The anticipation definition is fixed in the introduction and in the Figure 1 caption:
+    "seconds of uninterrupted belt motion" replaces "seen τ seconds before".
+  * §3.2 "the weights matter little" is replaced. Rerun here from the extract: with
+    unpenalized flow the benefit screen passes 15 cells instead of 18. The three cells lost
+    are 6/15/10 high-bursts, 6/15/10 nominal-Poisson and 12/15/5 nominal-bursts.
+  * "Decision epoch" for one or more candidates becomes "dispatch event", as in Paper 1.
+  * Contribution 4 now gives all the conditions of the identity of cells.
+* **Paper 1 (draft 1.2).**
+  * §9 now includes the retrospective rerun of nearest-job with the observable key on the
+    reserved realizations, against the archived network costs.
+    * The network is cheaper with an individual 95 % interval excluding zero in 8/8
+      regimes in B (2.0–7.6 %) and 8/8 in C (2.1–7.6 %), against 7/8 under the legacy key.
+    * In the high-load, Poisson, slow-head regime the contrasts are −2.1 ± 2.0 and
+      −2.7 ± 2.5.
+    * Holm on the legacy contrasts leaves 6 detections in B and 7 in C.
+    * The abstract states both keys. The known-parts search was not rerun.
+  * I* is scoped to an upper bound for a part just entering at a; a part blocked at b can
+    need (b−a)/v_x = 3.5 s.
+  * Makespan and mean flow are named wherever the light-traffic gap to the optimum is
+    invoked (abstract, contributions, discussion and conclusions).
+  * Table 2 caption and its text describe the 0.01 s enumeration with pruning (incumbent
+    plus 0.1 s) and the best-of-rules incumbent, not an exact optimum.
+  * Decoder Φ: it waits for the next part of its order even when another part is ready
+    (`src/policies/fixed_sequence.py`). **The sentence "Φ, which never idles, cannot
+    represent [waiting]" added in 0.7.39 was wrong** and is replaced in App. D.
+  * App. C, last paragraph: the DP over all parts for n ≤ 10 is exact for the makespan
+    only.
+  * §5.1 example:
+    * A variant with C at 6 cm is added: the choice moves C's entry into the zone from
+      1.33 s to 3.83 s.
+    * The mixed-model contrast is stated through a common line stop.
+* **Provenance.**
+  * The review's script is archived as `experiments/recheck_0_7_39.py`.
+  * Its outputs are in `docs/papers/paper1/data/recheck_0_7_39_reference.txt` and
+    `docs/papers/paper2/data/recheck_0_7_39_geometry.txt`.
+  * The patch scripts are kept outside the repository with the audit.
+* **Verification.**
+  * Both PDFs rebuilt (35 and 28 pages) with no undefined references.
+  * Full test suite passes (2 skipped).
+  * Status notes added to `docs/plans/papers.md`.
+* **Open (needs new runs).**
+  * Confirming a coverage requirement for the observable controller on unused seeds with
+    a frozen plan.
+  * The known-parts search under the observable key.
+
+---
+
 ## 0.7.39 — 2026-11-25 — Bibliographic audit: Paper 1 draft 1.1 and Paper 2 draft 1.4
 
 * **Why.** The owner supplied six original articles (Li, Boysen and Stephan 2026; Yano and

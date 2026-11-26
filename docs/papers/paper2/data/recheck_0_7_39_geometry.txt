@@ -1,0 +1,97 @@
+full-view screen (6, 10, 5, 'high', 'burst') True False
+published-key curve (6, 10, 5, 'high', 'burst') {'point': (5.0, 5.0), 'conservative': (7.5, 7.5), 'short_cost': 0.15461633928202556, 'short_share': 0.896359313733964, 'gain': 1.491849821266917}
+full-view screen (6, 10, 5, 'high', 'poisson') False True
+observable-key curve (6, 10, 5, 'high', 'poisson') {'point': (5.0, 10.0), 'conservative': (10.0, 10.0), 'short_cost': 0.42909271513239716, 'short_share': 0.5752246235819619, 'gain': 1.6694942756671864, 'move': 2.3051215337866924, 'vx': 5}
+full-view screen (6, 10, 5, 'nominal', 'burst') False False
+full-view screen (6, 10, 5, 'nominal', 'poisson') True True
+published-key curve (6, 10, 5, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (5.0, 5.0), 'short_cost': 0.11723606764822136, 'short_share': 0.9500133926244724, 'gain': 2.3453495606826325}
+observable-key curve (6, 10, 5, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (10.0, 10.0), 'short_cost': 0.28228844685880206, 'short_share': 0.9005130431575462, 'gain': 2.5310031756680513, 'move': 1.9012265549877259, 'vx': 5}
+full-view screen (6, 10, 10, 'high', 'burst') False False
+full-view screen (6, 10, 10, 'high', 'poisson') True True
+published-key curve (6, 10, 10, 'high', 'poisson') {'point': (2.0, 2.0), 'conservative': (3.3333333333333335, 3.3333333333333335), 'short_cost': 0.004630562733566812, 'short_share': 0.9962919074068748, 'gain': 1.2487721428922094}
+observable-key curve (6, 10, 10, 'high', 'poisson') {'point': (1.5, 1.5), 'conservative': (10.0, 10.0), 'short_cost': -0.06751938474515332, 'short_share': 1.2517221406325083, 'gain': 1.0279772764882849, 'move': 1.185231976083358, 'vx': 10}
+full-view screen (6, 10, 10, 'nominal', 'burst') False False
+full-view screen (6, 10, 10, 'nominal', 'poisson') True True
+published-key curve (6, 10, 10, 'nominal', 'poisson') {'point': (1.5, 1.5), 'conservative': (2.5, 2.5), 'short_cost': 0.0002996694512329867, 'short_share': 0.9997485612578749, 'gain': 1.1918189245965738}
+observable-key curve (6, 10, 10, 'nominal', 'poisson') {'point': (1.0, 1.0), 'conservative': (2.0, 2.0), 'short_cost': -0.07678909113852612, 'short_share': 1.1401147738754118, 'gain': 1.1202961543120875, 'move': 0.7917715851330628, 'vx': 10}
+full-view screen (6, 15, 5, 'high', 'burst') False False
+full-view screen (6, 15, 5, 'high', 'poisson') False True
+observable-key curve (6, 15, 5, 'high', 'poisson') {'point': (2.5, 2.5), 'conservative': (10.0, 10.0), 'short_cost': 0.2769638729417144, 'short_share': 1.14053389697292, 'gain': 1.8008543628605973, 'move': 2.348568638086716, 'vx': 5}
+full-view screen (6, 15, 5, 'nominal', 'burst') False False
+full-view screen (6, 15, 5, 'nominal', 'poisson') True True
+published-key curve (6, 15, 5, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (5.0, 5.0), 'short_cost': -0.04521016783284235, 'short_share': 1.0185249874231808, 'gain': 2.440496546640791}
+observable-key curve (6, 15, 5, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (10.0, 10.0), 'short_cost': -0.26110858312908, 'short_share': 0.99263267357999, 'gain': 2.4055016955839603, 'move': 1.6830212027290112, 'vx': 5}
+full-view screen (6, 15, 10, 'high', 'burst') True False
+published-key curve (6, 15, 10, 'high', 'burst') {'point': (0.5, 0.5), 'conservative': (2.0, 2.0), 'short_cost': 0.00010972828369594604, 'short_share': 0.9998936746462981, 'gain': 1.0320048783055729}
+full-view screen (6, 15, 10, 'high', 'poisson') True True
+published-key curve (6, 15, 10, 'high', 'poisson') {'point': (2.0, 2.0), 'conservative': (5.0, 5.0), 'short_cost': 0.04407945934945848, 'short_share': 0.9648946193747361, 'gain': 1.255632571542432}
+observable-key curve (6, 15, 10, 'high', 'poisson') {'point': (1.0, 5.0), 'conservative': (10.0, 10.0), 'short_cost': 0.0560703355446942, 'short_share': 0.703740441746969, 'gain': 1.1457791649348528, 'move': 1.009648800654287, 'vx': 10}
+full-view screen (6, 15, 10, 'nominal', 'burst') False False
+full-view screen (6, 15, 10, 'nominal', 'poisson') True True
+published-key curve (6, 15, 10, 'nominal', 'poisson') {'point': (1.5, 1.5), 'conservative': (2.0, 2.0), 'short_cost': 0.0006085409529766513, 'short_share': 0.9994104319326476, 'gain': 1.0321809926164587}
+observable-key curve (6, 15, 10, 'nominal', 'poisson') {'point': (1.5, 1.5), 'conservative': (7.5, 7.5), 'short_cost': -0.06662206947720702, 'short_share': 1.0985365305003731, 'gain': 1.0149305528995993, 'move': 0.6379526830397565, 'vx': 10}
+full-view screen (12, 5, 5, 'high', 'burst') False False
+full-view screen (12, 5, 5, 'high', 'poisson') True False
+published-key curve (12, 5, 5, 'high', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (None, None), 'short_cost': 0.05576274428378814, 'short_share': 0.9723363187661834, 'gain': 2.0157383904364656}
+full-view screen (12, 5, 5, 'nominal', 'burst') False False
+full-view screen (12, 5, 5, 'nominal', 'poisson') False False
+full-view screen (12, 5, 10, 'high', 'burst') False False
+full-view screen (12, 5, 10, 'high', 'poisson') False False
+full-view screen (12, 5, 10, 'nominal', 'burst') False False
+full-view screen (12, 5, 10, 'nominal', 'poisson') False True
+observable-key curve (12, 5, 10, 'nominal', 'poisson') {'point': (2.0, 3.3333333333333335), 'conservative': (10.0, 10.0), 'short_cost': 0.10782522186707541, 'short_share': 0.9171659978097687, 'gain': 1.1836612687921346, 'move': 1.9733012347531789, 'vx': 10}
+full-view screen (12, 10, 5, 'high', 'burst') False False
+full-view screen (12, 10, 5, 'high', 'poisson') False False
+full-view screen (12, 10, 5, 'nominal', 'burst') False False
+full-view screen (12, 10, 5, 'nominal', 'poisson') True True
+published-key curve (12, 10, 5, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (5.0, 5.0), 'short_cost': 0.06260686918460252, 'short_share': 0.969500660387786, 'gain': 2.0527286813612178}
+observable-key curve (12, 10, 5, 'nominal', 'poisson') {'point': (5.0, 5.0), 'conservative': (10.0, 10.0), 'short_cost': -0.09388124269342164, 'short_share': 0.8990077591660384, 'gain': 1.7939177005131133, 'move': 2.261511760901181, 'vx': 5}
+full-view screen (12, 10, 10, 'high', 'burst') False False
+full-view screen (12, 10, 10, 'high', 'poisson') False False
+full-view screen (12, 10, 10, 'nominal', 'burst') False False
+full-view screen (12, 10, 10, 'nominal', 'poisson') True True
+published-key curve (12, 10, 10, 'nominal', 'poisson') {'point': (3.3333333333333335, 3.3333333333333335), 'conservative': (3.3333333333333335, 3.3333333333333335), 'short_cost': 0.0148275916317908, 'short_share': 0.9887550163869929, 'gain': 1.3185961084600646}
+observable-key curve (12, 10, 10, 'nominal', 'poisson') {'point': (2.0, 2.0), 'conservative': (7.5, 7.5), 'short_cost': 0.006527827438599883, 'short_share': 1.1506674617129744, 'gain': 1.3268923028313286, 'move': 1.283176649181033, 'vx': 10}
+full-view screen (12, 15, 5, 'high', 'burst') False True
+observable-key curve (12, 15, 5, 'high', 'burst') {'point': (1.5, 10.0), 'conservative': (10.0, 10.0), 'short_cost': -0.5392913558205726, 'short_share': 1.3042817237682598, 'gain': 1.4513600488028915, 'move': 0.8640127303971898, 'vx': 5}
+full-view screen (12, 15, 5, 'high', 'poisson') False False
+full-view screen (12, 15, 5, 'nominal', 'burst') True True
+published-key curve (12, 15, 5, 'nominal', 'burst') {'point': (2.5, 5.0), 'conservative': (5.0, 5.0), 'short_cost': 0.13337269929371764, 'short_share': 0.8714687386150007, 'gain': 1.0376673959047245}
+observable-key curve (12, 15, 5, 'nominal', 'burst') {'point': (1.5, 10.0), 'conservative': (10.0, 10.0), 'short_cost': 0.20209540543230908, 'short_share': 0.788938594577674, 'gain': 1.0913697633686283, 'move': 1.0670707600681444, 'vx': 5}
+full-view screen (12, 15, 5, 'nominal', 'poisson') True True
+published-key curve (12, 15, 5, 'nominal', 'poisson') {'point': (5.0, 5.0), 'conservative': (7.5, 7.5), 'short_cost': 0.2868851420015481, 'short_share': 0.8077782797976418, 'gain': 1.4924699544855957}
+observable-key curve (12, 15, 5, 'nominal', 'poisson') {'point': (7.5, 7.5), 'conservative': (10.0, 10.0), 'short_cost': 0.32975238604890594, 'short_share': 0.5984080625981834, 'gain': 1.4606206113806894, 'move': 2.0469399356260705, 'vx': 5}
+full-view screen (12, 15, 10, 'high', 'burst') False False
+full-view screen (12, 15, 10, 'high', 'poisson') True True
+published-key curve (12, 15, 10, 'high', 'poisson') {'point': (1.5, 1.5), 'conservative': (2.5, 2.5), 'short_cost': 3.886288606735159e-05, 'short_share': 0.9999672242442207, 'gain': 1.1857205162419873}
+observable-key curve (12, 15, 10, 'high', 'poisson') {'point': (1.5, 5.0), 'conservative': (10.0, 10.0), 'short_cost': -0.16845798978824417, 'short_share': 0.7518292301711821, 'gain': 1.1346404336541132, 'move': 1.2000536052362019, 'vx': 10}
+full-view screen (12, 15, 10, 'nominal', 'burst') False False
+full-view screen (12, 15, 10, 'nominal', 'poisson') True True
+published-key curve (12, 15, 10, 'nominal', 'poisson') {'point': (2.0, 2.0), 'conservative': (2.0, 2.0), 'short_cost': -0.020902098941142633, 'short_share': 1.0166296063408995, 'gain': 1.2569208502390192}
+observable-key curve (12, 15, 10, 'nominal', 'poisson') {'point': (1.5, 1.5), 'conservative': (10.0, 10.0), 'short_cost': -0.13466739958713542, 'short_share': 1.0728220498441732, 'gain': 1.2532111567937156, 'move': 0.9560404874331747, 'vx': 10}
+full-view screen (18, 5, 5, 'high', 'burst') False False
+full-view screen (18, 5, 5, 'high', 'poisson') False False
+full-view screen (18, 5, 5, 'nominal', 'burst') True False
+published-key curve (18, 5, 5, 'nominal', 'burst') {'point': (2.5, 5.0), 'conservative': (7.5, 7.5), 'short_cost': 0.44341323652730735, 'short_share': 0.7050243349762578, 'gain': 1.5032197198084523}
+full-view screen (18, 5, 5, 'nominal', 'poisson') False False
+full-view screen (18, 5, 10, 'high', 'burst') False False
+full-view screen (18, 5, 10, 'high', 'poisson') False False
+full-view screen (18, 5, 10, 'nominal', 'burst') False True
+observable-key curve (18, 5, 10, 'nominal', 'burst') {'point': (3.3333333333333335, 7.5), 'conservative': (10.0, 10.0), 'short_cost': 0.07398183804726059, 'short_share': 0.9195339703822114, 'gain': 1.1047331676721335, 'move': 1.2248477671546205, 'vx': 10}
+full-view screen (18, 5, 10, 'nominal', 'poisson') False False
+full-view screen (18, 10, 5, 'high', 'burst') True True
+published-key curve (18, 10, 5, 'high', 'burst') {'point': (5.0, 5.0), 'conservative': (7.5, 7.5), 'short_cost': 0.20540849483110377, 'short_share': 0.8959313696598287, 'gain': 1.9737791701464709}
+observable-key curve (18, 10, 5, 'high', 'burst') {'point': (10.0, 10.0), 'conservative': (10.0, 10.0), 'short_cost': 0.44289705071357377, 'short_share': 0.6445190835392265, 'gain': 1.7457527272500755, 'move': 1.0896445498143128, 'vx': 5}
+full-view screen (18, 10, 5, 'high', 'poisson') True False
+published-key curve (18, 10, 5, 'high', 'poisson') {'point': (2.0, 5.0), 'conservative': (7.5, 7.5), 'short_cost': 0.23030355968149355, 'short_share': 0.8668505798416065, 'gain': 1.7296625055334254}
+full-view screen (18, 10, 5, 'nominal', 'burst') False False
+full-view screen (18, 10, 5, 'nominal', 'poisson') False True
+observable-key curve (18, 10, 5, 'nominal', 'poisson') {'point': (10.0, 10.0), 'conservative': (10.0, 10.0), 'short_cost': 0.03699696539874679, 'short_share': 0.8975265077086156, 'gain': 1.34877573700629, 'move': 2.528075916108705, 'vx': 5}
+full-view screen (18, 10, 10, 'high', 'burst') False False
+full-view screen (18, 10, 10, 'high', 'poisson') False False
+full-view screen (18, 10, 10, 'nominal', 'burst') False False
+full-view screen (18, 10, 10, 'nominal', 'poisson') False False
+historical/observable membership {(True, False): 5, (False, True): 6, (False, False): 32, (True, True): 13}
+conservative first crossings Counter({10.0: 16, 7.5: 2, 2.0: 1})
+direct shortening cost, median and maximum 0.03699696539874679 0.44289705071357377
+leave-one-cell-out error (seconds) {'constant': 2.2660818713450293, 'same_vx': 1.7446393762183237, 'fitted_move': 1.7154877098465753, 'crossing_time': 2.1228070175438596}
