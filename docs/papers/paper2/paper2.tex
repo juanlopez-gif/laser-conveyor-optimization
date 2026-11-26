@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.3 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.38)}
+\date{November 2026 --- draft 1.4 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.38; bibliographic audit of 0.7.39)}
 
 \begin{document}
 \maketitle
@@ -49,13 +49,15 @@ view alone produced small effects in every regime, while acting on it reduced th
 penalized flow time by 2.8--7.4\,\% (network) and 2.7--7.4\,\% (rule) in the four nominal-load regimes. The \emph{geometry
 bench} (72 regimes: belt spacing 6--18~cm, transverse head speed 5--15~cm/s, along-belt
 head speed 5 and 10~cm/s, two loads, Poisson and bursty arrivals; 60 realizations) then
-measures the gain of acting on a common grid of 0--10~s of anticipation. Pre-positioning
+measures the gain of acting on a common grid of 0--10~s of anticipation (the visible
+length divided by the belt speed: seconds of belt motion, to which any stop of that belt
+adds clock time). Pre-positioning
 passes the frozen benefit criterion (an estimated gain of at least 1~s per part with a
 lower 95\,\% bound of at least 0.5~s per part, design thresholds fixed before the run
 without an economic calibration) in 18 of the 56 distinct cells, 13 of them
 with Poisson arrivals; under the conservative criterion fixed by the protocol, retaining 90\,\% of the gain,
-17 of those 18 cells are certified at 2--7.5~s of anticipation, one unresolved within
-the grid; in the same 18 cells, giving the controller 3.33~s of anticipation (10~cm at
+17 of those 18 cells first meet it at a tested anticipation of 2--7.5~s, one unresolved
+within the grid; in the same 18 cells, giving the controller 3.33~s of anticipation (10~cm at
 3~cm/s) instead of 10~s cost a median of 0.05~s per part and at most 0.44~s per part,
 the largest value observed, and retained 71--102\,\% of the estimated gain (71\,\% in
 one cell). In the four nominal-load Poisson cells in which both along-belt speeds pass
@@ -63,9 +65,11 @@ the criterion, halving that speed multiplied the gain by 1.2--2.4 and moved the
 point-estimate requirement from 1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
 is the poorest predictor family of the required anticipation among those tested
 (leave-one-out error 1.5~s unscaled, 1.75~s rescaled); the mean planned duration of the pre-positioning moves the head starts is
-the best (1.0~s; the factor fitted on these traces is 1.7 times the mean planned move,
-each episode with a move weighted equally), and a
-constant of 2.8~s does nearly as well (1.1~s), so the predictor's advantage is small. For the rule, cells with the same crossing time, the same along-belt geometry and the
+the best of the predictors fixed before the run (1.0~s; the factor fitted on these traces
+is 1.7 times the mean planned move, each episode with a move weighted equally), a
+constant of 2.8~s does nearly as well (1.1~s), and the mean of the other cells with the same
+along-belt head speed, a comparator computed after the run, does better than both
+(0.82~s), so the trace-based predictor's advantage is small. For the rule, cells with the same crossing time, the same along-belt geometry and the
 same arrival realizations are identical by the model's structure. The results support specifying the camera in seconds of
 anticipation for this family of cells at the belt speed tested (3~cm/s, at which seconds
 and centimetres are one unit), with the cost of a shorter view measured in the
@@ -88,7 +92,14 @@ The actuator reaches a bounded window of each stream; what it does with a part d
 where the part is when the decision is taken, and what the controller can decide depends on
 what it sees. Instrumentation (which stretch of the belts a camera covers) and capability
 (whether the head may move towards a part before it is reachable) are design choices that
-are usually fixed before the scheduling policy is written, and seldom measured against it.
+are usually fixed before the scheduling policy is written. Line parameters have been
+optimized jointly with the sequence in paced assembly lines, where every part is known in
+advance \cite{Sarker2001}, and the value of seeing further has been measured for an
+operator's inspection range \cite{Nawijn1981}, for item-count lookahead in robot sorting
+\cite{Li2026} and for the length of an upstream buffer combined with the reach of several
+packing arms \cite{Ladefoged2026}; separating the value of the view from the value of the
+action it enables, for a head shared by belts that stop, has not been measured to our
+knowledge.
 Prior work notes the dependence without quantifying it: in a packaging line the cameras
 see items 5--10~s ahead and the planner is designed around that window
 \cite{S04_Schettini2023}; in a batching cell a longer buffer zone improves the objective
@@ -152,8 +163,33 @@ depend on its training.
 %====================================================================
 \section{Related work}\label{sec:related}
 %====================================================================
-Three strands of work touch the cell studied here; none asks the instrumentation
-question.
+Five strands of work touch the cell studied here. In one of them, three studies ask how
+much a controller gains from seeing further ahead, each in a different setting from ours;
+none separates the value of the view from the value of the action it enables.
+
+\textbf{Lookahead and upstream information.} At a conveyor-serviced production station
+with Poisson arrivals, an operator who has just finished a unit inspects a range of the
+belt measured in time units and takes the first unit that arrives in it; the optimal range
+depends on the number of units in a reserve, the operator's sight is assumed to cover every
+range, units that pass are lost and the belt never stops \cite{Nawijn1981}. A robot arm that
+takes the foremost item of one of several infeed queues, with the next $L$ items of each
+queue identified, is within about 1\,\% of its full-information optimum on average already
+at $L=1$ when it
+votes over sampled completions of the hidden queues, while a myopic dynamic program needs
+$L=20$ \cite{Li2026}: lookahead is counted in item identities, and the robot cannot act on
+an item before it is at the pick point. In robotic food packing, a buffer belt ahead of
+four arms with exclusive zones sets how early item weights are known; a longer buffer
+reduces the overfill with diminishing returns and increases the items lost at the end of
+the belt, and its value interacts with the reach given to each arm \cite{Ladefoged2026}.
+There the arm motions are instantaneous, so acting earlier has no meaning, the belt never
+stops, and the effects are fitted by regression on dimensionless parameters. Our study
+varies the physical length the camera covers and, separately, the permission to send a
+shared head towards a part before it is reachable, on belts that stop, and estimates both
+effects on paired realizations with criteria fixed before the run. The horizon of a
+look-ahead controller is a different quantity: the 20--80~s rollout horizons tuned in
+\cite{Righettini2025}, or the 30~s window of the scenario search of the companion paper,
+truncate simulated futures, while the anticipation measured here is what the camera
+physically observes now.
 
 \textbf{Picking and sorting from moving conveyors.} With one arm over one belt and
 Poisson arrivals, \cite{S02_Han2020} sequence the reachable objects by dynamic
@@ -171,7 +207,9 @@ belt. In all of these the belt never stops because of the processing and an unse
 item leaves the system; in our cell processing stops the part's belt and an unprocessed
 part blocks it, so the trajectories of the remaining parts depend on the schedule, and
 the visibility horizon is a parameter of the setting rather than a quantity whose value
-is measured.
+is measured. Conveyor stops caused by unfinished work are classical in mixed-model
+assembly lines \cite{Xiaobo2000,Tamura2011}, but there the launch sequence is fixed offline
+and nothing is sensed; the companion paper discusses them.
 
 \textbf{Interception of moving targets.} The moving-target travelling salesman problem
 \cite{S06_Helvig2003}, its discrete- and continuous-time formulations with visibility
@@ -310,8 +348,9 @@ The head's \emph{pre-positioning} option decides what it may do with a visible p
 is still in the entry zone. With \texttt{none} the candidates are the parts already in
 the laser zone; with \texttt{when\_idle}, if no part is in the zone, the head may be sent
 towards a visible entry-zone part: it moves to the point $(a,y_k)$ and waits there, and
-the commitment is revoked (at no cost) the moment any part enters the zone, so that the
-policy decides again. Physically, \texttt{when\_idle} needs the camera to cover the entry
+the commitment is revoked (at no cost) the moment another part is ready in the zone while
+the target is still in the entry zone, so that the policy decides again; if the target itself enters the zone, alone or together with other
+parts, the commitment stands. Physically, \texttt{when\_idle} needs the camera to cover the entry
 zone and the head to be able to move to a point and wait; it is the design mode of the
 cell. The treatments of the reference-cell study combine the two options:
 \begin{center}
@@ -336,9 +375,13 @@ the same length; this contrast, written $G(\tv)$ in seconds per part, is the qua
 the geometry bench.
 
 \subsection{Anticipation, crossing time and the moves the head makes}\label{sec:anticipation}
-A part at $x=a-\lv$ enters the laser zone $\tv=\lv/\vb$ seconds later: $\tv$ is the
-\emph{anticipation} the camera gives, 3.33~s for the whole 10~cm entry zone of the
-reference cell. When the head is idle at $(X,y)$ and a part is announced on belt $k$, the
+A part at $x=a-\lv$ enters the laser zone after $\tv=\lv/\vb$ seconds of belt motion:
+$\tv$ is the \emph{anticipation} the camera gives, 3.33~s for the whole 10~cm entry zone of
+the reference cell. It is the warning time while the belt runs; if the belt stops while the
+part crosses the visible stretch (because a part of the same belt is processed or blocks),
+the elapsed time from first detection to zone entry is $\tv$ plus that stopped time (10~cm
+at 3~cm/s with one 2.5~s service in between: 5.83~s). All coverages in this paper are
+nominal anticipations in this sense. When the head is idle at $(X,y)$ and a part is announced on belt $k$, the
 pre-positioned head reaches the meeting point $(a,y_k)$ after
 $\max(|X-a|/v_x,\,|y-y_k|/v_y)$ seconds. The lane component is at most the head's
 travel time across the conveyors, $\tcross=2d/v_y$ (2.4~s in the reference cell); the
@@ -475,7 +518,9 @@ seconds, $v_x$ was added as a factor, and the trace statistics were added.
 \item \emph{Sufficient coverage (knee):} the first grid anticipation $\tau$ whose paired
   contrast $G(\tau)-0.9\,G(10\,\mathrm{s})$ is $\ge0$ (point estimate) and, conservatively,
   whose lower simultaneous 95\,\% bound is $\ge0$ with a Bonferroni factor over the nine
-  non-zero grid points ($z=2.773$). The conservative value is the headline.
+  non-zero grid points ($z=2.773$). The conservative value is the headline. The knee is the
+  \emph{first} tested point that meets the contrast; later points are not required to meet
+  it too, and the simultaneous adjustment is within each cell, not across cells.
 \item \emph{Predictors of the knee} (rule, regimes worth sizing): the Spearman rank
   correlation of the knee with $\tcross$ and with $\tpp$ (the mean of the planned
   $\max(t_x,t_y)$ over the pre-positioning moves started at 10~s of anticipation), and the leave-one-out mean
@@ -851,7 +896,14 @@ By the frozen criterion the answer is the moves the head starts: $\tpp$ predicts
 knee with the lowest leave-one-out error (1.02~s), the crossing-time family with the
 highest (1.53~s unscaled and 1.75~s rescaled, the poorest candidates, since the fitted
 factor 0.86 is driven by the slow heads whose knees lie far below $\tcross$), and a
-constant of 2.76~s in between (1.13~s), a serious comparator on these selected cells.
+constant of 2.76~s in between (1.13~s), a serious comparator on these selected cells. A
+comparator not fixed before the run does better than all of them: predicting each knee by
+the mean knee of the other cells with the same along-belt head speed $v_x$, a quantity known
+at design time, gives a leave-one-out error of 0.82~s (group means 3.53~s at $v_x=5$ and
+1.79~s at $v_x=10$~cm/s; computed after the run from the knees of
+Table~\ref{tab:sufficient}, on the same selected cells, with two observed speeds). The
+trace-based predictor is therefore the best of the prespecified candidates, not the best
+available description, and any general claim about a predictor needs held-out geometries.
 The rank correlations point the same way and are all moderate: 0.38 for $\tcross$, 0.50
 for $\tpp$ and 0.47 for $t_x+t_y$, the supplementary sum of the two axis times (average
 ranks for ties, since the knee takes values on the grid).\footnote{Draft 0.6 of this paper reported $+0.47$, $+0.53$ and $+0.51$, computed
@@ -1075,7 +1127,8 @@ value observed), and retained 71--102\,\% of the estimated gain; the conservativ
 requirement to retain 90\,\% of the gain (Table~\ref{tab:sufficient}) is 2--5~s in the
 cells with $v_x=10$~cm/s and 5--7.5~s in those with $v_x=5$~cm/s, plus one cell with
 $v_x=5$ unresolved within the grid. Every cell of the geometry bench runs its belts at 3~cm/s, so
-within it seconds and centimetres are one unit ($\lv=3\tv$). The physical argument
+within it seconds of belt motion and centimetres are one unit ($\lv=3\tv$); the clock time a
+camera gives is longer whenever the belt stops (Section~\ref{sec:anticipation}). The physical argument
 for seconds is that the quantity the anticipation must cover is the head's move, which
 does not depend on $\vb$; but changing $\vb$ also changes where the head intercepts each
 part, and the curve may move with it. The belt-speed bench (Section~\ref{sec:belt}) gives
@@ -1100,7 +1153,9 @@ zone).
 \subsection{Why widening the view alone changes little}
 Under treatment~B the controller must choose among the parts already in the zone
 whenever there is one; upstream visibility can help it only through the order of the
-zone parts. In the reference cell that is worth little (Section~\ref{sec:seeing}); in the
+zone parts. For the rule with the arrival-time tie-break this help is zero by construction;
+an average near zero for the network measures what this policy extracts from the view, not
+what an optimal policy could. In the reference cell that is worth little (Section~\ref{sec:seeing}); in the
 bench the rule cannot use it at all, and the network's value of seeing with the same
 actions lies within $\pm0.7$~s per part at the nominal load (7 of 36 cell--arrival
 combinations outside $\pm0.3$). The exception is the high load
@@ -1142,8 +1197,12 @@ it instead of 18 (a sensitivity computed after the run). An economic translation
 cost of the camera's reach against the seconds saved per part at the cell's throughput)
 needs the cell's operating costs and is deferred. The study measures the \emph{reach} of
 the camera, not its precision: detection noise, latency and losses are a separate
-question. Parts are points with a minimum spacing, the head has no acceleration, and the
-learned policy is a secondary controller whose training ranges the bench partly exceeds.
+question. The designs are a predefined grid compared on paired realizations, not optimized
+jointly with the controller as line parameters are in \cite{Sarker2001}. The reading of the
+gain per move as a saving passed on to the parts queued behind it is a compatibility
+argument; demonstrating it would need paired alternative moves from matched states. Parts
+are points with a minimum spacing, the head has no acceleration, and the learned policy is a
+secondary controller whose training ranges the bench partly exceeds.
 The rule's tie-break differs between studies, the arrival time in the first two and the
 observable instant in the third (Sections~\ref{sec:design} and \ref{sec:belt}). The
 three sets of reserved realizations have been used once.
@@ -1167,7 +1226,8 @@ gain, with coverages of 2 to 7.5~s, the slow along-belt axis needing the most; o
 unresolved within the grid. In a separate question, predicting the point-estimate knees
 of all 18 configurations, the mean planned duration of the pre-positioning moves
 obtained a leave-one-out error of 1.02~s and a constant of 2.76~s obtained 1.13~s, while
-the transverse crossing time, the natural reference, was the poorest family (1.53~s). For the rule, cells with the same crossing time, the same along-belt geometry and the
+the transverse crossing time, the natural reference, was the poorest family (1.53~s); a
+group mean by along-belt head speed, computed after the run, obtained 0.82~s. For the rule, cells with the same crossing time, the same along-belt geometry and the
 same arrival realizations are identical by the model's structure. At a belt of 5~cm/s, with the rule, 10~cm of coverage cost less than the margin
 of 0.5~s per part fixed beforehand, against the full 50~cm view, in the two configurations
 with the fast along-belt axis; neither slow-axis configuration met the benefit criterion
@@ -1178,7 +1238,8 @@ nominal load, that acting on the view is worth more than seeing alone, was share
 two controllers of the first two studies, while the certified coverage of 2--7.5~s is
 the rule's (the network reached no conservative knee before 10~s). They give the
 designer of a cell of this family, at 3~cm/s, a coverage specification in seconds of
-anticipation with the cost of a shorter view measured, and at 5~cm/s the practical finding that 10~cm cost less than
+anticipation, obtained by comparing predefined designs rather than by optimizing the
+design, with the cost of a shorter view measured, and at 5~cm/s the practical finding that 10~cm cost less than
 the margin where the full-view benefit passed the criterion.
 
 \bibliographystyle{plain}

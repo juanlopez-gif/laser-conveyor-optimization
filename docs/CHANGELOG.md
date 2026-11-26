@@ -6,6 +6,74 @@ summarized from the git history.
 
 ---
 
+## 0.7.39 — 2026-11-25 — Bibliographic audit: Paper 1 draft 1.1 and Paper 2 draft 1.4
+
+* **Why.** The owner supplied six original articles (Li, Boysen and Stephan 2026; Yano and
+  Rachamadugu 1991; Tsai 1995; Xiaobo and Ohno 2000; Tamura et al. 2011; Sarker and Pan
+  2001), two AI-generated literature reports (SciSpace) and later a joint audit that
+  reconciled an earlier review with ours. All six originals, Nawijn and De Jonge (1981) and
+  Ladefoged et al. (2026) were read in full; every claim of the joint audit was checked
+  against the sources, the `.tex` files and the code before editing. The owner approved
+  applying the text and mathematical-wording changes ("Sí, aplícalos"). The audit itself
+  (reading cards, consolidated register, recalculation scripts) is kept outside the
+  repository, in Spanish, in `informe_laser_cintas/auditoria_bibliografica_2026-11-25/`.
+* **Main findings that drive the edits.**
+  * The closest predecessors of Paper 1 were missing: in mixed-model assembly lines a stop
+    caused by unfinished work halts the whole line and shifts every later product (Xiaobo
+    and Ohno 2000; Tamura et al. 2011). The difference that survives is the interaction:
+    one mobile head over parallel belts, each service stopping only its own belt, decided
+    online. Tsai (1995) does **not** stop the line (it measures the risk of a stop by the
+    operator's drift), contrary to one SciSpace report.
+  * Paper 2's "none asks the instrumentation question" was false: Nawijn and De Jonge (1981)
+    measure an inspection range in time units with Poisson arrivals, Li et al. (2026, §7.6)
+    vary item-count lookahead, and Ladefoged et al. (2026) vary an upstream buffer with the
+    arms' reach. None of them has an action taken before the part is reachable, a shared
+    head, or belts that stop.
+  * The two-label dynamic program of L6 is exact for the makespan only; for ΣC it is a lower
+    bound that can be strict (four-part example, 52 against 53, all 24 orders enumerated).
+    Every other bound of Appendix C was re-checked against the error Tamura et al. found
+    in Xiaobo and Ohno's branch-and-bound (adding terms computed for interacting subsets):
+    none repeats it.
+  * Paper 2 §3.3 described the revocation of a pre-positioning differently from the code
+    (`fastsim/core.py`, `simulation/engine.py`) and from Paper 1 §3.5; the code revokes only
+    when another part is ready while the target is still in the entry zone.
+  * Anticipation is seconds of belt motion: a stop of the belt adds clock time.
+  * A post hoc comparator (mean knee of the cells with the same along-belt head speed)
+    predicts the knees better (leave-one-out 0.82 s) than the prespecified predictors.
+* **Paper 1 (draft 1.1).** §1 and §2: mixed-model-line paragraph and sentence; Li et al.;
+  Schettini's output conveyor; rollout in conveyor cells (Righettini and Cortinovis 2025,
+  Li et al.); the expert-versus-size sentence restated as an observation with confounding.
+  §5.1: forced predecessors in Proposition 1; a two-belt example (a choice between two parts
+  moves a third one by 3.2 cm at a common clock time). §5.2: hardness situated against Tsai,
+  Xiaobo and Ohno and Li et al.; fixed N open. Abstract, §1, §10.1 and conclusions: the
+  hardness named as the offline L_max and ΣC_j variants with N in the input. §5.3 and
+  App. C: L6 exact only for the makespan, the four-part example, F_j∩U and M_h∩U in the
+  windows, L4(b) indexing, negative shifted releases in L5, a paragraph on the Tamura
+  error. Table 2: objective, Φ without deliberate idling, three instances. §6.2: the expert
+  scores unpenalized flow. §9: "its expert" is the search built on the final network; no
+  equivalence margin. §10.3: the exception is Poisson only (bursts: 4.2 and 4.6 %). Abstract
+  and conclusions: the 5 ms budget. App. D: Yano's FCFS contrast; Φ cannot idle. 35 pages.
+* **Paper 2 (draft 1.4).** Abstract: seconds of belt motion; "first meet it at a tested
+  anticipation"; the post hoc comparator. §1: the design sentence restated with Sarker and
+  Pan, Nawijn and De Jonge, Li et al. and Ladefoged et al. §2: the lookahead strand, the
+  prediction-horizon versus sensing distinction (Righettini and Cortinovis), the mixed-model
+  sentence. §3.3: the revocation rule as implemented. §3.4: anticipation defined with the
+  stopped time (10 cm with a 2.5 s service: 5.83 s). §4: the knee is the first tested point;
+  the adjustment is within a cell. §6.3: the 0.82 s comparator. §7.1, §7.2, Limits and
+  conclusions: seconds of motion, B vs A zero by construction for the rule, designs
+  compared rather than optimized, propagation as a compatibility argument. 26 pages.
+* **Bibliography.** Nine entries added to `docs/literature/references.bib`, each read in
+  full and checked against Crossref.
+* **Test.** `tests/test_lower_bounds.py::test_sum_dp_is_a_strict_lower_bound_of_the_relaxation`
+  (52 vs 53; the makespan DP exact). Suite: all tests pass, two skipped.
+* **Not done (optional, need new runs):** re-analysis with the observable tie-break key,
+  the persistence variant of the knee, σ = I against σ ≡ 1, a crossed expert × size ×
+  budget design, and a belt-speed × length bench.
+* **Where.** `docs/papers/paper1/{paper1.tex,paper1.pdf}`, `docs/papers/paper2/{paper2.tex,paper2.pdf}`,
+  `docs/literature/references.bib`, `tests/test_lower_bounds.py`, `docs/plans/papers.md`.
+
+---
+
 ## 0.7.38 — 2026-11-24 — Owner's check of 0.7.37: Paper 2 draft 1.3 and Paper 1 draft 1.0
 
 * **Why.** The owner's reading of commit 3667649: the main corrections are in; several

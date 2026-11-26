@@ -216,3 +216,30 @@ def test_counterexample_nearest_and_fifo_not_optimal():
 def test_bounds_finite_without_blocking():
     inst = generate_instance(5, 9, overrides={"simulation.unprocessed_at_zone_end": "pass"})
     assert math.isfinite(best_lower_bound(inst, "makespan"))
+
+
+# --------------------------------------------------------------------------- #
+# 0.7.39: the two-label DP of the sequence relaxation is a lower bound of the  #
+# relaxed sum of completions, not its exact value (Paper 1, Appendix C).       #
+# --------------------------------------------------------------------------- #
+def _four_part_relaxation():
+    from optimization.lower_bounds import BoundData
+    d = BoundData(
+        n=4, ids=["A", "B", "C", "D"], r=[1.0, 1.0, 0.0, 8.0], p=[4.0, 2.0, 7.0, 4.0],
+        conv=[1, 2, 3, 4], y=[0.0, 1.0, 2.0, 3.0], v=[1.0] * 4, m=[0] * 4,
+        a=1.0, b=100.0, delta=0.1, vx=100.0, vy=1.0, model="simultaneous",
+        x0=1.0, y0=0.0, all_stop=False, blocking=True,
+        by_conv={1: [0], 2: [1], 3: [2], 4: [3]})
+    return _Relaxation(d, [0, 1, 2, 3])
+
+
+def test_sum_dp_is_a_strict_lower_bound_of_the_relaxation():
+    rel = _four_part_relaxation()
+    best = min(sum(rel.sequence(list(o))) for o in itertools.permutations(range(4)))
+    cmax_dp, sum_dp = rel.dp()
+    assert best == pytest.approx(53.0)          # exact relaxed optimum (all 24 orders)
+    assert sum_dp == pytest.approx(52.0)        # two labels from different prefixes
+    assert sum_dp <= best                       # still a valid lower bound
+    # the makespan DP is exact
+    assert cmax_dp == pytest.approx(min(max(rel.sequence(list(o)))
+                                        for o in itertools.permutations(range(4))))
