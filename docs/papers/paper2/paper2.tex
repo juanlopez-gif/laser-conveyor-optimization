@@ -204,8 +204,10 @@ an item before it is at the pick point. In robotic food packing, a buffer belt a
 four arms with exclusive zones sets how early item weights are known; a longer buffer
 reduces the overfill with diminishing returns and increases the items lost at the end of
 the belt, and its value interacts with the reach given to each arm \cite{Ladefoged2026}.
-There the arm motions are instantaneous, so acting earlier has no meaning, the belt never
-stops, and the effects are fitted by regression on dimensionless parameters. Our study
+Their formulation includes the time an arm needs to intercept an item, pack it and reach
+the next one, but the reported simulations assume instantaneous movements and tray swaps,
+so moving an arm ahead of an item is not studied; the belts run at constant speed and never
+stop, and the effects are fitted by regression on dimensionless parameters. Our study
 varies the physical length the camera covers and, separately, the permission to send a
 shared head towards a part before it is reachable, on belts that stop, and estimates both
 effects on paired realizations with criteria fixed before the run. The horizon of a
@@ -596,7 +598,7 @@ five pairs of lengths giving the same anticipation at the two speeds), \texttt{n
 against \texttt{when\_idle} at every length, \nj\ as the only controller, and the same
 arrival realizations at both speeds (the arrival streams are seeded per belt and do not
 depend on the belt speed), so that differences between speeds are paired as well; 60
-realizations on a new reserved range, used once. The decision is taken per cell on the
+realizations on a new reserved range (seeds 10000--10059), used once. The decision is taken per cell on the
 paired cost of the shorter view against the full 50~cm view at 5~cm/s,
 $C_5(\ell)=J_{\mathrm{when\_idle},5}(\ell)-J_{\mathrm{when\_idle},5}(50\,\mathrm{cm})$,
 with a margin $\delta=0.5$~s per part fixed before the run (the largest cost of 3.33~s

@@ -6,6 +6,87 @@ summarized from the git history.
 
 ---
 
+## 0.7.42 — 2026-11-26 — Short versions of both papers; Ladefoged description corrected
+
+* **Why.** The authors decided to close both drafts with the current data, parking the
+  extra experiments, and asked for shortened versions of about 15 pages:
+  * Paper 1: a table of which comparators the network beats and under which conditions.
+  * Paper 2: the practical 5 cm/s result in the lead, the 90 % result kept, and
+    Ladefoged's description corrected.
+  The full drafts (Paper 1 draft 1.3, Paper 2 draft 1.6) remain the reference versions.
+* **Ladefoged et al. (2026), corrected in `paper2.tex` §2.**
+  * The text said that "the arm motions are instantaneous, so acting earlier has no
+    meaning".
+  * Checked against the PDF (§3.2, Table 2): the formulation includes the time an arm needs
+    to intercept, pack and reach the next item; only the reported simulations assume
+    instantaneous movements and tray swaps.
+  * New wording: moving an arm ahead of an item "is not studied" there.
+  * The external reading card was corrected too.
+* **New files (the full drafts are unchanged apart from the Ladefoged sentence).**
+  * Paper 1:
+    * `docs/papers/paper1/paper1_short.tex/.pdf` (17 pages incl. references);
+    * `paper1_supplement.tex/.pdf` (29 pages, Sections S1–S11: extended related work,
+      formulation details, MILP, complexity proof, lower bounds, special cases, search
+      design, policy details, development results, confirmatory complements, extended
+      discussion).
+  * Paper 2:
+    * `docs/papers/paper2/paper2_short.tex/.pdf` (16 pages);
+    * `paper2_supplement.tex/.pdf` (25 pages, Sections S1–S12).
+  * The short papers and supplements cross-reference each other through `xr-hyper`. Build
+    order: short, supplement, short.
+* **Paper 1 short version.**
+  * Abstract of about 240 words.
+  * Properties given as statements, with proofs in the supplement.
+  * Development results in one paragraph.
+  * New Table `tab:summary`: for nearest-job, known-parts search and nearest-head under
+    both keys, and for the scenario-search expert, the regimes with an interval excluding
+    0, Holm counts, ranges and the regimes without a detected difference.
+  * Computed from `phase4_search.csv`, `recheck_0_7_39_reference.txt` and
+    `closure_0_7_40`. Values that are new relative to `paper1.tex`, all recomputed from
+    the data:
+    * legacy nearest-head 6/8 and 6/8, Holm 6 and 6;
+    * legacy known-parts search Holm 7 and 6;
+    * pooled observable nearest-head +3.99 [3.16, 4.81] and +4.35 [3.53, 5.17].
+* **Paper 2 short version.** The abstract, contribution 1 and the conclusions lead with the
+  belt-speed result: at 5 cm/s, in the two fast along-belt-axis geometries, a 10 cm camera
+  met the 0.5 s-per-part margin against the full 50 cm view. Then come, in order:
+  * acting versus seeing;
+  * the cost of 3.33 s in the three analyses;
+  * the 90 % result, with the three-cohort table;
+  * predictors in one paragraph.
+  Per-cell tables, curves, mechanism, entry length, network bench and checks are in the
+  supplement.
+* **Verification.**
+  * Writers and verifiers were separate agents; verifiers were read-only and compared each
+    short paper with its full draft, numbers, caveats, loss of content and new claims.
+  * Round 1 found 11 issues in Paper 1 and 7 in Paper 2, all fixed:
+    * Paper 1: caveats missing next to claims (latency budget, equivalence margin,
+      light-traffic objectives, solver status, Holm count, shared seeds in a caption,
+      PPO curriculum, key on the search claim), plus a broken supplement sentence;
+    * Paper 2: the prior "at most 2 s" expectation with its measured values, 12/10/10
+      failing the benefit criterion at 3 cm/s in the belt bench, the tie-break in the
+      abstract, seeds on the observable counts, "not an upper bound" on one maximum, and
+      causal wording softened.
+  * Round 2 found 4 issues, all fixed:
+    * the key on the "no detected improvement over nj" sentence;
+    * "point estimate" for the search-vs-network claim;
+    * a supplement cross-reference to the two-belt example;
+    * keys and seeds on the 3 cm/s medians in the Paper 2 conclusions.
+  * Round 3 found 3 issues, all fixed:
+    * belt-speed bench seeds named in the short paper and also in `paper2.tex` §4 (the
+      full draft only said "a new reserved range"; 10000–10059 are the seeds in
+      `belt_speed_bench.csv.gz`);
+    * seeds and key on the reference-cell 7.4 % in the Paper 2 abstract, with the largest
+      observed costs beside the medians;
+    * this entry's round record.
+  * Final page counts: Paper 1 short 17, supplement 29; Paper 2 short 16, supplement 25.
+    The full drafts still compile (36 and 30 pages).
+* **Also.** The external guide `EXPERIMENTOS ADICIONALES/README_GUIA_MEJORA_PAPERS.md`
+  records the authors' decision. Its Appendix A gains the cost-upper-limit counts
+  14/18 and 12/19 (computed here) and the new Paper 1 summary values.
+
+---
+
 ## 0.7.41 — 2026-11-25 — Closure review of 0.7.40: Paper 1 draft 1.3 and Paper 2 draft 1.6
 
 * **Why.** The owner supplied an external closure checklist for commit 4892d46 with two new
