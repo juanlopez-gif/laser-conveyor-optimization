@@ -6,6 +6,181 @@ summarized from the git history.
 
 ---
 
+## 0.7.41 — 2026-11-25 — Closure review of 0.7.40: Paper 1 draft 1.3 and Paper 2 draft 1.6
+
+* **Why.** The owner supplied an external closure checklist for commit 4892d46 with two new
+  sets of runs:
+  * Paper 1: the known-parts search and nearest-head rerun with both keys on the reserved
+    seeds 7000–7029;
+  * Paper 2: a replication of the 3 cm/s geometry bench with the observable key on fresh
+    seeds 43700–43759.
+  The owner approved applying the checklist ("Si aplicalas") and asked for an agent loop to
+  confirm that every item is applied.
+* **Checks before editing.**
+  * Raw-file SHA-256 matches.
+  * 300 fresh-seed Paper 2 episodes (five cell/coverage/mode sets × 60) and all 480
+    observable nearest-head costs were re-simulated here with the repository code:
+    difference exactly 0.
+  * An independent reanalysis of the 20 160 fresh episodes reproduces the package:
+    * 14/56 cells pass;
+    * 1/14 conservative crossings before 10 s;
+    * median 0.086 and largest 0.468 [0.021, 0.914] s/part;
+    * 2/14 intervals exclude zero, 9/14 have an upper limit ≤ 0.5.
+  * The search and nearest-head counts were recomputed from the paired CSVs (search was
+    not re-simulated here; its script asserts the legacy replay against the archive).
+  * The penalty decomposition of the three weight-sensitive cells was recomputed from the
+    extract.
+  * New here: paired intervals of the 3.33 s vs 10 s cost for the 19 observable-key cells
+    on seeds 9000–9059 (`experiments/closure_0_7_40/observable_short_cost_ci.py`; largest
+    0.443 [−0.008, 0.894]; none excludes zero on the loss side; one, 12/15/5 high-bursts,
+    excludes it on the gain side).
+* **Deposited.**
+  * `docs/papers/paper1/data/closure_0_7_40/` (search and nearest-head paired seeds and
+    summaries).
+  * `docs/papers/paper2/data/closure_0_7_40/` (fresh episodes, cells, summary JSON,
+    observable cost intervals).
+  * `experiments/closure_0_7_40/` (the package's scripts and REPLICATION.md, the interval
+    script and `paper2_closure_tables.py`, which writes `tables/bench_observable.tex` and
+    `tables/bench_fresh.tex`).
+  * `experiments/paper2_bench_figures.py` now adds the post hoc speed-group row (0.82 s) to
+    `tables/bench_predictors.tex`. Bold still marks the best prespecified candidate; the
+    other tables and figures are unchanged.
+* **Paper 1 (draft 1.3).**
+  * **Observable-key reruns (§9, abstract).**
+    * Known-parts search costs more than the network in all 16 regime–mode cases: B
+      1.4–4.7 %, C 1.5–5.2 %.
+    * Its individual intervals exclude zero in 7 and 8 regimes (Holm 7 and 8); pooled
+      2.95 [2.24, 3.66] and 3.21 [2.38, 4.04].
+    * Nearest-head: B 1.4–8.2 %, C 1.5–6.7 %, with 6 and 7 intervals excluding zero (Holm
+      6 and 6).
+    * Labelled retrospective. §4, §8, the limits and the conclusions no longer say the
+      reserved realizations were never rerun, and "used once" is kept for the
+      prespecified evaluation.
+  * **Policy classes.**
+    * §3.5: the P/Psim gap is the cost of (C7) under full information, not an online
+      value. Mode `none` satisfies Psim but does not reach every Psim schedule.
+    * §5 "Anticipation pays": the 7.19 s holds for ready-only policies.
+  * **Prop. 1:** the forced-predecessor condition is sufficient, not necessary
+    (late-release example with releases at 0 and 16 s).
+  * **Learning claims.**
+    * §8 ladder no longer claims L is not under-fitted or that "the lever is the expert".
+    * §6.2 "sets the level … the reason is its horizon" → an observation and "one possible
+      reason".
+    * §10.2 renamed "What the training runs show".
+    * "scored no better than" → "no detectable difference".
+  * **PPO:** the abstract said PPO had its own stage-wise distribution; per
+    `docs/methods/rl2_ppo.md` it trains on the final mix from the first episode. The
+    abstract is corrected and names the curriculum as a third difference.
+  * §9.2: ±0.8 % are point estimates.
+  * §10.3 and the conclusions name the key wherever "seven of eight" or the slow-head
+    exception is cited.
+  * §10.4 and App. A: the MILP is a formulation; CP-SAT implements makespan, mean flow and
+    mean waiting; the penalized objective is neither implemented nor validated (§10.4
+    previously said otherwise).
+  * Captions of the confirmatory tables, figure and latency table/figure name seeds
+    7000–7029, shared with Paper 2.
+  * `extra.bib`:
+    * Schrage title prefix;
+    * Anthony et al. pp. 5360–5370;
+    * Ross et al. PMLR 15, with full author names;
+    * header records which entries were checked.
+* **Paper 2 (draft 1.6).**
+  * §6.3 is rewritten as "Sensitivity to the tie-break and replication on fresh
+    realizations".
+    * Correct workload: 6 720 full-view episodes in 56 cells, then 18 240 at the eight
+      shorter coverages in the 19 eligible cells; zero coverage not rerun. This corrects
+      the 0.7.40 text and entry, which said "at all grid points".
+    * The fresh replication: 14/56 cells; 9, 10 and 8 in common; 1/14 early conservative
+      crossings; median 0.09 and largest 0.47 [0.02, 0.91] s/part; 2/14 intervals exclude
+      zero; shares 67–117 %.
+    * Interpretation: not only precision. Of the 13 common cells, early certification
+      goes from 13 to 3, and two cells cross even on the point estimate only at 10 s.
+      Possible non-monotone response; last-grid-point certification is not a physical
+      minimum.
+    * New tables: Table 8 (three analyses side by side) and Table 10 (fresh cohort).
+    * Table 9 (observable, seeds 9000–9059) now has paired cost intervals.
+    * Numbering note: the 0.7.40 entry called the observable table "Table 9"; it was
+      Table 8 there.
+  * Abstract, contributions, §7.1, limits and conclusions carry the third cohort. The
+    abstract also states that which cells pass the screen is not stable.
+  * Predictors:
+    * contribution 4 says "among the candidates fixed before the run";
+    * the post hoc speed row is in Table 11;
+    * the untested claim "no candidate predicts the conservative knee" is removed (the
+      targets were point knees).
+  * "At most 2 s at 3 cm/s":
+    * kept in the belt-speed protocol as a prior expectation and corrected with the
+      measured values: 2.0/3.33 s with the arrival-time key, 7.5 s with the observable
+      key on the same seeds, 2/10 s on fresh seeds;
+    * §7.1 corrected likewise, with the belt-bench 3 cm/s benefit of 0.99 s for 12/10/10.
+  * §3.2: the per-cell penalty decomposition of the three weight-sensitive cells, with
+    half-widths:
+    * flow 0.92/0.86/0.93;
+    * events −0.00/0.08/0.03;
+    * blocked time 0.12/0.09/0.08;
+    * totals 1.03/1.03/1.04.
+  * Seeing vs acting:
+    * §2 and §7.2 restrict "the rule cannot use the view" to the arrival-time key;
+    * §7.2 adds the A→B / B→C / D reading.
+  * §4.1: "two unrelated controllers" → distinct implementations that share a lineage.
+  * Evidence history:
+    * "used once" is reserved for the prespecified analyses;
+    * the reuse of seeds 9000–9059 and the fresh set 43700–43759 are stated in the
+      abstract, §4, the limits and the conclusions;
+    * the reference-cell captions name seeds 7000–7029, shared with Paper 1.
+  * Smaller fixes:
+    * revocation recap in §3.4;
+    * Figure 5 caption (panels grouped as in the Poisson figure);
+    * shares above 100 % no longer called pure noise;
+    * §4.5 provenance of the retrospective and fresh files, with the hand-entered Table 8
+      identified.
+* **Verification loop.** Independent read-only agents, one per paper, checked every
+  checklist ID against the sources and recomputed the quoted numbers from the deposited
+  data. Round 1 found gaps that were fixed:
+  * Paper 2:
+    * captions and seed notes;
+    * fresh-seed values for the fast cells;
+    * decomposition half-widths;
+    * provenance of the intervals file and of Table 8;
+    * the key in §6.2;
+    * a garbled contribution sentence.
+  * Paper 1:
+    * a causal sentence in §6.2;
+    * "non-anticipating" → ready-only;
+    * seeds in further captions;
+    * the key in the conclusions;
+    * the CP-SAT objective list in App. A;
+    * the scripts' path.
+  Round 2, with fresh agents, found smaller gaps that were fixed:
+  * Paper 2:
+    * shared-seed notice on five more reference-cell captions;
+    * the key in the abstract's speed-halving sentence;
+    * "on the original realizations" for the 1.72/1.74 s predictor errors;
+    * this entry's contribution number.
+  * Paper 1:
+    * the shared-seed notice on the latency figure;
+    * "unpenalized flow time" as the search's score in the abstract, contribution 2 and
+      §6.2;
+    * the expert switch described as a continuation of the S network, with expert and
+      further iterations changing together, in §10.2 and the conclusions.
+  Round 3 found two further gaps that were fixed:
+  * Paper 2 §6.5: the knee shift is labelled "arrival-time tie-break"; "seeds 9000–9059"
+    is added where the 19 observable cells are named.
+  * Paper 1: "the larger networks did not score better" → "did not score detectably
+    better" in the abstract, §2 and the conclusions (M's point estimate −2.88 % is
+    slightly better than S's −2.79 %; overlapping intervals).
+  The outcome of the final round is recorded in `docs/plans/papers.md`.
+* **Verification.** Both PDFs rebuilt (36 and 30 pages) with no undefined references and
+  no overfull boxes; full test suite passes (2 skipped).
+* **Not done (conditional in the checklist):**
+  * the local vs synchronized stop experiment;
+  * the crossed expert × size design;
+  * a speed-scaling law;
+  * a validated penalized oracle;
+  * a fresh-seed confirmation of the Paper 1 margins under the observable key.
+
+---
+
 ## 0.7.40 — 2026-11-25 — Scientific review of 0.7.39: Paper 1 draft 1.2 and Paper 2 draft 1.5
 
 * **Why.** The owner supplied an external scientific review of the published commit
@@ -15,10 +190,12 @@ summarized from the git history.
   per mode; Paper 2: 6 720 full-view costs, tolerance 1e-7), and the observable-key
   figures matched the review's table cell by cell.
 * **Paper 2 (draft 1.5).**
-  * New §6.3 "Sensitivity to the tie-break" and Table 9 (`tables/bench_observable.tex`).
+  * New §6.3 "Sensitivity to the tie-break" and Table 8 (`tables/bench_observable.tex`;
+    this entry said "Table 9" until 0.7.41).
     The rule was rerun with the observable tie-break on the same 60 realizations of the
-    56 distinct cells, in both modes and at all grid points, with the criteria unchanged.
-    It is labelled retrospective, not a confirmation.
+    56 distinct cells, in both modes, at 10 s in all 56 cells and at the shorter grid
+    points in the 19 eligible cells (this entry said "at all grid points" until 0.7.41),
+    with the criteria unchanged. It is labelled retrospective, not a confirmation.
     * 19 cells pass the benefit screen; 13 pass under both keys, 5 only under the legacy
       key and 6 only under the observable one.
     * 3.33 s instead of 10 s costs a median of 0.037 s and at most 0.443 s per part.

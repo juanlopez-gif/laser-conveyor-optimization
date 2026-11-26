@@ -30,7 +30,7 @@
 \large The value of upstream visibility and pre-positioning in a shared-head conveyor cell,
 across geometries and operating conditions}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.5 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.38; bibliographic audit of 0.7.39; scientific review of 0.7.40)}
+\date{November 2026 --- draft 1.6 (results of versions 0.7.13, 0.7.21 and 0.7.28; referee corrections of 0.7.34--0.7.38; bibliographic audit of 0.7.39; scientific review of 0.7.40; closure review of 0.7.41)}
 
 \begin{document}
 \maketitle
@@ -41,7 +41,7 @@ can only reach parts inside a working zone; a camera may also see a stretch of t
 zone upstream of it. We ask an engineering question: how far upstream must the camera see,
 and what must the controller be allowed to do with the view, for the visibility to pay
 off? Three paired simulation studies answer it, each on realizations reserved for it and
-used once, with a dispatching rule as the primary controller and, in the first two, a
+used once for its prespecified analysis, with a dispatching rule as the primary controller and, in the first two, a
 learned dispatching policy as a secondary one. In the \emph{reference cell} (eight regimes, 30 realizations)
 we separate \emph{seeing} earlier (the same actions, a wider view) from \emph{acting}
 earlier (sending the idle head towards a part before it reaches the zone): widening the
@@ -61,21 +61,25 @@ within the grid; in the same 18 cells, giving the controller 3.33~s of anticipat
 3~cm/s) instead of 10~s cost a median of 0.05~s per part and at most 0.44~s per part,
 the largest value observed, and retained 71--102\,\% of the estimated gain (71\,\% in
 one cell). These results use the rule's arrival-time tie-break, which a camera cannot
-observe; rerun afterwards on the same realizations with the observable tie-break (the
+observe. Rerun afterwards on the same realizations with the observable tie-break (the
 instant of first observation), the rule passes the benefit criterion in 19 cells (13 in
-common), 3.33~s again cost a median of 0.04 and at most 0.44~s per part, but only 3 of the
-19 cells meet the conservative criterion before 10~s: the small cost of a shorter view
-holds under both keys, the certified range of 2--7.5~s does not. In the four nominal-load Poisson cells in which both along-belt speeds pass
-the criterion, halving that speed multiplied the gain by 1.2--2.4 and moved the
-point-estimate requirement from 1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
+common), 3.33~s cost a median of 0.04 and at most 0.44~s per part, and only 3 of the 19
+cells first meet the conservative criterion before 10~s; replicated with that key on 60
+fresh realizations, 14 cells pass (9 in common with those 19), 3.33~s cost a median of
+0.09 and at most 0.47~s per part (individual 95\,\% interval 0.02--0.91), and 1 of the 14
+cells first meets the conservative criterion before 10~s. A shorter view cost little on
+average in every analysis; the certified range of 2--7.5~s belongs to the arrival-time
+key, and which cells pass the benefit criterion is not stable across realizations. In the four nominal-load Poisson cells in which both along-belt speeds pass
+the criterion with the arrival-time key, halving that speed multiplied the gain by
+1.2--2.4 and moved the point-estimate requirement from 1.5--3.3 to 3.3--5~s. The head's transverse crossing time, the natural design reference,
 is the poorest predictor family of the required anticipation among those tested
 (leave-one-out error 1.5~s unscaled, 1.75~s rescaled); the mean planned duration of the pre-positioning moves the head starts is
 the best of the predictors fixed before the run (1.0~s; the factor fitted on these traces
 is 1.7 times the mean planned move, each episode with a move weighted equally), a
 constant of 2.8~s does nearly as well (1.1~s), and the mean of the other cells with the same
 along-belt head speed, a comparator computed after the run, does better than both
-(0.82~s), so the trace-based predictor's advantage is small; under the observable key the
-move duration and the speed-group mean are within 0.03~s of each other (1.72 and
+(0.82~s), so the trace-based predictor's advantage is small; under the observable key, on
+the original realizations (19 cells), the move duration and the speed-group mean are within 0.03~s of each other (1.72 and
 1.74~s). For the rule, cells with the same crossing time, the same along-belt geometry and the
 same arrival realizations are identical by the model's structure. The results support specifying the camera in seconds of
 anticipation for this family of cells at the belt speed tested (3~cm/s, at which seconds
@@ -140,7 +144,7 @@ test that reference, and rejects it in favour of a measured quantity.
 \item A paired study of one reference cell, with its protocol frozen in the repository before the run, that separates the value of
   seeing earlier (treatment B against A) from the value of acting earlier (C against B)
   and measures the gain of acting at six visible lengths, on eight regimes and 30
-  reserved realizations, with a dispatching rule and a learned policy
+  reserved realizations (seeds 7000--7029, shared with the companion paper), with a dispatching rule and a learned policy
   (Sections~\ref{sec:design} and \ref{sec:reference}). Widening the view alone changed
   little; acting on it was worth 2.8--7.4\,\% of the penalized flow time for the network
   and 2.7--7.4\,\% for the rule in the four nominal-load regimes.
@@ -155,13 +159,16 @@ test that reference, and rejects it in favour of a measured quantity.
   unresolved within the grid); the along-belt head speed is a first-order factor. These
   figures use the rule's arrival-time tie-break; a retrospective rerun with the
   observable tie-break keeps the small cost of 3.33~s (median 0.04, at most 0.44~s per
-  part over 19 cells) but certifies the 90\,\% criterion before 10~s in only 3 of them
+  part over 19 cells) but certifies the 90\,\% criterion before 10~s in only 3 of them,
+  and a replication on 60 fresh realizations with that key gives 14 cells, a median of
+  0.09 and at most 0.47~s per part, and 1 early certification
   (Section~\ref{sec:tiebreak}).
 \item A test of what predicts the required anticipation: the transverse crossing time is
-  the worst of the candidates and the planned duration of the moves the head starts the
-  best, with a constant close behind (the predictor's advantage is small; on the 18 cells
-  of the arrival-time key, while on the 19 cells of the observable key the move duration
-  and a post hoc group mean by along-belt head speed are within 0.03~s); for the rule, cells with the same crossing time, the same along-belt
+  the worst of the candidates and, among the candidates fixed before the run, the planned
+  duration of the moves the head starts the best on the 18 cells of the arrival-time key,
+  with a constant close behind (the predictor's advantage is small); on the 19 cells of the
+  observable key (seeds 9000--9059) the move duration and a post hoc group mean by along-belt head speed are
+  within 0.03~s of each other; for the rule, cells with the same crossing time, the same along-belt
   geometry and motion settings and the same arrival realizations are identical by
   the model's structure (Section~\ref{sec:predict}).
 \item A trace-based reading of the mechanism: at the nominal load the aggregate gain per
@@ -251,7 +258,8 @@ constraint-programming schedules \cite{S20_VanRemmerden2025}, action masking
 \cite{S15_Zisgen2025,S16_Drijver2023,S17_Drakaki2017,S12_Wang2004,S13_Li2020}. Its
 design and training are the subject of Paper~1; here it matters only that it uses every
 observable part, so that it can turn a wider view into different decisions, which the
-dispatching rule cannot.
+dispatching rule with the arrival-time tie-break cannot (with the observable tie-break the
+view can change only how the rule breaks ties).
 
 What these works leave open, and this paper measures, is how the value of the sensing
 reach depends on what the controller may do with it, and how that value moves with the
@@ -345,7 +353,13 @@ with the unpenalized flow time instead of $J$, the benefit criterion of the geom
 (Section~\ref{sec:bench}) would pass 15 cells instead of 18 (a sensitivity computed after
 the run from the released extract; the three cells lost are $d/v_y/v_x=6/15/10$~cm,
 cm/s, cm/s at the high load with bursts and at the nominal load with Poisson arrivals,
-and $12/15/5$ at the nominal load with bursts).
+and $12/15/5$ at the nominal load with bursts). In those three cells the flow-time part of
+the full-view gain is 0.92, 0.86 and 0.93~s per part, below the threshold of 1~s, while the
+weighted blocking events add $-0.00$, 0.08 and 0.03~s and the weighted blocked time 0.12,
+0.09 and 0.08~s, bringing the totals to 1.03, 1.03 and 1.04~s (paired 95\,\% half-widths:
+flow 0.47, 0.19 and 0.39; totals 0.51, 0.26 and 0.46~s per part; in the first cell the
+flow-only lower limit, 0.44~s, is also below the 0.5~s of the screen): the penalty terms
+decide whether these cells reach the threshold.
 
 \subsection{Information model and pre-positioning}
 A policy may use only what the cell observes. At a dispatch event (the head is free and at
@@ -416,7 +430,8 @@ $\tcross$ as the reference against which the coverage curve is read, on the hypo
 that the gain of pre-positioning grows with $\tv$ up to about $\tcross$ and levels off
 beyond it. The geometry bench records, for every pre-positioning move the head starts, both
 components of the planned travel at the moment the move is decided (a move may still be
-revoked when a part enters the zone; revocations are counted apart and are rare, at most
+revoked when another part becomes ready while its target is still upstream; revocations
+are counted apart and are rare, at most
 0.6 per episode in the cells analysed below), and tests $\tcross$ against the mean planned
 duration of those moves, $\tpp$, as predictors of the anticipation the camera needs.
 
@@ -424,12 +439,14 @@ duration of those moves, $\tpp$, as predictors of the anticipation the camera ne
 \section{Experimental design}\label{sec:design}
 %====================================================================
 
-Three paired studies share the checks of this section: the reference-cell study of Section~\ref{sec:reference}, and the geometry bench and the belt-speed bench of Section~\ref{sec:benchresults}. All three evaluate \nj; the reference and geometry studies also evaluate the frozen network. Each study's protocol was fixed before its run, on realizations reserved for it and used once; for the belt-speed bench the margin and the design were proposed in the protocol, and the final choices of seed range, margin and controller are recorded with the results. The reference-cell realizations (seeds 7000--7029) are the phase-4 realizations that the companion paper analyzes for different research questions.
+Three paired studies share the checks of this section: the reference-cell study of Section~\ref{sec:reference}, and the geometry bench and the belt-speed bench of Section~\ref{sec:benchresults}. All three evaluate \nj; the reference and geometry studies also evaluate the frozen network. Each study's protocol was fixed before its run, on realizations reserved for it and used once; for the belt-speed bench the margin and the design were proposed in the protocol, and the final choices of seed range, margin and controller are recorded with the results. The reference-cell realizations (seeds 7000--7029) are the phase-4 realizations that the companion paper analyzes for different research questions. The geometry bench's realizations were reused once more, after its run, for the retrospective rerun of Section~\ref{sec:tiebreak}, and the bench was then replicated with the observable tie-break on 60 fresh realizations (seeds 43700--43759), with the seed range, the cells, the benefit screen, the grid and the criteria fixed before that run.
 
 \subsection{Controllers}
-Two unrelated controllers run every configuration of the first two studies (the belt-speed
-bench runs the rule only), so that the value of information is not
-tied to one policy:
+Two distinct implementations run every configuration of the first two studies (the
+belt-speed bench runs the rule only), so that the value of information is not tied to one
+policy; they are not independent, since the network descends from a training chain whose
+expert searched over the rule, so their agreement on shared realizations is evidence of
+robustness to the choice of controller with shared sources of variation:
 \begin{itemize}[nosep]
 \item \nj\ (\texttt{nearest\_job}), the primary controller: the dispatching rule that
   chooses the candidate with the smallest interception time (ties: earliest arrival in
@@ -477,7 +494,7 @@ with \texttt{none} and \texttt{when\_idle}.
 \caption{Reference-cell regimes and physical scales. $\tcross$ is the head's travel time
 across the conveyors; the entry zone is given in seconds of belt travel; parts, penalized
 flow time, blocking events and blocked conveyor-seconds are means per episode for \nj\ in
-B over the 30 realizations.}
+B over the 30 realizations (seeds 7000--7029, shared with the companion paper).}
 \label{tab:regimes}
 \resizebox{\linewidth}{!}{\input{tables/regimes}}
 \end{table}
@@ -493,8 +510,9 @@ confidence interval, and in parentheses the number of realizations in which
 $J_X(\omega)<J_Y(\omega)$. A negative $\Delta$ favours $X$, the first-named
 configuration. Pilots on development realizations (seeds 2000--2029, also used to choose
 the network) shaped the hypotheses; the confirmatory run used 30 realizations reserved for
-it (seeds 7000--7029), never seen by any design decision, and run once with the protocol
-frozen beforehand.
+it (seeds 7000--7029), never seen by any design decision of this study, and run once for
+its prespecified analysis with the protocol frozen beforehand (the companion paper
+analyzes the same realizations for other questions).
 
 \subsection{The geometry bench}\label{sec:bench}
 The bench varies the cell around the reference cell with the belt speed (3~cm/s), the
@@ -514,7 +532,8 @@ anticipation of the grid; the laser zone, the workspace and the head's home move
 The \textbf{coverage grid is common in seconds}: $\tv\in\{0,0.5,1,1.5,2,2.5,3.33,5,7.5,
 10\}$~s, i.e.\ $\lv=3\tv\in\{0,1.5,\dots,30\}$~cm, each with \texttt{none} and
 \texttt{when\_idle}. Every configuration runs on the same \textbf{60 realizations}
-(seeds 9000--9059, reserved for this bench and used once). A \textbf{physical-length
+(seeds 9000--9059, reserved for this bench and used once for its prespecified analysis;
+reused for the retrospective rerun of Section~\ref{sec:tiebreak}). A \textbf{physical-length
 check} runs the reference geometry with its original 10~cm entry at the grid points up to
 10~cm, against the 35~cm entry at the same points, to separate the effect of the longer
 installation from the camera's reach. The bench was preceded by a pilot on development
@@ -590,8 +609,13 @@ benefit criterion at 3~cm/s and fails it at 5~cm/s is reported as ``benefit lost
 speed'' and the question is moot for it. The conservative reading uses the 95\,\% bound
 of the cost against $\delta$ (the headline), the point reading the estimate. It was
 written beforehand that the two cells with $v_x=10$~cm/s answer $H_{\mathrm{cm}}$
-under either hypothesis, since their requirement at 3~cm/s is at most 2~s, so that only
-the two cells with $v_x=5$~cm/s can separate the scales.
+under either hypothesis, on the expectation that their requirement at 3~cm/s is at most
+2~s, so that only the two cells with $v_x=5$~cm/s can separate the scales. That expectation
+was not borne out in full: in the geometry bench (35~cm entry, nominal load, Poisson
+arrivals) their conservative requirements are 2.0~s ($d/v_y=6/15$) and 3.33~s ($12/10$)
+with the arrival-time key, 7.5~s each with the observable key on the same realizations,
+and 2~s and 10~s with the observable key on fresh realizations (Tables~\ref{tab:sufficient},
+\ref{tab:tiebreak} and \ref{tab:fresh}).
 
 \subsection{Checks}
 Five checks support the causal reading. (i) \emph{Masks are respected}: unit tests change
@@ -619,8 +643,17 @@ and the predictor analysis counts the triplet once. (v) \emph{Reproducibility}: 
 per-episode results of the three confirmatory runs are distributed with the source
 (\texttt{data/phase4\_info.csv}, 15\,360 episodes; \texttt{data/geometry\_bench.csv.gz},
 179\,520 episodes; \texttt{data/belt\_speed\_bench.csv.gz}, 11\,520 episodes) together with
-the scripts that generate every figure and table; the analysis of the
-bench extracts needs only NumPy and Matplotlib.
+the scripts that generate the figures and tables of those runs; the analysis of the
+bench extracts needs only NumPy and Matplotlib. The retrospective rerun of
+Section~\ref{sec:tiebreak} is distributed as its aggregate output
+(\texttt{data/recheck\_0\_7\_39\_geometry.txt}), with the paired intervals of its
+shortening costs in \texttt{data/closure\_0\_7\_40/observable\_short\_cost\_ci.txt}, and the
+replication on fresh realizations as per-episode results
+(\texttt{data/closure\_0\_7\_40/paper2\_prospective\_episodes.csv.gz}, 20\,160 episodes).
+Tables~\ref{tab:tiebreak} and \ref{tab:fresh} are generated from these files by a
+script, \texttt{paper2\_\allowbreak closure\_\allowbreak tables.py}, in
+\texttt{experiments/closure\_0\_7\_40}; Table~\ref{tab:cohorts}
+is entered by hand from the same outputs.
 
 %====================================================================
 \section{The reference cell: seeing against acting}\label{sec:reference}
@@ -637,7 +670,8 @@ treatments.
 \caption{Reference cell: contrasts between treatments (paired $\Delta$ of the penalized
 flow time, \%, 95\,\% CI; in parentheses the realizations, out of 30, in which the
 first-named treatment is cheaper; bold: the interval excludes zero). For \nj\ the
-contrasts B vs A and D vs B are zero by construction.}
+contrasts B vs A and D vs B are zero by construction (arrival-time tie-break). Seeds
+7000--7029, shared with the companion paper.}
 \label{tab:contrasts}
 \resizebox{\linewidth}{!}{\input{tables/contrasts}}
 \end{table}
@@ -647,7 +681,7 @@ contrasts B vs A and D vs B are zero by construction.}
 \includegraphics[width=\linewidth]{figures/contrasts.pdf}
 \caption{Reference cell: the network's contrasts between treatments on the eight regimes
 (paired $\Delta$ of the penalized flow time, 95\,\% CI; negative favours the first-named
-treatment; filled markers: the interval excludes zero).}
+treatment; filled markers: the interval excludes zero). Seeds 7000--7029, shared with the companion paper.}
 \label{fig:contrasts}
 \end{figure}
 
@@ -706,7 +740,7 @@ anticipation, against $\tcross=2.4$~s (nominal head) or 4.8~s (slow head).
 pre-positioning (\texttt{when\_idle} against \texttt{none} at the same visible length,
 paired; bands are 95\,\% CIs) against the visible length and the anticipation
 $\tv=\lv/\vb$. The dashed line is the head's travel time across the conveyors,
-$\tcross$; the shaded area lies beyond the entry zone.}
+$\tcross$; the shaded area lies beyond the entry zone. Seeds 7000--7029, shared with the companion paper.}
 \label{fig:coverage}
 \end{figure}
 
@@ -716,7 +750,7 @@ $\tcross$; the shaded area lies beyond the entry zone.}
 (\texttt{when\_idle} vs \texttt{none}, same length; paired $\Delta$ of the penalized flow
 time, \%, 95\,\% CI) and, in parentheses, its share of the gain with the whole entry zone
 (10~cm). The second header row gives the anticipation in seconds at the belt speed of
-3~cm/s.}
+3~cm/s. Seeds 7000--7029, shared with the companion paper.}
 \label{tab:coverage}
 \resizebox{\linewidth}{!}{\input{tables/coverage_real}}
 \end{table}
@@ -748,7 +782,7 @@ shorter view costs more; in parentheses, realizations in which the shorter view 
 better). Right: pre-positioning benefit lost, the gain of Table~\ref{tab:coverage} at
 the shorter length minus the gain at 10~cm, per realization (points). A secondary
 analysis of the phase-4 data, added after the run. Bold: the
-interval excludes zero.}
+interval excludes zero. Seeds 7000--7029, shared with the companion paper.}
 \label{tab:direct}
 \resizebox{\linewidth}{!}{\input{tables/direct}}
 \end{table}
@@ -786,7 +820,7 @@ nominal regime retains 76\,\% of the whole-zone gain at 5~cm and 97\,\% at 7.5~c
 \caption{Reference cell, robustness (a secondary analysis of the phase-4 data, added after the run): the reference network's contrasts (as
 Table~\ref{tab:contrasts}) and the paired difference between the frozen and the
 reference network's contrasts (frozen minus reference, per realization, points; negative
-= the frozen network obtains more from the treatment). Bold: the interval excludes zero.}
+= the frozen network obtains more from the treatment). Bold: the interval excludes zero. Seeds 7000--7029, shared with the companion paper.}
 \label{tab:robust}
 \resizebox{\linewidth}{!}{\input{tables/robustness}}
 \end{table}
@@ -843,7 +877,7 @@ reference cell's whole entry zone.}
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/bench_curves_burst.pdf}
-\caption{Geometry bench, \nj, bursty arrivals: gain of pre-positioning $G(\tv)$ [s per part, 95\,\% band] against the anticipation, one panel per cell, with the layout, units and markers of Figure~\ref{fig:curves} (Poisson arrivals).}
+\caption{Geometry bench, \nj, bursty arrivals: gain of pre-positioning $G(\tv)$ [s per part, 95\,\% band] against the anticipation, with the panels grouped by along-belt head speed and load and the units and markers of Figure~\ref{fig:curves} (Poisson arrivals).}
 \label{fig:curvesburst}
 \end{figure}
 
@@ -860,7 +894,7 @@ $\ge0$; undet.\ = no grid point qualifies).}
 \end{table}
 
 \textbf{The conservative answer.} The knee that retains 90\,\% of the gain lies at
-0.5--5~s as a point estimate (median 2.5~s over the 18 cells: 1.75~s at $v_x=10$ and 3.33~s at $v_x=5$~cm/s) and at 2.0--7.5~s conservatively, with
+0.5--5~s as a point estimate (median 2.5~s over the 18 cells: 1.75~s at $v_x=10$ and 3.33~s at $v_x=5$~cm/s) and at 2.0--7.5~s conservatively (arrival-time tie-break, as everything in this section before Section~\ref{sec:tiebreak}), with
 one cell undetermined ($d=12$, $v_y=5$, $v_x=5$, high load, Poisson, where no grid point
 is conservatively at 90\,\%). The two answers differ because the curves are flat near
 their top: a cell can retain 95\,\% of its gain at 3.33~s and still need 5--7.5~s before
@@ -874,50 +908,110 @@ over the 18 cells (Table~\ref{tab:sufficient}; the cost is significant in 5 of t
 With 2.5~s the cost was a median 0.09 and at most 0.77~s per part (significant in 5); with
 1.5~s a median 0.33 and at most 1.50 (significant in 10). In share terms, 3.33~s retained
 71--102\,\% of the whole-grid gain (median 97\,\%), 2.5~s 62--108\,\% (median 94\,\%) and
-5~s 94--104\,\% (shares above 100\,\% are sampling noise around a flat top). The two
+5~s 94--104\,\% (a share above 100\,\% means that the shorter view scored better on these
+realizations: sampling noise around a flat top, or a heuristic that does not respond
+monotonically to the view). The two
 readings belong together: the share says how much of the benefit a shorter view keeps,
 the paired cost what the cell loses by it. Both ranges are those of the 18 cells evaluated
 and are not a bound for cells outside the bench.
 
-\subsection{Sensitivity to the tie-break}\label{sec:tiebreak}
+\subsection{Sensitivity to the tie-break and replication on fresh realizations}\label{sec:tiebreak}
 The bench ran the rule with its legacy tie-break, the arrival time, which may precede
 the first observation of a part (Section~\ref{sec:design}); the results above describe
 that controller and were fixed before the run. After the run, as a retrospective
 sensitivity analysis and not as a new confirmation, the rule was rerun on the same 60
-realizations of the 56 distinct cells, in both modes and at every grid point, with the
-observable tie-break (the instant of first observation), with the criteria of
-Section~\ref{sec:bench} unchanged (the legacy rerun reproduces every one of the 6\,720
-archived full-view costs within the $10^{-7}$~s per part checked). Under the observable key the
-pure-information contrast of the rule is no longer zero by construction, since the
-tie-break depends on the coverage, so $G$ at each coverage is measured against a baseline
-that can move with it.
+realizations with the observable tie-break (the instant of first observation) and the
+criteria of Section~\ref{sec:bench} unchanged: both modes at 10~s in all 56 distinct cells
+(6\,720 episodes; the legacy rerun reproduces every archived cost within the $10^{-7}$~s per
+part checked), then the eight shorter positive grid points in the 19 cells that passed the
+benefit criterion under that key (18\,240 episodes); zero coverage was not rerun. Under the
+observable key the pure-information contrast of the rule is no longer zero by
+construction, since the tie-break depends on the coverage, so $G$ at each coverage is
+measured against a baseline that can move with it.
 
 The benefit criterion passes 19 cells instead of 18; 13 pass under both keys, 5 only
 under the arrival-time key and 6 only under the observable one, so similar counts hide
 eleven changes of membership. In the 19 cells (Table~\ref{tab:tiebreak}), 3.33~s instead
-of 10~s cost a median of 0.04~s per part and at most 0.44~s (the maxima of the two keys
-come from different cells), and retained 58--130\,\% of the gain. The conservative
-90\,\% criterion is first met before 10~s in 3 of the 19 cells (at 2, 7.5 and 7.5~s) and
-first at 10~s, the end of the grid, in the other 16. The difference is one of precision:
-under the observable key the paired contrasts against 90\,\% of $G(10\,\mathrm{s})$ are
-noisier, and a point estimate that crosses early does not become conservatively positive
-before the end of the grid; a first crossing at 10~s does not show that 10~s of coverage
-is physically required. For the engineering reading, the small cost of a shorter view is
-supported under both keys, while the certified range of 2--7.5~s is a property of the
-arrival-time key. Confirming a requirement for a deployable, observable controller needs
-new realizations and criteria fixed before the run. The belt-speed bench
-(Section~\ref{sec:belt}) already used the observable key.
+of 10~s cost a median of 0.04~s per part and at most 0.44~s (individual 95\,\% interval
+$-0.01$ to 0.89; the maxima of the two keys come from different cells); no interval
+excludes zero on the side of a loss, and one excludes it on the other side ($d/v_y/v_x=12/15/5$,
+high load, bursts: the shorter view was cheaper by $0.54\pm0.39$~s per part). The share of
+the gain retained at 3.33~s was 58--130\,\%. The conservative 90\,\% criterion is first met
+before 10~s in 3 of the 19 cells (at 2, 7.5 and 7.5~s) and first at 10~s, the end of the
+grid, in the other 16. Of the 13 cells that pass under both keys, all 13 certify before
+10~s under the arrival-time key and 3 under the observable key. The change is not only one
+of precision: the set of cells, the estimated curves and their uncertainty all change, and
+in two cells ($18/10/5$ at the high load with bursts and at the nominal load with Poisson
+arrivals) even the point estimate first reaches 90\,\% only at 10~s. A fixed heuristic need
+not respond monotonically to a wider view, and under the observable key its baseline moves
+with the coverage. A first certification at the last grid point describes the uncertainty
+and the coverages tested in that cell; it does not show that 10~s of coverage is
+physically required.
+
+\textbf{Replication on fresh realizations.} The observable-key result was then replicated on
+60 realizations not used before (seeds 43700--43759), with the seed range, the 56 cells, the
+benefit screen, the grid, the paired contrasts and the interval rules fixed before the
+run: both modes at 10~s in all 56 cells and the eight shorter positive grid points in the
+cells that passed the screen (20\,160 episodes). Fourteen cells pass
+(Table~\ref{tab:fresh}); 9 of them also passed with the observable key on the original
+realizations, 10 with the arrival-time key, and 8 in all three analyses. Giving the
+controller 3.33~s instead of 10~s cost a median of 0.09 and at most 0.47~s per part
+($18/5/5$, nominal load, bursts; individual 95\,\% interval 0.02--0.91), with an interval
+excluding zero in 2 of the 14 cells and an upper limit at or below 0.5~s per part in 9; the
+share of the gain retained at 3.33~s was 67--117\,\%. The point estimate first reaches the
+90\,\% criterion before 10~s in 13 of the 14 cells, the conservative criterion in 1
+($6/15/10$, nominal load, Poisson arrivals, at 2~s); the other 13 first certify at 10~s. The
+intervals are per cell, computed after the screen and without adjustment for choosing the
+largest estimate, so the largest observed mean is not an upper limit for the family.
+
+Table~\ref{tab:cohorts} sets the three analyses side by side. In all of them a view of
+3.33~s cost little on average in the cells where pre-positioning pays, though not in every
+cell; early certification of 90\,\% retention is a property of the arrival-time key; and
+which cells pass the benefit screen is not stable across realizations. The cost of a
+shorter view and the share of the gain it retains answer different design questions: the
+first is what the cell loses, the second whether a fixed fraction of the benefit can be
+guaranteed. The belt-speed bench (Section~\ref{sec:belt}) already used the observable key.
 
 \begin{table}[t]
 \centering\small
-\caption{Geometry bench, \nj\ with the observable tie-break (retrospective rerun on the
-same 60 realizations): the 19 cells that pass the benefit criterion under that key.
-$G(10\,\mathrm{s})$ and the cost of 3.33~s ($J_{\mathrm{when\_idle}}(3.33\,\mathrm{s})-
-J_{\mathrm{when\_idle}}(10\,\mathrm{s})$, positive when the shorter view costs more) in
-s/part; knees as in Table~\ref{tab:sufficient}, with the 10~s end of the grid among the
-tested points.}
+\caption{The three analyses of the 3~cm/s geometry bench with \nj: the prespecified run
+(arrival-time tie-break), its retrospective rerun with the observable tie-break on the
+same realizations, and the replication with the observable tie-break on fresh
+realizations. Each analysis applies the benefit screen independently; knees and costs as
+in Table~\ref{tab:sufficient}; the cost interval is the individual paired 95\,\% interval of
+the cell with the largest estimated cost.}
+\label{tab:cohorts}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+analysis & pass the screen & knee $<10$~s & cons.\ knee $<10$~s & cost of 3.33~s, median & largest [95\,\% CI] \\
+\midrule
+arrival-time key, seeds 9000--9059 & 18/56 & 18/18 & 17/18 & 0.05 & 0.44 [0.11, 0.77] \\
+observable key, seeds 9000--9059 & 19/56 & 17/19 & 3/19 & 0.04 & 0.44 [$-0.01$, 0.89] \\
+observable key, seeds 43700--43759 & 14/56 & 13/14 & 1/14 & 0.09 & 0.47 [0.02, 0.91] \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Geometry bench, \nj\ with the observable tie-break, retrospective rerun on the
+same 60 realizations (seeds 9000--9059): the 19 cells that pass the benefit criterion under
+that key. $G(10\,\mathrm{s})$ and the cost of 3.33~s ($J_{\mathrm{when\_idle}}(3.33\,\mathrm{s})-
+J_{\mathrm{when\_idle}}(10\,\mathrm{s})$, positive when the shorter view costs more, with its
+individual paired 95\,\% interval; bold when it excludes zero) in s/part; knees as in
+Table~\ref{tab:sufficient}, with the 10~s end of the grid among the tested points.}
 \label{tab:tiebreak}
 \resizebox{\linewidth}{!}{\input{tables/bench_observable}}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Geometry bench, \nj\ with the observable tie-break, replication on 60 fresh
+realizations (seeds 43700--43759): the 14 cells that pass the benefit criterion. Columns
+as in Table~\ref{tab:tiebreak}.}
+\label{tab:fresh}
+\resizebox{\linewidth}{!}{\input{tables/bench_fresh}}
 \end{table}
 
 \subsection{What predicts the required anticipation}\label{sec:predict}
@@ -951,7 +1045,8 @@ mean duration of the pre-positioning moves actually made at 10~s of anticipation
 \centering\small
 \caption{Geometry bench, \nj: predictors of the knee over the 18 cells worth sizing for
 (the 2.4~s triplet counted once). Leave-one-out mean absolute error of the knee predicted
-from the other 17 cells; bold: lowest.}
+from the other 17 cells; bold: lowest among the candidates fixed before the run. The last
+row is a comparator computed after the run.}
 \label{tab:predictors}
 \resizebox{\linewidth}{!}{\input{tables/bench_predictors}}
 \end{table}
@@ -972,8 +1067,8 @@ The ranking also depends on the controller version and the cohort: on the 19 cel
 observable key (Section~\ref{sec:tiebreak}; point-estimate knees, factor refitted in
 every fold), the move duration gives 1.72~s, the group mean by $v_x$ 1.74~s, the crossing
 time 2.12~s and the constant 2.27~s. Since the rerun changes both the policy and the
-selected cells, this comparison does not isolate why the ranking changes; no candidate
-predicts the conservative knee.
+selected cells, this comparison does not isolate why the ranking changes. All these
+errors concern the point-estimate knee; the conservative knee was not used as a target.
 The rank correlations point the same way and are all moderate: 0.38 for $\tcross$, 0.50
 for $\tpp$ and 0.47 for $t_x+t_y$, the supplementary sum of the two axis times (average
 ranks for ties, since the knee takes values on the grid).\footnote{Draft 0.6 of this paper reported $+0.47$, $+0.53$ and $+0.51$, computed
@@ -1010,7 +1105,7 @@ which both speeds pass the benefit criterion (1.03--1.32 $\to$ 1.49--2.44~s per 
 1.1--1.5 in the three geometries in which neither does), lengthened the mean along-belt
 component of the moves from 0.44--0.76 to 1.57--1.90~s in those four cells, lowered the
 head's idle fraction under \texttt{none} from 17--27\,\% to 12--15\,\% (under
-\texttt{when\_idle}, from 5--6 to 4--5\,\%), and moved the knee from 1.5--3.33~s
+\texttt{when\_idle}, from 5--6 to 4--5\,\%), and moved the knee (arrival-time tie-break) from 1.5--3.33~s
 (conservatively 2.0--3.33) to 3.33--5~s (conservatively 5--7.5). The size of the change
 depends on the geometry; its direction does not.
 The reference study had found that a head twice as slow on \emph{both} axes needed the
@@ -1200,7 +1295,8 @@ $v_x=5$ unresolved within the grid. Those numbers belong to the rule with the
 arrival-time tie-break. For a camera-based controller, the retrospective rerun with the
 observable key (Section~\ref{sec:tiebreak}) supports the first statement (a median of
 0.04 and at most 0.44~s per part for 3.33~s) but not the second: only 3 of its 19 cells
-certify 90\,\% before 10~s. Every cell of the geometry bench runs its belts at 3~cm/s, so
+certify 90\,\% before 10~s; the replication on fresh realizations agrees (a median of 0.09
+and at most 0.47~s per part; 1 of 14 cells certifies before 10~s). Every cell of the geometry bench runs its belts at 3~cm/s, so
 within it seconds of belt motion and centimetres are one unit ($\lv=3\tv$); the clock time a
 camera gives is longer whenever the belt stops (Section~\ref{sec:anticipation}). The physical argument
 for seconds is that the quantity the anticipation must cover is the head's move, which
@@ -1208,7 +1304,11 @@ does not depend on $\vb$; but changing $\vb$ also changes where the head interce
 part, and the curve may move with it. The belt-speed bench (Section~\ref{sec:belt}) gives
 the practical answer for 5~cm/s without settling the scale: 10~cm cost less than the
 margin of 0.5~s per part against the full view in the two cells with the fast along-belt
-axis, where the requirement at 3~cm/s was already at most 2~s, while the conservative
+axis (whose conservative requirement at 3~cm/s in the geometry bench, nominal load and
+Poisson arrivals, is 2.0 and 3.33~s with the arrival-time key, 7.5~s with the observable
+key on the same realizations, and 2 and 10~s with that key on fresh realizations; in the
+belt-speed bench, with its 50~cm entry, the cell $12/10/10$ misses the benefit
+criterion at 3~cm/s, $+0.99$~s per part), while the conservative
 90\,\% criterion was not certified at 10~cm in either of them (first certified at 25 and
 50~cm); in the two cells with the
 slow axis the full-view benefit itself fell below the criterion at 5~cm/s, a reduction
@@ -1221,7 +1321,7 @@ steps. Among the predictors fixed before the run, the planned duration of the mo
 head starts, both axes included, predicts the point-estimate requirement best on the 18
 cells of the arrival-time key (fitted factor 1.7 on its mean), but only 0.1~s better than
 a constant, and a post hoc group mean by along-belt head speed does better (0.82~s); on the
-19 cells of the observable key the move duration and that group mean are within 0.03~s
+19 cells of the observable key (seeds 9000--9059) the move duration and that group mean are within 0.03~s
 (1.72 and 1.74~s). The data therefore support a number of seconds for the family of cells
 tested, not a predictor to extrapolate to cells that differ much from those tested.
 
@@ -1230,8 +1330,12 @@ Under treatment~B the controller must choose among the parts already in the zone
 whenever there is one; upstream visibility can help it only through the order of the
 zone parts. For the rule with the arrival-time tie-break this help is zero by construction;
 an average near zero for the network measures what this policy extracts from the view, not
-what an optimal policy could. In the reference cell that is worth little (Section~\ref{sec:seeing}); in the
-bench the rule cannot use it at all, and the network's value of seeing with the same
+what an optimal policy could. Treatment A to B changes the view with the same permission
+to act, B to C adds the permission to act for a fixed view, and D bounds what more
+information could give a policy able to use it; a fixed policy's measured score need not
+be optimal. In the reference cell that is worth little (Section~\ref{sec:seeing}); in the
+bench the rule with the arrival-time key cannot use it at all (with the observable key the
+view can change its tie-breaks), and the network's value of seeing with the same
 actions lies within $\pm0.7$~s per part at the nominal load (7 of 36 cell--arrival
 combinations outside $\pm0.3$). The exception is the high load
 with bursts, where the network gains up to 1.6~s per part from the view alone: when the
@@ -1281,8 +1385,11 @@ secondary controller whose training ranges the bench partly exceeds.
 The rule's tie-break differs between studies, the arrival time in the first two and the
 observable instant in the third (Sections~\ref{sec:design} and \ref{sec:belt}); the
 retrospective rerun of the geometry bench with the observable key
-(Section~\ref{sec:tiebreak}) shows that its certified coverage depends on that choice. The
-three sets of reserved realizations have been used once.
+(Section~\ref{sec:tiebreak}) shows that its certified coverage depends on that choice, and
+the replication on fresh realizations that the set of cells passing the benefit criterion
+changes with the realizations. The three sets of reserved realizations were used once for
+their prespecified analyses; those of the geometry bench were reused for the retrospective
+rerun, and the replication used a fourth, fresh set.
 
 %====================================================================
 \section{Conclusions}
@@ -1303,22 +1410,26 @@ gain, with coverages of 2 to 7.5~s, the slow along-belt axis needing the most; o
 unresolved within the grid. These figures belong to the rule with its arrival-time
 tie-break; rerun afterwards with the observable tie-break, the rule kept the small cost
 of a shorter view (a median of 0.04 and at most 0.44~s per part over 19 cells) but
-certified the 90\,\% criterion before 10~s in only 3 of them. In a separate question, predicting the point-estimate knees
+certified the 90\,\% criterion before 10~s in only 3 of them; replicated on 60 fresh
+realizations, it did so in 1 of 14 cells, with 3.33~s costing a median of 0.09 and at most
+0.47~s per part. In a separate question, predicting the point-estimate knees
 of all 18 configurations, the mean planned duration of the pre-positioning moves
 obtained a leave-one-out error of 1.02~s and a constant of 2.76~s obtained 1.13~s, while
 the transverse crossing time, the natural reference, was the poorest family (1.53~s); a
 group mean by along-belt head speed, computed after the run, obtained 0.82~s (under the
-observable key 1.72~s for the move duration and 1.74~s for the group mean). For the rule, cells with the same crossing time, the same along-belt geometry and the
+observable key, on the original realizations, 1.72~s for the move duration and 1.74~s for
+the group mean). For the rule, cells with the same crossing time, the same along-belt geometry and the
 same arrival realizations are identical by the model's structure. At a belt of 5~cm/s, with the rule, 10~cm of coverage cost less than the margin
 of 0.5~s per part fixed beforehand, against the full 50~cm view, in the two configurations
 with the fast along-belt axis; neither slow-axis configuration met the benefit criterion
 with the full view, and the paired comparison between speeds detected a reduction in one
 of the two; and the comparison between centimetres and seconds remains open. These are
-measurements on reserved realizations used once; the directional finding at the
+measurements on reserved realizations, used once for the prespecified analyses; the directional finding at the
 nominal load, that acting on the view is worth more than seeing alone, was shared by the
 two controllers of the first two studies, while the certified coverage of 2--7.5~s is
 the rule's with the arrival-time tie-break (the network reached no conservative knee
-before 10~s, nor did 16 of 19 cells of the rule with the observable tie-break). They give the
+before 10~s, nor did 16 of 19 cells of the rule with the observable tie-break on the same
+realizations and 13 of 14 on fresh ones). They give the
 designer of a cell of this family, at 3~cm/s, a coverage specification in seconds of
 anticipation, obtained by comparing predefined designs rather than by optimizing the
 design, with the cost of a shorter view measured under both tie-breaks, and at 5~cm/s the practical finding that 10~cm cost less than

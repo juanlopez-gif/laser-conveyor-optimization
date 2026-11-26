@@ -1,7 +1,10 @@
 % Classical references used by Paper 1's formulation, properties and method sections.
 % Kept apart from docs/literature/references.bib (the verified systematic-review list):
-% these entries are standard textbook citations, added from memory on 2026-11-23 and
-% to be checked against the publisher's record before submission.
+% these entries are standard textbook citations, added from memory on 2026-11-23. The
+% closure review of 0.7.40 (2026-11-25) matched Lenstra et al. (1977, Theorems 4(g) and 5),
+% Baker (1974), Silver et al. (2018) and Schulman et al. (2017) against their source records;
+% 0.7.41 corrected Schrage (1968, title prefix), Anthony et al. (2017, pages) and Ross et al.
+% (2011, PMLR volume and the authors' names) from the same check.
 
 @incollection{Lenstra1977,
   author    = {Lenstra, J. K. and Rinnooy Kan, A. H. G. and Brucker, P.},
@@ -16,7 +19,7 @@
 
 @article{Schrage1968,
   author  = {Schrage, Linus},
-  title   = {A proof of the optimality of the shortest remaining processing time discipline},
+  title   = {Letter to the Editor---A proof of the optimality of the shortest remaining processing time discipline},
   journal = {Operations Research},
   volume  = {16},
   number  = {3},
@@ -33,9 +36,11 @@
 }
 
 @inproceedings{Ross2011,
-  author    = {Ross, St{\'e}phane and Gordon, Geoffrey and Bagnell, Drew},
+  author    = {Ross, St{\'e}phane and Gordon, Geoffrey J. and Bagnell, J. Andrew},
   title     = {A reduction of imitation learning and structured prediction to no-regret online learning},
   booktitle = {Proceedings of the 14th International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {15},
   pages     = {627--635},
   year      = {2011}
 }
@@ -45,6 +50,7 @@
   title     = {Thinking fast and slow with deep learning and tree search},
   booktitle = {Advances in Neural Information Processing Systems},
   volume    = {30},
+  pages     = {5360--5370},
   year      = {2017}
 }
 

@@ -151,7 +151,14 @@ def t_predictors(b: Bench):
             (r"knee $=b\,\tau_{\mathrm{pp}}$ (mean planned duration of the moves started)", spearman(tpp, knee), loo_mae(tpp, knee, MODELS["knee = b·τ_pp"]), f"$b={fit(tpp):.2f}$"),
             (r"knee $=b'\,(t_x+t_y)$", spearman(txy, knee), loo_mae(txy, knee, MODELS["knee = b·τ_pp"]), f"$b'={fit(txy):.2f}$"),
             (r"knee $=$ constant", math.nan, loo_mae(tc, knee, MODELS["knee = constant"]), f"${knee.mean():.2f}$~s")]
-    best = min(r[2] for r in rows)
+    best = min(r[2] for r in rows)          # bold: best of the candidates fixed before the run
+    # 0.7.41: post hoc comparator (computed after the run, not prespecified): the mean knee of
+    # the other cells with the same along-belt head speed v_x.
+    vx = np.array([r["vx"] for r, _, _ in pts])
+    same_vx = np.mean([abs(knee[i] - knee[(vx == vx[i]) & (np.arange(len(knee)) != i)].mean())
+                       for i in range(len(knee))])
+    rows.append((r"knee $=$ mean of the other cells with the same $v_x$ (post hoc)", math.nan,
+                 float(same_vx), "---"))
     L = [r"\begin{tabular}{@{}lccc@{}}", r"\toprule",
          r"predictor & Spearman $\rho$ with the knee & leave-one-out MAE [s] & fitted coefficient \\", r"\midrule"]
     for name, sp, mae, coef in rows:

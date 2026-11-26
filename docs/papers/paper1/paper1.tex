@@ -42,7 +42,7 @@
 \title{\textbf{Scheduling a Shared Mobile Head Across Parallel Conveyors with Endogenous Blocking}\\[0.3em]
 \large Formulation, properties, and a learned dispatching policy trained by expert iteration with scenario search}
 \author{laser-conveyor-optimization\\\small\url{https://github.com/juanlopez-gif/laser-conveyor-optimization}}
-\date{November 2026 --- draft 1.2 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.38; bibliographic audit of 0.7.39; scientific review of 0.7.40)}
+\date{November 2026 --- draft 1.3 (results of versions 0.7.5--0.7.13; tie-break audit of 0.7.33; PPO baseline of 0.7.29; referee rounds of 0.7.35--0.7.38; bibliographic audit of 0.7.39; scientific review of 0.7.40; closure review of 0.7.41)}
 
 \begin{document}
 \maketitle
@@ -64,7 +64,8 @@ among the parts already in the zone produces the same schedule, within one inter
 time of the offline optimum in makespan and mean flow time. We then ask how to decide well in
 milliseconds. A look-ahead search scores each candidate part by simulating the known parts
 together with sampled futures of the unknown arrivals (eight Poisson futures over a 30~s
-window, common random numbers, the realized cost of every part as the objective); it is
+window, common random numbers, the realized unpenalized flow time of every part as the
+score, while every evaluation uses the penalized objective); it is
 the best-scoring decision rule among those tried on the development groups, but it needs about a second per decision. A
 permutation-equivariant Transformer policy over the parts, the belts, the head and the cell's
 parameters, trained by expert iteration with that scenario search as the expert, on
@@ -73,24 +74,29 @@ eight operating regimes, used once, no difference between the policy alone and t
 scenario search built on it was detected in any tested regime; the look-ahead over the known parts costs
 1.5--3.9\,\% more than the policy in every regime of the basic mode (1.4--4.4\,\% in the design mode; significant in seven of eight in each), and the policy beats the nearest-part rule
 by 2--7\,\% of the penalized flow time in seven of the eight regimes (individual 95\,\%
-intervals, rule with its legacy arrival-time tie-break; in all eight in both modes when
-the rule alone was rerun afterwards on the same realizations with the observable
-tie-break), at 10.8~ms per
+intervals; comparators with their legacy arrival-time tie-break). Rerun afterwards on the
+same realizations with the observable tie-break, a retrospective sensitivity analysis
+rather than a new confirmation, the rule is beaten in all eight regimes of both modes and
+the look-ahead over the known parts costs 1.4--5.2\,\% more than the policy (interval
+excluding zero in seven regimes of the basic mode and eight of the design mode). The policy
+decides in 10.8~ms per
 decision (median, one thread, machine fully loaded; 17.5~ms at the 95th percentile;
 above the design's 5~ms budget in 98\,\% of the decisions on that machine)
 against 1.2~s for the search. Three negative results shape the method:
 truncating the look-ahead with a learned value is far worse than not truncating; sampled
 futures helped only in the tested variants in which the look-ahead scores every part; and larger networks (6.7~M and
-39~M parameters) did not score better than the 0.88~M one with the same teacher in the three runs made. Giving the teacher the cell's
+39~M parameters) did not score detectably better than the 0.88~M one ($-2.88$ and $-2.44$ against $-2.79$\,\%, overlapping intervals) with the same teacher in the three runs made. Giving the teacher the cell's
 bursty arrival model does not improve it either. A policy-gradient (PPO) baseline on the
-same tokens, action mask, simulator and evaluation protocol (with its own stage-wise
-training distribution), trained under a protocol fixed before the run, compares learning from the reward with learning from the search on
+same tokens, action mask, simulator and evaluation protocol (trained on the final
+training mix from its first episode, whereas the expert-iteration chain changed its mix
+by stage), trained under a protocol fixed before the run, compares learning from the reward with learning from the search on
 development realizations: from scratch, after a number of acting episodes comparable to
 the expert-iteration chain, PPO stayed 4--8\,\% above \nj\ and 8--12\,\% above the
 learned policy on three seeds, in 22 minutes per run against 12.7 hours for the whole
 chain on the same workstation; fine-tuning the learned policy with PPO made it worse on
 all three seeds. Under the protocols tried, the chain trained with the search performed
-better; the two methods differ in the learning signal and in the compute spent. The
+better; the two methods differ in the learning signal, the compute spent and the
+curriculum, which these runs do not separate. The
 distance to the optimum is not measured.
 \end{abstract}
 
@@ -135,11 +141,11 @@ measure on reserved realizations. Its contributions are:
   nearest-part is optimal, and that waiting and anticipation pay.
 \item A look-ahead search for the online problem (Section~\ref{sec:search}) that
   simulates every candidate against sampled futures of the unknown arrivals and scores it
-  by the realized cost of all parts, with the design study that fixed it.
+  by the realized (unpenalized) flow time of all parts, with the design study that fixed it.
 \item A learned dispatching policy (Section~\ref{sec:policy}) that reads the state as a
   set of tokens, points to any candidate part, and is trained by expert iteration with
   the scenario search as the expert, on a distribution of cells with one to six
-  conveyors; and its confirmatory evaluation on reserved realizations, with the protocol frozen in the repository before the run,
+  conveyors; and its confirmatory evaluation on reserved realizations, with the protocol frozen in the repository before the run
   (Section~\ref{sec:confirm}).
 \end{enumerate}
 A companion paper (Paper~2) uses the policy and the nearest-part rule as controllers to
@@ -214,7 +220,7 @@ fitted to the search's choices, repeated, is expert iteration \cite{Anthony2017,
 with the state-distribution correction of \cite{Ross2011}; what is specific to this paper
 is the expert (a scenario rollout scored on every part) and the observation, on one
 training chain per network size, that changing the expert moved the policy's score while
-larger networks did not score better; size, episodes and iterations are confounded in
+larger networks did not score detectably better; size, episodes and iterations are confounded in
 those runs. Learning directly from the reward with a
 policy-gradient method \cite{Schulman2017} on the same representation is the baseline
 that the question ``what does learning from the search add'' calls for; the project's
@@ -420,12 +426,17 @@ head only to parts already inside the zone satisfies in addition
 \qquad S_{\pi(1)}\ge R_{\pi(1)}+\tau(P_0,P_{\pi(1)}).
 \end{equation}
 We write $\Psim=\Pb+\text{(C7)}$. Since (C7) only removes schedules, $\Pb$ is a relaxation
-of $\Psim$: its optimum bounds everything a non-anticipating controller can do, and the
-gap between the two measures the value of pre-positioning (a single part arriving at $t=0$
-completes at $5.83$~s in $\Pb$ and at $7.19$~s in $\Psim$). The cell's two action modes
+of $\Psim$: its optimum is a lower bound on the cost of every schedule a non-anticipating
+controller can produce, and the gap between the two optima measures what the restriction
+(C7) costs under full knowledge of the instance (a single part arriving at $t=0$
+completes at $5.83$~s in $\Pb$ and at $7.19$~s in $\Psim$); it is not the value that an online
+controller obtains from pre-positioning, which Section~\ref{sec:confirm} and the companion
+paper measure as paired contrasts between policies. The cell's two action modes
 are, with $\mathcal R(t)$ the ready unassigned parts (inside the zone) and $\mathcal U(t)$
 the unassigned parts in the entry zone of a running belt: \texttt{none}, candidates
-$\mathcal R(t)$, which realizes $\Psim$; and \texttt{when\_idle}, candidates $\mathcal R(t)$
+$\mathcal R(t)$, whose schedules satisfy the constraints of $\Psim$ (a non-idling policy in
+this mode does not reach every schedule of $\Psim$: a deliberate wait for a part that is
+not yet ready while another part is ready is feasible for $\Psim$); and \texttt{when\_idle}, candidates $\mathcal R(t)$
 if non-empty and $\mathcal U(t)$ otherwise, feasible for $\Pb$. A \emph{dispatch event} is an
 instant at which the head is free and the candidate set is non-empty; with a single
 candidate the dispatch is forced, and a \emph{decision epoch} (Section~\ref{sec:online})
@@ -490,7 +501,7 @@ the arrival process. A policy acts on the observation $\I_t$ of Section~\ref{sec
 which omits the hidden queue and the source's phase, so $\I_t$ need not be a Markov
 state of the process; every policy of this paper is a function of $\I_t$, with the
 audited exception of the legacy comparators of Section~\ref{sec:confirm}, whose
-tie-break used $r_j$ (below), and nothing below assumes more. The identity between return and cost covers the whole episode:
+tie-break used $r_j$ (below; they were rerun afterwards with the observable key), and nothing below assumes more. The identity between return and cost covers the whole episode:
 $n\Fpi=c(0,t_1)+\sum_{i=1}^{m-1}c(t_i,t_{i+1})+c(t_m,T)$, with $t_1$ the first decision
 epoch, $t_m$ the last and $T$ the instant the last part leaves; the first term is the
 cost of the forced initial segment (waiting for the first part, single-candidate
@@ -524,8 +535,10 @@ known-parts search; per regime the changes are of either sign, within $\pm0.6$\,
 in the reference cell and up to $+1.5$\,\% at the heavy load with Poisson arrivals
 for the rules and up to $+0.8$\,\% for the search. The confirmatory numbers below therefore
 compare the network with comparators run under the legacy key, whose effect on
-development realizations is small and of either sign; the reserved realizations were
-not rerun, and no claim is made that every reserved margin is conservative.
+development realizations is small and of either sign. After that run the three
+comparators were rerun on the reserved realizations with both keys, as a retrospective
+sensitivity analysis (Section~\ref{sec:confirm}); the prespecified numbers are kept as
+they were, and no claim is made that every reserved margin is conservative.
 
 \subsection{Information model}\label{sec:info}
 A policy may use only what the cell observes. Let $O(t)\subseteq J$ be the parts
@@ -598,11 +611,16 @@ the decoder $\Phi$.
 \subsection{Structure}
 \begin{proposition}[Rigid belts]\label{prop:rigid}
 On each conveyor the order of the parts never changes and, once two parts $i$ (earlier)
-and $j$ have entered, $x_i(t)-x_j(t)=E_j-E_i\ge\delta$. The head may nevertheless process
-them in either order, except that a part must be processed before $j$ whenever it is so far
-ahead that $j$ cannot reach $a$ before it reaches $b$, i.e.\ $a+(m_j-m_i)\delta>b$ (the
-forced predecessors $F_j$ of Appendix~\ref{app:bounds}; nine positions in the reference
-cell).
+and $j$ have entered, $x_i(t)-x_j(t)=E_j-E_i\ge\delta$. The head may in general process
+them in either order; a part $i$ must be processed before $j$ in particular when the rank
+separation alone keeps $j$ from reaching $a$ before $i$ reaches $b$, $a+(m_j-m_i)\delta>b$
+(the forced predecessors $F_j$ of Appendix~\ref{app:bounds}; nine positions in the
+reference cell). This condition is sufficient, not necessary: release times and the
+realized belt motion can force further precedences (with $a=10$ and $b=45$~cm, belt speed
+3~cm/s, $\delta=4$~cm and releases at 0 and 16~s, the first part reaches $b$ at 15~s and
+stops its belt, so the second cannot reach $a$ before the first is served, although
+$a+\delta\le b$); the bounds of Appendix~\ref{app:bounds} use only the sufficient set and
+remain valid.
 \end{proposition}
 \begin{proposition}[Blocking cascade]\label{prop:cascade}
 On conveyor $k$ at time $t$ the binding cap is set by the most downstream unstarted part:
@@ -779,7 +797,7 @@ Appendix~\ref{app:special} documents with explicit instances, each reproduced by
   improvement needs deliberate idling, which no implemented rule does.
 \item \emph{Anticipation pays} (Counterexample~\ref{cex:anticipation}): for a single part
   the optimum of $\Pb$ pre-positions the head at $(a,y_k)$ and completes at 5.83~s; every
-  non-anticipating policy completes at 7.19~s ($+23$\,\%). Whenever a part enters the zone
+  ready-only policy (mode \texttt{none}) completes at 7.19~s ($+23$\,\%). Whenever a part enters the zone
   while the head is idle away from its entry point, the cell loses up to $I^\ast$ against
   $\Pb$; this is why the cell's design mode allows pre-positioning, and why its value is
   measured in Paper~2. Delaying a start of the \emph{same} sequence, on the other hand,
@@ -812,8 +830,9 @@ $\mu=\nj$ it is the \emph{known-parts search} of the tables below; with $\mu$ eq
 current network it is the expert of the first training stage.
 
 \subsection{Scenario search: sampled futures, scored on every part}
-The known-parts rollout sets the level the networks reach: on the validation cells no network of any size
-exceeded it by more than the noise (Section~\ref{sec:ladder}). The reason is its horizon.
+With the known-parts rollout as expert, no network of any size exceeded that expert on the
+validation cells by more than the noise (Section~\ref{sec:ladder}). One possible reason is
+its horizon.
 The known parts are a few; the decision that serves them best may leave the head far from
 the belt that will need it next, and the rollout cannot see that. The second search
 samples the unknown future. For each candidate it runs $M$ look-aheads, each with a
@@ -821,7 +840,8 @@ different synthetic list of arrivals over the next $W$ seconds, Poisson at the b
 known mean rates (the clone's horizon becomes $t+W$ and it drains after it), with common
 random numbers: the same scenario index gives the same future to every candidate. The
 score of a candidate is the mean over the $M$ futures of the \emph{realized cost of all
-parts} from the decision on, the work-in-progress integral of \eqref{eq:smdp}, not the
+parts} from the decision on, the work-in-progress integral of \eqref{eq:smdp} (its first
+term, without the blocking penalty), not the
 completion times of the known parts. Table~\ref{tab:variants} gives the design study that
 led to $M=8$, $W=30$~s and no penalty in the score (the expert scores unpenalized flow,
 while every evaluation uses the penalized objective), all variants run over the same trained
@@ -957,7 +977,8 @@ the known-parts search ran with the legacy arrival-time key, and so did the know
 expert of iteration 0 and the base policy inside every look-ahead; the network's own
 decisions never used the arrival time. The only results obtained with the observable
 key are those of the audit quoted in Section~\ref{sec:online}, which measures the
-effect of the change on development realizations, not on the reserved ones.
+effect of the change on development realizations, and the retrospective reruns of the
+comparators on the reserved realizations reported in Section~\ref{sec:confirm}.
 
 \subsection{Three sizes, one expert: the ladder stops at S}\label{sec:ladder}
 With the known-parts expert, the three sizes were trained on a 48-thread workstation
@@ -970,9 +991,12 @@ expert. The best scores are $-2.79$\,\% (S, iteration 3), $-2.88$\,\% (M, iterat
 $-2.44$\,\% (L, iteration 1, after 14~h), all within the confidence intervals of one
 another. Training losses keep falling while validation stalls: the networks fit their
 expert ever better: no network scored better than its expert. M costs $8.5\times$ more per generated
-episode and $4\times$ more per decision than S for no measurable gain; L is not
-under-fitted by lack of data (it had four times S's) but learns the same expert more
-slowly. The ladder stops at S, and the lever is the expert.
+episode and $4\times$ more per decision than S for no measurable gain. L had four times
+S's data and reached its best score at its first iteration; with one run per size, and
+size, data, episodes and iterations varying together, these runs do not show whether L
+was limited by data, by optimization or by capacity. The ladder stopped at S on cost; that
+the expert moved the score more than the size did is an observation on these runs, not a
+matched ablation.
 
 \begin{table}[t]
 \centering\small
@@ -1213,7 +1237,7 @@ shaping, a penalty towards the initialization in V2, and longer budgets.
 \section{Confirmatory evaluation}\label{sec:confirm}
 %====================================================================
 
-This section reports the one evaluation on realizations reserved for it and used once: the protocol fixed before the run, then the results in both dispatch modes, with the latencies measured on the same decisions.
+This section reports the one evaluation on realizations reserved for it and used once: the protocol fixed before the run, then the results in both dispatch modes, with the latencies measured on the same decisions. Retrospective reruns of the comparators on the same realizations, made afterwards, are reported separately and labelled as such.
 
 \subsection{Protocol}
 The frozen network, the known-parts search over \nj, the scenario search over the
@@ -1236,17 +1260,21 @@ The run used the legacy arrival-time tie-break for \nj, \nh\ and the known-parts
 (Section~\ref{sec:online}): their numbers below are those of comparators run under
 that key, whose effect on development realizations was at most $\pm1.5$\,\% per
 regime and of either sign. After the run, as a retrospective sensitivity analysis and
-not as a new confirmation, \nj\ alone was rerun on the same reserved realizations with
-both keys (the legacy run reproduces the archived costs to the printed precision) and
-paired with the archived costs of the network (results below); \nh\ and the known-parts
-search were not rerun with the observable key.
+not as a new confirmation, \nj, \nh\ and the known-parts search (with the key applied
+both to the candidate ranking and inside every look-ahead continuation) were rerun on the
+same reserved realizations with both keys (every legacy rerun reproduces the archived
+cost, the largest difference being $1.4\cdot10^{-13}$~s per part) and paired with the
+archived costs of the network (results below). These reruns reuse the reserved
+realizations; a confirmation of the margins under the observable key would need fresh
+ones.
 
 \begin{table}[t]
 \centering\small
 \caption{Regimes of the confirmatory evaluation and their physical scales ($\tcross$ is
 the head's travel time across the conveyors); parts, penalized flow time, flow time,
 blocking events and blocked conveyor-seconds are means per episode for \nj\ in B over the
-30 realizations.}
+30 realizations (seeds 7000--7029, the phase-4 realizations that the companion paper also
+analyzes).}
 \label{tab:regimes}
 \resizebox{\linewidth}{!}{\input{tables/regimes}}
 \end{table}
@@ -1261,7 +1289,8 @@ Table~\ref{tab:confirmC} the design mode; Table~\ref{tab:latency} the latencies.
 time of each policy against \nj; contrasts of the two searches against the network
 (positive = the network is better; in parentheses the realizations in which the search
 is cheaper); and per-decision latency (median / 95th percentile). Bold: the interval
-excludes zero. Rules and known-parts search with the legacy arrival-time tie-break (Section~\ref{sec:online}).}
+excludes zero. Rules and known-parts search with the legacy arrival-time tie-break (Section~\ref{sec:online}); the
+observable-key reruns are in the text. Seeds 7000--7029, shared with the companion paper.}
 \label{tab:confirmB}
 \resizebox{\linewidth}{!}{\input{tables/confirm_B}}
 \end{table}
@@ -1269,7 +1298,8 @@ excludes zero. Rules and known-parts search with the legacy arrival-time tie-bre
 \begin{table}[t]
 \centering\small
 \caption{As Table~\ref{tab:confirmB}, design mode (C): every policy, including \nj, may
-pre-position the idle head. Legacy tie-break.}
+pre-position the idle head. Legacy tie-break; seeds 7000--7029, shared with the companion
+paper.}
 \label{tab:confirmC}
 \resizebox{\linewidth}{!}{\input{tables/confirm_C}}
 \end{table}
@@ -1281,19 +1311,22 @@ pre-position the idle head. Legacy tie-break.}
 flow time, 95\,\% CI; filled markers: basic mode B, hollow: design mode C). Left: the
 known-parts search against \nj. Middle: the scenario search (expert) and the network
 against \nj. Right: the two searches against the network (positive = the network is
-better).}
+better). Rules and known-parts search with the legacy tie-break; seeds 7000--7029, shared
+with the companion paper.}
 \label{fig:confirm}
 \end{figure}
 
 \begin{table}[t]
 \centering\small
 \caption{Per-decision latency of every policy on the same decisions (one thread, machine
-fully loaded), pooled over the eight regimes: 16\,215 decisions in B, 17\,147 in C.}
+fully loaded), pooled over the eight regimes: 16\,215 decisions in B, 17\,147 in C
+(seeds 7000--7029, shared with the companion paper).}
 \label{tab:latency}
 \resizebox{\linewidth}{!}{\input{tables/latency}}
 \end{table}
 
-\textbf{The network alone beats \nj\ in seven of the eight regimes}, by 2.0--7.3\,\% in B
+\textbf{The network alone beats \nj\ in seven of the eight regimes} (legacy key; in all
+eight under the observable key, below), by 2.0--7.3\,\% in B
 ($-7.2$ and $-7.3$\,\% on the reference cell with Poisson arrivals, $-2.0$ and $-6.2$ with
 bursts, $-2.8$ to $-4.2$ at the heavy load) and by 2.0--7.1\,\% in C; the exception is the
 heavy load with Poisson arrivals and a slow head ($-1.3\pm2.3$ and $-1.6\pm2.7$), where
@@ -1304,10 +1337,20 @@ each mode leaves six detections in B and seven in C. With \nj\ rerun under the o
 tie-break (retrospective, same realizations, network costs unchanged), the network is
 cheaper with an individual interval excluding zero in all eight regimes in both modes
 (2.0--7.6\,\% in B and 2.1--7.6\,\% in C); in the exception above the contrasts become
-$-2.1\pm2.0$ and $-2.7\pm2.5$, so the margin there stays close to zero. The margin of the
-known-parts search was not re-estimated under the observable key.
+$-2.1\pm2.0$ and $-2.7\pm2.5$, so the margin there stays close to zero. Under the
+observable key the known-parts search costs more than the network in all sixteen
+regime--mode comparisons, 1.4--4.7\,\% in B and 1.5--5.2\,\% in C, with an individual
+interval excluding zero in seven regimes in B and eight in C (the same counts after Holm);
+pooled over the regimes it costs $2.95$\,\% more in B $[2.24,3.66]$ and $3.21$\,\% more in C
+$[2.38,4.04]$. \nh\ under the observable key costs 1.4--8.2\,\% more than the network in B
+and 1.5--6.7\,\% in C, with an individual interval excluding zero in six regimes in B and
+seven in C (six and six after Holm). These two contrasts are
+$100\,(J_{\mathrm{comparator}}/J_{\mathrm{network}}-1)$, positive favouring the network; the
+paired costs are distributed with the source in \texttt{data/closure\_0\_7\_40} and the
+scripts in \texttt{experiments/closure\_0\_7\_40}.
 
-\textbf{It beats the known-parts search in every regime}: the search costs 1.5--3.9\,\% more than the policy in B and
+\textbf{It has a lower cost than the known-parts search in every regime} (legacy key; the
+observable-key rerun is above): the search costs 1.5--3.9\,\% more than the policy in B and
 1.4--4.4 in C, significantly in seven of eight in both modes, at 2--3 times the search's
 latency. At the heavy load with Poisson arrivals in B the known-parts search shows no detected
 improvement over \nj\ (point estimates $+0.3$ and $+2.3$\,\%, intervals containing zero):
@@ -1318,9 +1361,10 @@ intervals.
 \textbf{No difference from its expert was detected} (no equivalence margin was set, so
 this is not a test of equivalence). The paired contrast of the
 scenario search over the network against the network alone includes zero in every
-regime and mode: within $\pm0.8$\,\% in B, and in C within $\pm0.8$\,\% except
+regime and mode, with point estimates within $\pm0.8$\,\% in B, and in C within $\pm0.8$\,\% except
 the heavy load with Poisson arrivals and a slow head, where the point estimate favours
-the network by $2.0\pm2.8$\,\%, an interval that admits a practically relevant difference; the search is cheaper in 12--18 of the 30
+the network by $2.0\pm2.8$\,\%, an interval that admits a practically relevant difference (the intervals are wider than
+the point estimates throughout); the search is cheaper in 12--18 of the 30
 realizations, at 0.4--1.9~s per decision
 (median by regime; 1.2~s pooled, 3.6~s at the 95th percentile, 12~s at most; 2\,600
 look-aheads per episode on average). No difference between the amortized policy and
@@ -1345,8 +1389,8 @@ percentile) and the rules in under 0.2~ms.
 \centering
 \includegraphics[width=\linewidth]{figures/latency.pdf}
 \caption{Empirical distribution of the per-decision latency of the four policies on the
-same decisions (basic mode, eight regimes pooled, one thread, machine fully loaded; log
-scale). The dotted line is the 5~ms budget of the design: on this loaded machine the
+same decisions (basic mode, eight regimes pooled, seeds 7000--7029, shared with the
+companion paper, one thread, machine fully loaded; log scale). The dotted line is the 5~ms budget of the design: on this loaded machine the
 network exceeded it in 98.1\,\% of the decisions in B and 97.6\,\% in C (10.8~ms median);
 on an unloaded machine the available figure is a median of 4.1~ms, not a per-decision
 guarantee.}
@@ -1364,7 +1408,7 @@ plan's original target, is $-14.1$\,\% on the reference cell with Poisson arriva
 \section{Discussion}\label{sec:discussion}
 %====================================================================
 
-Four readings of the results follow: what the formulation buys, what sets the quality of the policy, what the policy cannot do, and the limits of the study.
+Four readings of the results follow: what the formulation buys, what the training runs show, what the policy cannot do, and the limits of the study.
 
 \subsection{What the formulation buys}
 The odometer formulation makes the endogenous part of the problem explicit and cheap: a
@@ -1381,13 +1425,14 @@ of the offline optimum, so the value of
 a better decision rule is concentrated in the contended regimes, which is where the
 confirmatory evaluation measures it.
 
-\subsection{What sets the quality of the policy}
+\subsection{What the training runs show}
 Three facts of Section~\ref{sec:dev} point the same way. Networks of 0.88, 6.7 and 39
 million parameters scored $-2.79$, $-2.88$ and $-2.44$\,\% with the same expert in one
 run each (size, episodes and iterations confounded), no difference detected; for every network no difference from its expert's score is detected after one or two iterations and then trades one validation group against
-another; and changing the expert moved the score by two points where changing the size
-moved it by none. In the runs made, the amortized policy scored no better than the search
-that labels its data, and the search scored better in the tested variants that score
+another; and after the switch to the scenario-search expert, a continuation of the best S
+network in which the expert and further iterations changed together, the score moved by
+about two points, where changing the size moved it by none. In the runs made, no detectable difference separated the amortized
+policy from the search that labels its data, and the search scored better in the tested variants that score
 every part, average more futures and do not truncate; these are observations on one
 chain, not matched ablations of each component. The learned value
 head, which would make deeper or cheaper search possible, is the part that failed: its
@@ -1397,8 +1442,10 @@ between candidates rather than the cost-to-go might do better; we did not try it
 
 \subsection{What the policy cannot do}
 The confirmatory run shows two limits of the problem rather than of the method. At the
-heavy load with Poisson arrivals and a slow head, no policy beats the nearest-part rule by
-more than the noise (with bursts the policy does, by $4.2\pm1.7$ and $4.6\pm2.0$\,\%):
+heavy load with Poisson arrivals and a slow head, no policy beat the nearest-part rule with
+its legacy tie-break by more than the noise (with bursts the policy does, by $4.2\pm1.7$ and
+$4.6\pm2.0$\,\%; against the rule with the observable tie-break, rerun afterwards, the
+network's margin there is $-2.1\pm2.0$ and $-2.7\pm2.5$\,\%, just excluding zero):
 with every belt queueing, the order in which the visible parts are served matters little
 and the hidden queue, which none of the policies sees, is what would matter (Paper~2
 measures it at 2.7--3.7\,\%). With bursts the gain of deciding better falls to 2\,\% on
@@ -1406,9 +1453,10 @@ the reference cell, and an expert that knows the burst model does not raise it: 
 information that would help, whether the source is on now, is not in the state.
 
 \subsection{Limits}\label{sec:limits}
-The distance to the optimum is not measured. The MILP of Appendix~\ref{app:milp} and the
-project's CP-SAT model support the makespan and the flow-time objectives but the blocking
-penalty is implemented only in the former, and a hindsight reference on the realized
+The distance to the optimum is not measured. The MILP of Appendix~\ref{app:milp} is a
+formulation; the project's CP-SAT model implements its grid version for the makespan, the
+mean flow time and the mean waiting time, and the penalized objective with (M12) is
+specified but neither implemented nor validated against the continuous model, and a hindsight reference on the realized
 instances was deferred to a second confirmatory run on new reserved realizations; the
 lower bounds of Section~\ref{sec:bounds} have been compared with offline solutions on
 small instances only, where part of the gap is the anticipation the rules cannot do. The
@@ -1422,7 +1470,8 @@ conveyors appear only in the validation of training, on development realizations
 Latencies are for one CPU thread of a loaded workstation and a 0.88~M-parameter model.
 Parts are points with a minimum spacing, the head has no acceleration, processing times
 are constant in the confirmatory regimes, and the penalty weights are placeholders. The
-reserved realizations have been used once.
+reserved realizations were used once for the prespecified evaluation and reused afterwards
+only for the retrospective reruns of its comparators.
 
 %====================================================================
 \section{Conclusions}
@@ -1438,13 +1487,16 @@ serves the parts in view best is not the best decision: a look-ahead that sample
 unknown arrivals and scores the realized cost of every part decides better than the
 nearest-part rule by 3--8\,\% of the penalized flow time in the seven significant regimes
 of the basic mode (1.4--7.7\,\% over the eight) and than a look-ahead over the
-known parts by 2--4\,\% of the cost in that mode, and a permutation-equivariant pointer policy trained by expert
+known parts by 2--4\,\% of the cost in that mode (comparators with the legacy tie-break;
+the scenario search itself was not rerun with the observable key), and a permutation-equivariant pointer policy trained by expert
 iteration with that search as expert, on randomized cells, shows no detected difference
 from it at a hundredth of its latency, 10~ms per decision on a loaded machine (above
 the design's 5~ms budget on that machine). With the
-tested expert and training runs, the larger networks did not score better than the
-0.88~M one; changing the expert did move the score. On reserved
-realizations of eight regimes the policy beats the rule in seven, and no difference
+tested expert and training runs, the larger networks did not score detectably better than the
+0.88~M one; continuing the S network with the scenario-search expert did move the score
+(expert and further iterations changed together). On reserved
+realizations of eight regimes the policy beats the rule with its legacy tie-break in seven
+(in all eight against the rule with the observable tie-break, rerun afterwards), and no difference
 from its expert was detected in any. What remains open is how far all of this is
 from the optimum: measuring a penalized optimality gap requires a reference validated
 for that objective, which Appendix~\ref{app:milp} does not yet provide, on the realized
@@ -1527,7 +1579,7 @@ event-driven simulator; the refinement is deferred to the point at which the dis
 to the penalized optimum is measured. (Without (M12) a penalized objective could
 set $\beta_{jt}=0$ while the belt is stopped by a processing operation, which an earlier
 audit of the project found.) The project's CP-SAT implementation realizes (M1)--(M11)
-for the makespan and flow-time objectives and uses the strict threshold in its decoder;
+for the makespan, mean flow time and mean waiting time objectives and uses the strict threshold in its decoder;
 the penalized objective with (M12) is specified here and has not been implemented or
 validated against the continuous model, which is why this appendix is an exact
 reference for the flow-time and makespan objectives only. The objectives are

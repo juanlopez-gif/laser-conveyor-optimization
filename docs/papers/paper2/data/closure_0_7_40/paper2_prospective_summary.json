@@ -1,0 +1,254 @@
+{
+  "source_commit": "4892d46db10effa185f99245c6519878a705f35d",
+  "reference_script_sha256": "2363198d293a8c578d7cf901ae87eca6009c95cc9cb80d54ab68fcb7551a1835",
+  "seed_first": 43700,
+  "seed_last": 43759,
+  "seeds_per_cell": 60,
+  "cell_count": 56,
+  "rule": "nearest_job, KEY_OBSERVED",
+  "grid_s": [
+    0.5,
+    1,
+    1.5,
+    2,
+    2.5,
+    3.3333333333333335,
+    5,
+    7.5,
+    10
+  ],
+  "screen": "G(10)>=1 and mean - 1.96*SE(paired G)>=0.5",
+  "crossing_z": 2.773,
+  "episode_rows": 20160,
+  "selected_count": 14,
+  "prior_count": 19,
+  "intersection": [
+    [
+      6,
+      15,
+      10,
+      "high",
+      "poisson"
+    ],
+    [
+      6,
+      15,
+      10,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      10,
+      5,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      10,
+      10,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      15,
+      5,
+      "nominal",
+      "burst"
+    ],
+    [
+      12,
+      15,
+      5,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      15,
+      10,
+      "high",
+      "poisson"
+    ],
+    [
+      12,
+      15,
+      10,
+      "nominal",
+      "poisson"
+    ],
+    [
+      18,
+      10,
+      5,
+      "nominal",
+      "poisson"
+    ]
+  ],
+  "new_only": [
+    [
+      6,
+      10,
+      5,
+      "high",
+      "burst"
+    ],
+    [
+      12,
+      5,
+      5,
+      "nominal",
+      "burst"
+    ],
+    [
+      12,
+      10,
+      5,
+      "nominal",
+      "burst"
+    ],
+    [
+      18,
+      5,
+      5,
+      "nominal",
+      "burst"
+    ],
+    [
+      18,
+      10,
+      10,
+      "nominal",
+      "poisson"
+    ]
+  ],
+  "prior_only": [
+    [
+      6,
+      10,
+      5,
+      "high",
+      "poisson"
+    ],
+    [
+      6,
+      10,
+      5,
+      "nominal",
+      "poisson"
+    ],
+    [
+      6,
+      10,
+      10,
+      "high",
+      "poisson"
+    ],
+    [
+      6,
+      10,
+      10,
+      "nominal",
+      "poisson"
+    ],
+    [
+      6,
+      15,
+      5,
+      "high",
+      "poisson"
+    ],
+    [
+      6,
+      15,
+      5,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      5,
+      10,
+      "nominal",
+      "poisson"
+    ],
+    [
+      12,
+      15,
+      5,
+      "high",
+      "burst"
+    ],
+    [
+      18,
+      5,
+      10,
+      "nominal",
+      "burst"
+    ],
+    [
+      18,
+      10,
+      5,
+      "high",
+      "burst"
+    ]
+  ],
+  "crossing_counts": {
+    "point_first": {
+      "2.5": 2,
+      "1.5": 2,
+      "1.0": 1,
+      "3.3333333333333335": 2,
+      "7.5": 3,
+      "10.0": 1,
+      "2.0": 2,
+      "5.0": 1
+    },
+    "point_sustained": {
+      "5.0": 2,
+      "1.5": 2,
+      "1.0": 1,
+      "7.5": 4,
+      "3.3333333333333335": 1,
+      "10.0": 1,
+      "2.5": 1,
+      "2.0": 2
+    },
+    "conservative_first": {
+      "10.0": 13,
+      "2.0": 1
+    },
+    "conservative_sustained": {
+      "10.0": 13,
+      "2.0": 1
+    }
+  },
+  "early_crossing_counts": {
+    "point_first": 13,
+    "point_sustained": 13,
+    "conservative_first": 1,
+    "conservative_sustained": 1
+  },
+  "direct_cost_median": 0.08617156802490537,
+  "worst_estimated_mean_shortening_cost_cell": {
+    "spacing_cm": 18,
+    "vy_cm_s": 5,
+    "vx_cm_s": 5,
+    "load": "nominal",
+    "arrivals": "burst",
+    "full_gain": 1.3770387651556697,
+    "full_gain_half95": 0.771170748569621,
+    "selected": true,
+    "point_first": 7.5,
+    "point_sustained": 7.5,
+    "conservative_first": 10.0,
+    "conservative_sustained": 10.0,
+    "short_cost": 0.4675062572725064,
+    "short_half95": 0.44681688689836696,
+    "short_share": 0.6672010729198355,
+    "prior_observable_selected": false
+  }
+}
